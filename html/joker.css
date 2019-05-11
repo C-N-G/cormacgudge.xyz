@@ -1,0 +1,80 @@
+body {
+    background-color: white;
+    background-size: 20%;
+    background-position: center top;
+    background-image: url("https://i.redd.it/4f5qcgcvvbo11.jpg");
+    font-family: Impact, Charcoal, sans-serif;
+}
+input{
+    font-family: Impact, Charcoal, sans-serif;
+}
+.content {
+    width: 95vw;
+    max-width: 1080px;
+    margin: auto;
+    word-wrap: break-word;
+}
+.title {
+    text-align: center;
+    font-size: 4em;
+    color: green;
+    text-shadow: 0 0 20px black;
+    user-select: none;
+}
+.input-box {
+    text-align: center;
+}
+.border-style {
+    border: solid 3px red;
+    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
+    border-radius: 10px;
+    background-color: white;
+    color: black;
+}
+.input-text{
+    box-sizing:border-box;
+    height: 1.8em;
+    font-size: 2em;
+    padding: 0.2em;
+    width: 100%;
+}
+.input-button {
+    font-size: 2.5em;
+    padding: 0.5em;
+    margin: 40px;
+    transition: all 0.5s;
+}
+.input-button:hover {
+    background-color: black;
+    color: red;
+    box-shadow: 0 5px 19px #FF0000, 0 10px 32px #0000FF;
+}
+.game-list {
+    border: solid 3px red;
+    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
+    border-radius: 10px;
+    background-color: white;
+    color: black;
+    user-select: none;
+}
+.game-list > h1 {
+    text-align: center;
+    font-size: 2.5em;
+    color: red;
+}
+ul {
+    font-size: 2em;
+    list-style: none;
+    padding: 0 1em;
+}
+li {
+    background-color: #FF8080;
+}
+li:nth-child(even) {
+    background-color: #84FF80;
+}
+.result-box {
+    padding: 0 1em;
+    font-size: 2em;
+    text-align: center;
+}
