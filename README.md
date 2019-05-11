@@ -1,2 +1,2 @@
-# js_website
+# cormacgudge.xyz
 full stack javascript personal website

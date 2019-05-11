@@ -1,0 +1,188 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="Game choosing tool">
+    <meta name="author" content="Cormac Gudge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chooser</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+<style>
+body {
+    background-color: white;
+    background-size: 20%;
+    background-position: center top;
+    background-image: url("https://i.redd.it/4f5qcgcvvbo11.jpg");
+    font-family: Impact, Charcoal, sans-serif;
+}
+input{
+    font-family: Impact, Charcoal, sans-serif;
+}
+.content {
+    width: 95vw;
+    max-width: 1080px;
+    margin: auto;
+    word-wrap: break-word;
+}
+.title {
+    text-align: center;
+    font-size: 4em;
+    color: green;
+    text-shadow: 0 0 20px black;
+    user-select: none;
+}
+.input-box {
+    text-align: center;
+}
+.border-style {
+    border: solid 3px red;
+    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
+    border-radius: 10px;
+    background-color: white;
+    color: black;
+}
+.input-text{
+    box-sizing:border-box;
+    height: 1.8em;
+    font-size: 2em;
+    padding: 0.2em;
+    width: 100%;
+}
+.input-button {
+    font-size: 2.5em;
+    padding: 0.5em;
+    margin: 40px;
+    transition: all 0.5s;
+}
+.input-button:hover {
+    background-color: black;
+    color: red;
+    box-shadow: 0 5px 19px #FF0000, 0 10px 32px #0000FF;
+}
+.game-list {
+    border: solid 3px red;
+    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
+    border-radius: 10px;
+    background-color: white;
+    color: black;
+    user-select: none;
+}
+.game-list > h1 {
+    text-align: center;
+    font-size: 2.5em;
+    color: red;
+}
+ul {
+    font-size: 2em;
+    list-style: none;
+    padding: 0 1em;
+}
+li {
+    background-color: #FF8080;
+}
+li:nth-child(even) {
+    background-color: #84FF80;
+}
+.result-box {
+    padding: 0 1em;
+    font-size: 2em;
+    text-align: center;
+}
+</style>
+<script>
+$( document ).ready(function(){
+    $('.result-section').hide();
+    function add_game_to_list(){
+        var input_game = $('.input-text').val();
+        if (input_game) {
+            $('.game-list > ul').append("<li>"+input_game+"</li>");
+            $('.input-text').val("");
+        }
+    }
+    function get_list_values(){
+        var games = [];
+        $('li').each( function(){
+            games.push($(this).text());
+        });
+        return(games);
+    }
+    function get_random_result(){
+        var games = get_list_values();
+        var num = Math.floor(Math.random() * games.length);
+        if (games[num] == undefined) {
+            games[num] = '';
+        }
+        if (games[num] == '') {
+            games[num] = 'Try adding some games';
+        }
+        console.log(games[num]);
+        return(games[num]);
+
+    }
+    function animate_screen_change(element_hide, element_show){
+        $(element_hide).animate({
+            opacity: '0',
+        }, 1000, function(){
+            $(this).hide();
+            $(this).css('opacity', '100');
+            $(element_show).show();
+        });
+    }
+    $('.btn-enter-text').on("click", function(){
+        add_game_to_list();
+        $(".input-text").focus();
+    });
+    $(".input-text").on('keyup', function (e) {
+        if (e.keyCode == 13) {
+            add_game_to_list();
+        }
+    });
+    $('.game-list').on('click', "li", function(){
+        $(this).remove();
+    });
+    $('.btn-result').on('click', function(){
+        $('.result-winner').text(get_random_result());
+        animate_screen_change('.input-section','.result-section');
+    });
+    $('.btn-back').on('click', function(){
+        animate_screen_change('.result-section','.input-section');
+    });
+    $('.btn-again').on('click', function(){
+        $('.result-winner').text(get_random_result());
+    });
+});
+</script>
+</head>
+
+<body>
+    <div class="content">
+        <h1 class="title">Game Chooser<span style="font-size: 0.25em; color: black;"> v1</span></h1>
+        <div class="input-section">
+            <div class="input-box">
+                <input class="input-text border-style" type="text" maxlength="60" placeholder="Enter Game Name" /><br />
+                <input class="input-button btn-enter-text border-style" type="button" value="LOCK IT IN!" />
+            </div>
+            <div class="game-list">
+                <h1>Epic Gamer Time</h1>
+                <ul>
+                </ul>
+                <h1>Epic Gamer Time</h1>
+            </div>
+            <div class="input-box">
+                <input class="input-button btn-result border-style" type="button" value="ITS GAMER TIME!" />
+            </div>
+        </div>
+        <div class="result-section">
+            <div class="result-box border-style">
+                <p class="result-winner">
+                </p>
+            </div>
+            <div class="input-box">
+                <input class="input-button btn-again border-style" type="button" value="ONE MORE TIME!" />
+                <input class="input-button btn-back border-style" type="button" value="NEED MORE GAMES!" />
+            </div>
+        </div>
+    </div>
+</body>
+</html>
