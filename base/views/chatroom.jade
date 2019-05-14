@@ -1,0 +1,10 @@
+extends chatroom_layout
+
+block content
+  ul#messages
+  form#nick-bar(action='')
+    input(id='nick' autocomplete='off' placeholder='Enter Nickname')
+    button Enter
+  form#chat-bar(action='')
+    input(id='m' autocomplete='off')
+    button Send
