@@ -1,6 +1,6 @@
 $( document ).ready(function() {
     $('#chat-bar').hide();
-    var socket = io();
+    var socket = io('/chatroom');
     $('#chat-bar').submit(function(e){
         e.preventDefault(); // prevents page reloading
         socket.emit('chat message', $('#m').val());

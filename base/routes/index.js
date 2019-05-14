@@ -7,7 +7,10 @@ router.get('/', function(req, res, next) {
   res.render('index');
 });
 router.get('/joker', function(req, res, next) {
-  res.render('joker');
+  res.render('joker_input');
+});
+router.get('/joker_result_type1', function(req, res, next) {
+  res.render('joker_result_type1');
 });
 router.get('/chatroom', chatroom_controller.index);
 

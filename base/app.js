@@ -19,12 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-function addNameToRequest(req,res,next){
-req.name ="James";
-next();
-}
-
-app.use('/', addNameToRequest, indexRouter);
+app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler

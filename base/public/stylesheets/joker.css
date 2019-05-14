@@ -8,6 +8,16 @@ body {
 input{
     font-family: Impact, Charcoal, sans-serif;
 }
+.input-box > input,
+.input-box > a > input,
+.game-list,
+.result-section > .result-box {
+    border: solid 3px red;
+    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
+    border-radius: 10px;
+    background-color: white;
+    color: black;
+}
 .content {
     width: 95vw;
     max-width: 1080px;
@@ -23,13 +33,6 @@ input{
 }
 .input-box {
     text-align: center;
-}
-.border-style {
-    border: solid 3px red;
-    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
-    border-radius: 10px;
-    background-color: white;
-    color: black;
 }
 .input-text{
     box-sizing:border-box;
@@ -50,11 +53,6 @@ input{
     box-shadow: 0 5px 19px #FF0000, 0 10px 32px #0000FF;
 }
 .game-list {
-    border: solid 3px red;
-    box-shadow: 0 0 9px #FF0000, 0 0 16px #0000FF;
-    border-radius: 10px;
-    background-color: white;
-    color: black;
     user-select: none;
 }
 .game-list > h1 {
