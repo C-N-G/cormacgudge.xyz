@@ -2,9 +2,12 @@ extends chatroom_layout
 
 block content
   ul#messages
+  ul#clients
+    li
+      h3 CLIENTS
   form#nick-bar(action='')
-    input(id='nick' autocomplete='off' placeholder='Enter Nickname')
+    input(id='nick' autocomplete='off' placeholder='Enter Nickname' maxlength='60')
     button Enter
   form#chat-bar(action='')
-    input(id='m' autocomplete='off')
+    input(id='m' autocomplete='off' maxlength='2000')
     button Send

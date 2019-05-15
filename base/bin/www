@@ -26,23 +26,49 @@ var server = http.createServer(app);
  */
 
 var io = require('socket.io')(server);
+var clients = [];
+var disconnected_id = 0;
 var chat = io
     .of('/chatroom')
     .on('connection', function(socket){
+        var nickname = '';
+        var nickname_id = 0;
+        function update_client_list() {
+            chat.emit('client list update', JSON.stringify(clients));
+            console.log('Client list: ' + clients);
+        }
         console.log('USER HAS CONNECTED TO CHAT');
-        var nickname = 'user';
+        update_client_list();
         socket.on('disconnect', function(){
-            chat.emit('user disconnect', nickname + ' has disconnected');
-            console.log('user disconnect');
+            if (nickname) {
+                chat.emit('user disconnect', nickname);
+                console.log('user disconnect. ID=' + nickname_id );
+
+                clients.splice(nickname_id, 1);
+                disconnected_id = nickname_id;
+
+                update_client_list();
+            }
+        });
+        socket.on('client id update', function(){
+            if (nickname_id > disconnected_id){
+                nickname_id--;
+            }
         });
         socket.on('chat message', function(msg){
             chat.emit('chat message', nickname + ': ' + msg);
-            console.log('chat message');
+            console.log('message from ' + nickname);
         });
         socket.on('nickname', function(nick){
+
             nickname = nick;
-            chat.emit('user connect', nickname + ' has connected');
-            console.log('uesr connect');
+            clients.push(nickname);
+            nickname_id = clients.length - 1;
+
+            chat.emit('user connect', nickname);
+            console.log(nickname + 'connected');
+
+            update_client_list();
         });
     });
 var joker = io

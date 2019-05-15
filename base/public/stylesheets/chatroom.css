@@ -26,13 +26,31 @@ form button {
     padding: 10px;
 }
 #messages {
-    list-style-type:
-    none; margin: 0;
+    list-style-type: none;
+    margin: 0;
     padding: 0;
+    max-height: 90vh;
+    max-width: 90vw;
+    overflow-y: auto;
+    overflow-wrap: break-word;
 }
 #messages li {
     padding: 5px 10px;
 }
 #messages li:nth-child(odd) {
     background: #eee;
+}
+#clients {
+    border: 6px solid black;
+    height: 100%;
+    width: 10vw;
+    list-style-type: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    text-align: center;
+    overflow-wrap: break-word;
+}
+#clients li {
+    border-bottom: 1px solid black;
 }
