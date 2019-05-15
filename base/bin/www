@@ -32,14 +32,17 @@ var chat = io
         console.log('USER HAS CONNECTED TO CHAT');
         var nickname = 'user';
         socket.on('disconnect', function(){
-            io.emit('user disconnect', nickname + ' has disconnected');
+            chat.emit('user disconnect', nickname + ' has disconnected');
+            console.log('user disconnect');
         });
         socket.on('chat message', function(msg){
-            io.emit('chat message', nickname + ': ' + msg);
+            chat.emit('chat message', nickname + ': ' + msg);
+            console.log('chat message');
         });
         socket.on('nickname', function(nick){
             nickname = nick;
-            io.emit('user connect', nickname + ' has connected');
+            chat.emit('user connect', nickname + ' has connected');
+            console.log('uesr connect');
         });
     });
 var joker = io
