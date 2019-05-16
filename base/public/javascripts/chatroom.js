@@ -8,16 +8,17 @@ $( document ).ready(function() {
         e.preventDefault(); // prevents page reloading
         if ($('#m').val()) {
             socket.emit('chat message', $('#m').val());
+            socket.emit('user is not typing');
         }
         $('#m').val('');
         return false;
     });
     $('#m').on('input', function(){
         if ($('#m').val()){
-            socket.emit('user is typing', 'dummy');
+            socket.emit('user is typing');
         }
         else {
-            socket.emit('user is not typing', 'dummy');
+            socket.emit('user is not typing');
         }
     });
     $('#nick-bar').submit(function(e){
