@@ -61,9 +61,9 @@ var chat = io
                 var matches = msg.match(pattern);
                 for (var i = 0; i < matches.length; i++){
                     if (matches[i].indexOf('www') == 0){ //if link starts with www it will search current domain
-                        msg = msg.replace(matches[i], '<a href="http://' + matches[i] + '">' + matches[i] + '</a>')
+                        msg = msg.replace(matches[i], '<a href="http://' + matches[i] + '" target="_blank">' + matches[i] + '</a>')
                     } else {
-                        msg = msg.replace(matches[i], '<a href="' + matches[i] + '">' + matches[i] + '</a>')
+                        msg = msg.replace(matches[i], '<a href="' + matches[i] + '" target="_blank">' + matches[i] + '</a>')
                     }
                 }
                 //msg = msg.replace(pattern, '<a href="' +  + '"')
