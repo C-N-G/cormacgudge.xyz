@@ -70,6 +70,12 @@ var chat = io
 
             update_client_list();
         });
+        socket.on('user is typing', function(){
+            chat.emit('user is typing', JSON.stringify({nickname, nickname_id}));
+        });
+        socket.on('user is not typing', function(){
+            chat.emit('user is not typing', JSON.stringify({nickname, nickname_id}));
+        });
     });
 var joker = io
     .of('/joker')
