@@ -6,8 +6,9 @@ $( document ).ready(function() {
     var socket = io('/chatroom');
     $('#chat-bar').submit(function(e){
         e.preventDefault(); // prevents page reloading
-        if ($('#m').val()) {
-            socket.emit('chat message', $('#m').val());
+        var message = $('#m').val();
+        if (message) {
+            socket.emit('chat message', message);
             socket.emit('user is not typing');
         }
         $('#m').val('');
@@ -33,7 +34,7 @@ $( document ).ready(function() {
         return false;
     });
     socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
+        $('#messages').append('<li>' + msg + '</li>');
         scroll_top();
     });
     socket.on('user connect', function(msg){

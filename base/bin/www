@@ -56,6 +56,18 @@ var chat = io
             }
         });
         socket.on('chat message', function(msg){
+            var pattern = /((https?:\/\/|www)[^\s]+)/ig;
+            if (pattern.test(msg)) { //adding anchors to links
+                var matches = msg.match(pattern);
+                for (var i = 0; i < matches.length; i++){
+                    if (matches[i].indexOf('www') == 0){ //if link starts with www it will search current domain
+                        msg = msg.replace(matches[i], '<a href="http://' + matches[i] + '">' + matches[i] + '</a>')
+                    } else {
+                        msg = msg.replace(matches[i], '<a href="' + matches[i] + '">' + matches[i] + '</a>')
+                    }
+                }
+                //msg = msg.replace(pattern, '<a href="' +  + '"')
+            }
             chat.emit('chat message', nickname + ': ' + msg);
             console.log('message from ' + nickname);
         });
