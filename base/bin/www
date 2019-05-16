@@ -136,6 +136,9 @@ var chat = io
         // SERVER RECEIVES NICKNAME CHANGE MESSAGE FROM CLIENT
         socket.on('nickname', function(nick){
 
+            if (nick.length > 60){
+                nick = nick.slice(0,60);
+            }
             nickname = admin_check(nick);
             clients.push(nickname);
             nickname_id = clients.length - 1;
