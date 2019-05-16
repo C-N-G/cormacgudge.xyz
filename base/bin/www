@@ -114,6 +114,8 @@ var chat = io
                     if (target_index != null){
                         list.forEach(function(id){
                             if (target_index == chat.connected[id].custom_nickname_id){
+                                chat.emit('chat message', nickname + ': ' + msg);
+                                msg = false;
                                 chat.to(id).emit('chat message', 'SERVER: you have been kicked');
                                 setTimeout(force_disconnect_client, 1000, id);
                             }
@@ -125,7 +127,9 @@ var chat = io
             }
 
             // SERVER SENDS CHAT MESSAGE TO ALL CLIENTS
-            chat.emit('chat message', nickname + ': ' + msg);
+            if (msg){
+                chat.emit('chat message', nickname + ': ' + msg);
+            }
             console.log('message from ' + nickname);
         });
 
