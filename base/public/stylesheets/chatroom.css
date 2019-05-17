@@ -1,0 +1,75 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font: 13px Helvetica, Arial;
+}
+form {
+    background: #000;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+form input {
+    min-height: 50px;
+    border: 5px solid black;
+    border-right: 0;
+    width: 90%;
+
+}
+form button {
+    min-height: 50px;
+    width: 10%;
+    border: 5px solid black;
+    background: rgb(130, 224, 255);
+}
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    max-height: calc(100vh - 75px);
+    max-width: 90vw;
+    overflow-y: auto;
+    overflow-wrap: break-word;
+}
+@media screen and (max-width: 1126px) {
+    #messages {
+        max-width: calc(100vw - 112px);
+    }
+}
+#messages li {
+    padding: 5px 10px;
+}
+#messages li:nth-child(odd) {
+    background: #eee;
+}
+#clients {
+    border: 5px solid black;
+    border-bottom: 0;
+    height: calc(100% - 50px);
+    width: 10vw;
+    min-width: 112px;
+    list-style-type: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    text-align: center;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+}
+#clients li {
+    border-bottom: 1px solid black;
+}
+#typing {
+    position: fixed;
+    list-style-type: none;
+    overflow: hidden;
+    bottom: 50px;
+    padding: 5px;
+}
+#typing li {
+    float: left;
+    margin-right: 10px;
+}

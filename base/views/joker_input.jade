@@ -1,0 +1,27 @@
+extends main_layout
+
+block content
+  .content
+    h1.title
+      | Game Chooser
+      span(style={'font-size': '0.25em', color: 'black'}) v1
+    .input-section
+      .input-box
+        input(class='input-text border-style' type='text' maxlength='60' placeholder='Enter Game Name')
+        br
+        input(class='input-button btn-enter-text border-style' type='button' value='LOCK IT IN!')
+      .game-list
+        h1 Epic Gamer Time
+        ul
+        h1 Epic Gamer Time
+      .input-box
+        input(class='input-button btn-result border-style' type='button' value='LOCK IT IN!')
+    .result-section
+      div(class='result-box border-style')
+        p.result-winner
+      .input-box
+        input(class='input-button btn-again border-style' type='button' value='ONE MORE TIME!')
+        input(class='input-button btn-back border-style' type='button' value='NEED MORE GAMES!')
+        br
+        a(href='/joker_result_type1')
+          input(class='input-button btn-back border-style' type='button' value='GAME 1')

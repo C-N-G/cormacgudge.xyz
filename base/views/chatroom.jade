@@ -1,0 +1,12 @@
+extends main_layout
+
+block content
+  ul#messages
+  ul#clients
+  ul#typing 
+  form#nick-bar(action='')
+    input(id='nick' autocomplete='off' placeholder='Enter Nickname' maxlength='60')
+    button Enter
+  form#chat-bar(action='')
+    input(id='m' autocomplete='off' maxlength='2000')
+    button Send
