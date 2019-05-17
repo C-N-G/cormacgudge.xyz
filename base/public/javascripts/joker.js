@@ -1,4 +1,5 @@
 $( document ).ready(function(){
+    var socket = io('/joker');
     $('.result-section').hide();
     function add_game_to_list(){
         var input_game = $('.input-text').val();

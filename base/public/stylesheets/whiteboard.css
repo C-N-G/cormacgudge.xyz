@@ -1,0 +1,13 @@
+.content {
+    width: 100%;
+    max-width: 1080px;
+    margin: auto;
+    word-wrap: break-word;
+}
+#drawing_area {
+}
+.canvas_container {
+    border: 5px solid black;
+    width: 1000px;
+    height: 1000px;
+}
