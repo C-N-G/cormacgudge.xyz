@@ -13,6 +13,13 @@ $( document ).ready(function(){
     draw.lineWidth = draw_size;
     draw.lineCap = 'round';
     draw.lineJoin = "round";
+    var draw_1 = $('#drawing_area')[0].getContext('2d');
+    draw_1.strokeStyle = '#000000';
+    draw_1.lineWidth = draw_size;
+    draw_1.lineCap = 'round';
+    draw_1.lineJoin = "round";
+
+    
 
     function mouse_draw() {
         if (mouse_click && !mouse_drawing) {
@@ -40,21 +47,27 @@ $( document ).ready(function(){
     function net_mouse_draw(net_mouse_x, net_mouse_y, net_click, net_draw) {
         if (net_click && !net_draw) {
 
-            draw.beginPath();
-            draw.arc(net_mouse_x, net_mouse_y, (draw_size / 2), 0, 2 * Math.PI);
-            draw.fill();
+            draw_1.beginPath();
+            draw_1.arc(net_mouse_x, net_mouse_y, (draw_size / 2), 0, 2 * Math.PI);
+            draw_1.fill();
 
-            draw.beginPath();
-            draw.lineTo(net_mouse_x, net_mouse_y);
+            draw_1.beginPath();
+            draw_1.lineTo(net_mouse_x, net_mouse_y);
         } else if (net_click && net_draw) {
-            draw.lineTo(net_mouse_x, net_mouse_y);
-            draw.stroke();
+            draw_1.lineTo(net_mouse_x, net_mouse_y);
+            draw_1.stroke();
         } else if (!net_click) {
 
         }
     }
+    /*
+        TODO:
+        add heart beat so that every 20ms it switches between
+        rendering from client and server
 
-
+        or add a new draw.getcontext('2d') object for each net
+        user drawing on my machine
+    */
     $('#drawing_area').on('mousedown', function(){
         mouse_click = true;
         mouse_draw();
