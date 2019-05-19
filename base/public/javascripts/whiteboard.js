@@ -18,26 +18,43 @@ $( document ).ready(function(){
 
     var last_pos = {};
 
-    var inputs = [];
-    inputs[0] = [];
-    inputs[1] = [];
+    var net_clients = {};
+    var inputs = {};
+    //inputs[0] = [];
+    //inputs[1] = [];
 
+    function update_net_clients(obj) {
+        for (var variable in obj) {
+            if (object.hasOwnProperty(variable)) {
 
-    function store_inputs(x, y, size, color, is_drawing) {
-        inputs[0].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+            }
+        }
     }
 
-    function net_store_inputs(x, y, size, color, is_drawing) {
-        inputs[1].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+    function store_inputs(x, y, size, color, is_drawing) {
+        if (inputs['local'] == undefined) {
+            inputs['local'] = []
+            inputs['local'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+        } else {
+            inputs['local'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+        }
+    }
+
+    function net_store_inputs(x, y, size, color, is_drawing, id) {
+        if (inputs[id] == undefined) {
+            inputs[id] = []
+            inputs[id].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+        } else {
+            inputs[id].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+        }
     }
 
     setInterval(draw_event, 20);
 
     // IF LAST DRAW HAD IS DRAWING == TRUE THEN GO FROM LAST POSITION
     function draw_event() {
-        for (var user = 0; user < inputs.length; user++) {
+        for (var user in inputs) {
             if (inputs[user].length > 0) {
-
                 if (inputs[user].length > 1) {
                     for (var i = 0; i < (inputs[user].length - 1); i++) {
                         if (inputs[user][i].is_drawing == true) {
@@ -58,7 +75,7 @@ $( document ).ready(function(){
                     } else if (inputs[user][inputs[user].length - 1].is_drawing == false) {
                         inputs[user] = [];
                     }
-                }  else if (inputs[user].length == 1 && inputs[user][0].is_drawing == true) {
+                } else if (inputs[user].length == 1 && inputs[user][0].is_drawing == true) {
                     dot_draw(inputs[user][0].x, inputs[user][0].y, inputs[user][0].size, inputs[user][0].color);
                     inputs[user] = [];
                 }
@@ -71,8 +88,8 @@ $( document ).ready(function(){
         draw.lineWidth = size;
 
         draw.beginPath();
-        draw.moveTo(x, y);
-        draw.lineTo(x1, y1);
+        draw.moveTo(x+0.5, y+0.5);
+        draw.lineTo(x1+0.5, y1+0.5);
         draw.stroke();
     }
 
@@ -81,13 +98,13 @@ $( document ).ready(function(){
         draw.lineWidth = size;
 
         draw.beginPath();
-        draw.arc(x, y, (size / 2), 0, 2 * Math.PI);
+        draw.arc(x+0.5, y+0.5, (size / 2), 0, 2 * Math.PI);
         draw.fill();
     }
 
     function mouse_draw() {
         store_inputs(mouse_x, mouse_y, draw_size, draw_color, mouse_drawing)
-        socket.emit('draw', {'cord_x': mouse_x, 'cord_y': mouse_y, 'size': 4, 'color': '#FF0000', 'is_drawing': mouse_drawing});
+        socket.emit('draw', {'cord_x': mouse_x, 'cord_y': mouse_y, 'size': 4, 'color': '#FF0000', 'is_drawing': mouse_drawing, 'id': socket.id});
     }
 
     $('#drawing_area').on('mousemove', function(event){
@@ -116,6 +133,10 @@ $( document ).ready(function(){
     });
 
     socket.on('draw', function(data){
-        net_store_inputs(data.cord_x, data.cord_y, data.size, data.color, data.is_drawing);
-    })
+        update_net_clients(data.clients);
+        net_store_inputs(data.cord_x, data.cord_y, data.size, data.color, data.is_drawing, data.id);
+    });
+    socket.on('remove user', function(msg){
+        delete inputs[msg];
+    });
 });
