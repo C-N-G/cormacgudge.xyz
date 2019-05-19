@@ -8,44 +8,61 @@ $( document ).ready(function(){
     var mouse_drawing = false;
     var draw_size = 4;
     var draw_color = '#000000';
+    var local_name = 'local';
 
     var draw = $('#drawing_area')[0].getContext('2d');
-    draw.strokeStyle = draw_color;
-    draw.fillStyle = draw_color;
-    draw.lineWidth = draw_size;
     draw.lineCap = 'round';
     draw.lineJoin = "round";
 
     var last_pos = {};
+    var dot_was_last = false;
+    var dot_last_pos = {};
 
-    var net_clients = {};
     var inputs = {};
-    //inputs[0] = [];
-    //inputs[1] = [];
+    inputs['local'] = {};
+    inputs['local']['events'] = [];
+    inputs['local']['client_name'] = local_name;
+    inputs['local']['client_color'] = draw_color;
 
-    function update_net_clients(obj) {
-        for (var variable in obj) {
-            if (object.hasOwnProperty(variable)) {
+    var nicknames = {};
+    var nickname_colors = {};
 
+    function store_inputs(x, y, size, color, is_drawing, id, client_name) {
+        if (inputs[id] == undefined) {
+            inputs[id] = {};
+            inputs[id]['events'] = [];
+            inputs[id]['client_name'] = client_name;
+            nicknames[id] = client_name;
+            inputs[id]['client_color'] = color;
+            nickname_colors[id] = color;
+            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing, 'client_name': client_name});
+            update_users();
+        } else {
+            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing, 'client_name': client_name});
+            inputs[id]['client_name'] = client_name;
+            inputs[id]['client_color'] = color;
+            if (inputs[id].client_name != nicknames[id]) {
+                nicknames[id] = client_name;
+                update_users();
+            }
+            if (inputs[id].client_color != nickname_colors[id]) {
+                nickname_colors[id] = color;
+                update_users();
             }
         }
     }
 
-    function store_inputs(x, y, size, color, is_drawing) {
-        if (inputs['local'] == undefined) {
-            inputs['local'] = []
-            inputs['local'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
-        } else {
-            inputs['local'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
-        }
-    }
-
-    function net_store_inputs(x, y, size, color, is_drawing, id) {
-        if (inputs[id] == undefined) {
-            inputs[id] = []
-            inputs[id].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
-        } else {
-            inputs[id].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
+    function update_users() {
+        console.log('user update');
+        $('#users').empty();
+        var keys = Object.keys(inputs);
+        console.log(keys);
+        // for (var i = 0; i < keys.length; i++) {
+        //     $('#users').append('<li>' + keys[i] + '</li>');
+        //     console.log(keys[i]);
+        // }
+        for (var user in inputs) {
+            $('#users').append('<li style="color: ' + inputs[user].client_color + '">' + inputs[user].client_name + '</li>');
         }
     }
 
@@ -54,30 +71,45 @@ $( document ).ready(function(){
     // IF LAST DRAW HAD IS DRAWING == TRUE THEN GO FROM LAST POSITION
     function draw_event() {
         for (var user in inputs) {
-            if (inputs[user].length > 0) {
-                if (inputs[user].length > 1) {
-                    for (var i = 0; i < (inputs[user].length - 1); i++) {
-                        if (inputs[user][i].is_drawing == true) {
-                            line_draw(
-                                inputs[user][i].x,
-                                inputs[user][i].y,
-                                inputs[user][i+1].x,
-                                inputs[user][i+1].y,
-                                inputs[user][i].size,
-                                inputs[user][i].color
-                            );
-                        }
+            if (inputs[user]['events'].length > 0) {
+                for (var i = 0; i < inputs[user]['events'].length; i++) {
+                    if (inputs[user]['events'][i].is_drawing == true && inputs[user]['events'][i+1] != undefined) {
+                        line_draw(
+                            inputs[user]['events'][i].x,
+                            inputs[user]['events'][i].y,
+                            inputs[user]['events'][i+1].x,
+                            inputs[user]['events'][i+1].y,
+                            inputs[user]['events'][i].size,
+                            inputs[user]['events'][i].color
+                        );
+                    } else if (dot_was_last == true && inputs[user]['events'][i].is_drawing == true) {
+                        dot_was_last = false;
+                        line_draw(
+                            dot_last_pos.x,
+                            dot_last_pos.y,
+                            inputs[user]['events'][i].x,
+                            inputs[user]['events'][i].y,
+                            inputs[user]['events'][i].size,
+                            inputs[user]['events'][i].color
+                        );
+                    } else if (inputs[user]['events'][i].is_drawing == false) {
+                        dot_draw(
+                            inputs[user]['events'][i].x,
+                            inputs[user]['events'][i].y,
+                            inputs[user]['events'][i].size,
+                            inputs[user]['events'][i].color
+                        );
+                        dot_was_last = true;
+                        dot_last_pos = inputs[user]['events'][i];
                     }
-                    if (inputs[user][inputs[user].length - 1].is_drawing == true) {
-                        last_pos = inputs[user][inputs[user].length - 1];
-                        inputs[user] = [];
-                        inputs[user].push(last_pos);
-                    } else if (inputs[user][inputs[user].length - 1].is_drawing == false) {
-                        inputs[user] = [];
-                    }
-                } else if (inputs[user].length == 1 && inputs[user][0].is_drawing == true) {
-                    dot_draw(inputs[user][0].x, inputs[user][0].y, inputs[user][0].size, inputs[user][0].color);
-                    inputs[user] = [];
+                }
+                var last_event = inputs[user]['events'].length - 1;
+                if (inputs[user]['events'][last_event].is_drawing == true) {
+                    last_pos = inputs[user]['events'][last_event];
+                    inputs[user]['events'] = [];
+                    inputs[user]['events'].push(last_pos);
+                } else if (inputs[user]['events'][last_event].is_drawing == false) {
+                    inputs[user]['events'] = [];
                 }
             }
         }
@@ -103,9 +135,49 @@ $( document ).ready(function(){
     }
 
     function mouse_draw() {
-        store_inputs(mouse_x, mouse_y, draw_size, draw_color, mouse_drawing)
-        socket.emit('draw', {'cord_x': mouse_x, 'cord_y': mouse_y, 'size': 4, 'color': '#FF0000', 'is_drawing': mouse_drawing, 'id': socket.id});
+        store_inputs(
+            mouse_x,
+            mouse_y,
+            draw_size,
+            draw_color,
+            mouse_drawing,
+            'local',
+            local_name
+        )
+        socket.emit('draw', {
+            'cord_x': mouse_x,
+            'cord_y': mouse_y,
+            'size': draw_size,
+            'color': draw_color,
+            'is_drawing': mouse_drawing,
+            'id': socket.id,
+            'client_name': local_name
+        });
     }
+
+    socket.on('draw', function(data){
+        store_inputs(
+            data.cord_x,
+            data.cord_y,
+            data.size,
+            data.color,
+            data.is_drawing,
+            data.id,
+            data.client_name
+        );
+    });
+
+    socket.on('remove user', function(msg){
+        delete inputs[msg];
+        update_users();
+    });
+
+    /*
+    TODO bug - if mouse button is held down, and mouse leaves drawing
+    area, and mouse is brought back into drawing area with mouse button still
+    held down, then upon releasong the mouse button, a dot is drawn.
+    No dot should be drawn there.
+    */
 
     $('#drawing_area').on('mousemove', function(event){
         offset = $('#drawing_area').offset();
@@ -117,8 +189,8 @@ $( document ).ready(function(){
         }
     }).on('mousedown', function(){
         mouse_click = true;
-        mouse_drawing = true;
         mouse_draw();
+        mouse_drawing = true;
     }).on('mouseup', function(){
         mouse_click = false;
         mouse_drawing = false;
@@ -132,11 +204,30 @@ $( document ).ready(function(){
         mouse_drawing = false;
     });
 
-    socket.on('draw', function(data){
-        update_net_clients(data.clients);
-        net_store_inputs(data.cord_x, data.cord_y, data.size, data.color, data.is_drawing, data.id);
+    $('#color_picker').on('change', function(){
+        draw_color = $(this).val();
+        inputs['local'].client_color = draw_color;
+        nickname_colors['local'] = draw_color;
+        update_users();
     });
-    socket.on('remove user', function(msg){
-        delete inputs[msg];
+
+    $('#size_picker').on('change', function(){
+        draw_size = $(this).val();
+    });
+
+    $('#clear_screen').on('click', function(){
+        draw.clearRect(0, 0, $('#drawing_area').width(), $('#drawing_area').height());
+    });
+
+    $('#nickname').submit(function(e){
+        e.preventDefault(); // prevents page reloading
+        if ($('#nickname_entry').val()) {
+            local_name = $('#nickname_entry').val();
+            inputs['local'].client_name = local_name;
+            nicknames['local'] = local_name;
+            update_users();
+        }
+        $('#nickname_entry').val('');
+        return false;
     });
 });

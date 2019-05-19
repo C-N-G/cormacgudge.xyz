@@ -2,6 +2,25 @@ extends main_layout
 
 block content
   .content
+    ul#menu
+      li
+        span Colour>
+        input(type='color', id='color_picker', value='#000000')
+      li
+        span Size>
+        input(type='number', id='size_picker', value='4', min='1', max='10')
+        span  Max=10 Min=1 
+      li
+        button#clear_screen Clear Screen
+      li
+        form#nickname(action='')
+          input(id='nickname_entry' autocomplete='off' placeholder='Enter Nickname' maxlength='40')
+          button Enter
+      li
+        span.testing X = 0, Y = 0
     .canvas_container
-      canvas#drawing_area(width='1000' height='1000')
-    p.testing test
+      canvas#drawing_area(width='1500' height='1500')
+    #user_wrapper
+      p#user_header USERS
+      ul#users
+    

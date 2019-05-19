@@ -1,13 +1,48 @@
 .content {
-    width: 100%;
-    max-width: 1080px;
-    margin: auto;
-    word-wrap: break-word;
+
 }
 #drawing_area {
 }
 .canvas_container {
     border: 5px solid black;
-    width: 1000px;
-    height: 1000px;
+    width: 1500px;
+    height: 1500px;
+}
+#menu {
+    margin: 0;
+    padding: 0;
+}
+#menu li {
+    display: inline-block;
+    border-width: 5px 5px 0 0;
+    border-style: solid;
+    border-color: black;
+    padding: 3px;
+    min-height: 30px;
+}
+#menu li:first-child {
+    border-left: 5px solid black;
+}
+#menu li span,
+#menu li input,
+#menu li button{
+    vertical-align: top;
+}
+span,
+#user_wrapper {
+    user-select: none;
+}
+#user_wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    word-wrap: break-word;
+    max-width: 100px;
+}
+#users {
+    padding: 0;
+}
+#user_header {
+    font-size: 2em;
+    margin: 0;
 }
