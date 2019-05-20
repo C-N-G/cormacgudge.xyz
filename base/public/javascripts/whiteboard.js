@@ -52,18 +52,52 @@ $( document ).ready(function(){
         }
     }
 
+    function sanitise_text(text) {
+        text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return text;
+    }
+
     function update_users() {
-        console.log('user update');
         $('#users').empty();
         var keys = Object.keys(inputs);
-        console.log(keys);
-        // for (var i = 0; i < keys.length; i++) {
-        //     $('#users').append('<li>' + keys[i] + '</li>');
-        //     console.log(keys[i]);
-        // }
         for (var user in inputs) {
-            $('#users').append('<li style="color: ' + inputs[user].client_color + '">' + inputs[user].client_name + '</li>');
+            $('#users').append('<li style="background-color: '
+            + inputs[user].client_color
+            + '; color: '
+            + invertColor(inputs[user].client_color , true)
+            + '">'
+            + sanitise_text(inputs[user].client_name)
+            + '</li>'
+        );
         }
+    }
+
+    function invertColor(hex, bw) { // https://stackoverflow.com/questions/35969656/how-can-i-generate-the-opposite-color-according-to-current-color
+        if (hex.indexOf('#') === 0) {
+            hex = hex.slice(1);
+        }
+        // convert 3-digit hex to 6-digits.
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        if (hex.length !== 6) {
+            throw new Error('Invalid HEX color.');
+        }
+        var r = parseInt(hex.slice(0, 2), 16),
+            g = parseInt(hex.slice(2, 4), 16),
+            b = parseInt(hex.slice(4, 6), 16);
+        if (bw) {
+            // http://stackoverflow.com/a/3943023/112731
+            return (r * 0.299 + g * 0.587 + b * 0.114) > 186
+                ? '#000000'
+                : '#FFFFFF';
+        }
+        // invert color components
+        r = (255 - r).toString(16);
+        g = (255 - g).toString(16);
+        b = (255 - b).toString(16);
+        // pad each with zeros and return
+        return "#" + padZero(r) + padZero(g) + padZero(b);
     }
 
     setInterval(draw_event, 20);
@@ -177,6 +211,23 @@ $( document ).ready(function(){
     area, and mouse is brought back into drawing area with mouse button still
     held down, then upon releasong the mouse button, a dot is drawn.
     No dot should be drawn there.
+    */
+
+    /*
+    TODO feature - Add support for rectangle dragging
+    */
+
+    /*
+    TODO feature - Add canvas sync on connect
+    */
+
+    /*
+    TODO feature - Make clear screen affect the whole server, and
+    add a system for restricting it
+    */
+
+    /*
+    TODO feature - Add admin tools for erasing
     */
 
     $('#drawing_area').on('mousemove', function(event){

@@ -7,15 +7,14 @@ exports.render = function(req, res) {
     });
 };
 exports.index = function(io) {
-    //var whiteboard_clients = {};
     var whiteboard = io
         .of('/whiteboard')
         .on('connection', function(socket){
-
+            var admin = false;
             console.log('CONNECTED TO WHITEBOARD');
             socket.on('draw', function(data){
 
-                if (data.size > 10) {
+                if (data.size > 10 && admin == false) {
                     data.size = 10
                 } else if (data.size < 1) {
                     data.size = 1
@@ -23,6 +22,11 @@ exports.index = function(io) {
 
                 if (data.client_name.length > 40) {
                     data.client_name = data.client_name.slice(0,40);
+                }
+
+                if (data.client_name == 'Cormac password') {
+                    admin = true;
+                    data.client_name = 'Cormac';
                 }
 
                 socket.broadcast.emit('draw', data);

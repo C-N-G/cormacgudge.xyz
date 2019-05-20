@@ -1,7 +1,14 @@
 $( document ).ready(function() {
+
     function scroll_top() {
         $('#messages').scrollTop(999*999);
     }
+
+    function sanitise_text(text) {
+        text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return text;
+    }
+
     $('#chat-bar').hide();
     var socket = io('/chatroom');
     $('#chat-bar').submit(function(e){
@@ -34,7 +41,7 @@ $( document ).ready(function() {
         return false;
     });
     socket.on('chat message', function(msg){
-        $('#messages').append('<li>' + msg + '</li>');
+        $('#messages').append('<li>' + sanitise_text(msg) + '</li>');
         scroll_top();
     });
     socket.on('user connect', function(msg){
