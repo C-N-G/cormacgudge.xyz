@@ -15,7 +15,7 @@ $( document ).ready(function(){
     draw.lineJoin = "round";
 
     var last_pos = {};
-    var dot_was_last = false;
+    var dot_was_last = {};
     var dot_last_pos = {};
 
     var inputs = {};
@@ -82,11 +82,11 @@ $( document ).ready(function(){
                             inputs[user]['events'][i].size,
                             inputs[user]['events'][i].color
                         );
-                    } else if (dot_was_last == true && inputs[user]['events'][i].is_drawing == true) {
-                        dot_was_last = false;
+                    } else if (dot_was_last[user] == true && inputs[user]['events'][i].is_drawing == true) {
+                        dot_was_last[user] = false;
                         line_draw(
-                            dot_last_pos.x,
-                            dot_last_pos.y,
+                            dot_last_pos[user].x,
+                            dot_last_pos[user].y,
                             inputs[user]['events'][i].x,
                             inputs[user]['events'][i].y,
                             inputs[user]['events'][i].size,
@@ -99,15 +99,15 @@ $( document ).ready(function(){
                             inputs[user]['events'][i].size,
                             inputs[user]['events'][i].color
                         );
-                        dot_was_last = true;
-                        dot_last_pos = inputs[user]['events'][i];
+                        dot_was_last[user] = true;
+                        dot_last_pos[user] = inputs[user]['events'][i];
                     }
                 }
                 var last_event = inputs[user]['events'].length - 1;
                 if (inputs[user]['events'][last_event].is_drawing == true) {
-                    last_pos = inputs[user]['events'][last_event];
+                    last_pos[user] = inputs[user]['events'][last_event];
                     inputs[user]['events'] = [];
-                    inputs[user]['events'].push(last_pos);
+                    inputs[user]['events'].push(last_pos[user]);
                 } else if (inputs[user]['events'][last_event].is_drawing == false) {
                     inputs[user]['events'] = [];
                 }
