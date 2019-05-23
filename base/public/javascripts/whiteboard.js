@@ -11,10 +11,12 @@ $( document ).ready(function(){
     var local_name = 'local';
 
     var draw = $('#drawing_area')[0].getContext('2d');
+    $('#drawing_area').hide();
     draw.lineCap = 'round';
     draw.lineJoin = "round";
 
-    var last_pos = {};
+    var line_last_pos = {};
+    var line_was_last = {};
     var dot_was_last = {};
     var dot_last_pos = {};
 
@@ -52,11 +54,13 @@ $( document ).ready(function(){
         }
     }
 
+    // TODO: Move text sanitiation to server
     function sanitise_text(text) {
         text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return text;
     }
 
+    // TODO: Move user updating to server, and making it centralised to load on new connection
     function update_users() {
         $('#users').empty();
         var keys = Object.keys(inputs);
@@ -72,6 +76,7 @@ $( document ).ready(function(){
         }
     }
 
+    // TODO: Write my own flavour of this function
     function invertColor(hex, bw) { // https://stackoverflow.com/questions/35969656/how-can-i-generate-the-opposite-color-according-to-current-color
         if (hex.indexOf('#') === 0) {
             hex = hex.slice(1);
@@ -107,26 +112,7 @@ $( document ).ready(function(){
         for (var user in inputs) {
             if (inputs[user]['events'].length > 0) {
                 for (var i = 0; i < inputs[user]['events'].length; i++) {
-                    if (inputs[user]['events'][i].is_drawing == true && inputs[user]['events'][i+1] != undefined) {
-                        line_draw(
-                            inputs[user]['events'][i].x,
-                            inputs[user]['events'][i].y,
-                            inputs[user]['events'][i+1].x,
-                            inputs[user]['events'][i+1].y,
-                            inputs[user]['events'][i].size,
-                            inputs[user]['events'][i].color
-                        );
-                    } else if (dot_was_last[user] == true && inputs[user]['events'][i].is_drawing == true) {
-                        dot_was_last[user] = false;
-                        line_draw(
-                            dot_last_pos[user].x,
-                            dot_last_pos[user].y,
-                            inputs[user]['events'][i].x,
-                            inputs[user]['events'][i].y,
-                            inputs[user]['events'][i].size,
-                            inputs[user]['events'][i].color
-                        );
-                    } else if (inputs[user]['events'][i].is_drawing == false) {
+                    if (inputs[user]['events'][i].is_drawing == false && (line_was_last[user] == false || line_was_last[user] == undefined)) {
                         dot_draw(
                             inputs[user]['events'][i].x,
                             inputs[user]['events'][i].y,
@@ -135,16 +121,38 @@ $( document ).ready(function(){
                         );
                         dot_was_last[user] = true;
                         dot_last_pos[user] = inputs[user]['events'][i];
+
+                    } else if (inputs[user]['events'][i].is_drawing == true || inputs[user]['events'][i].is_drawing == false && line_was_last[user] == true) {
+                        var pos_x = 0;
+                        var pos_y = 0;
+                        if (dot_was_last[user] == true) {
+                            pos_x = dot_last_pos[user].x;
+                            pos_y = dot_last_pos[user].y;
+                            dot_was_last[user] = false;
+                        } else if (dot_was_last[user] == false && inputs[user]['events'][i-1] != undefined) {
+                            pos_x = inputs[user]['events'][i-1].x;
+                            pos_y = inputs[user]['events'][i-1].y;
+                        } else if (dot_was_last[user] == false && inputs[user]['events'][i-1] == undefined) {
+                            pos_x = line_last_pos[user].x;
+                            pos_y = line_last_pos[user].y;
+                        }
+                        line_draw(
+                            pos_x,
+                            pos_y,
+                            inputs[user]['events'][i].x,
+                            inputs[user]['events'][i].y,
+                            inputs[user]['events'][i].size,
+                            inputs[user]['events'][i].color
+                        );
+                        if (inputs[user]['events'][i].is_drawing == false) {
+                            line_was_last[user] = false;
+                        } else {
+                            line_was_last[user] = true;
+                            line_last_pos[user] = inputs[user]['events'][i];
+                        }
                     }
                 }
-                var last_event = inputs[user]['events'].length - 1;
-                if (inputs[user]['events'][last_event].is_drawing == true) {
-                    last_pos[user] = inputs[user]['events'][last_event];
-                    inputs[user]['events'] = [];
-                    inputs[user]['events'].push(last_pos[user]);
-                } else if (inputs[user]['events'][last_event].is_drawing == false) {
-                    inputs[user]['events'] = [];
-                }
+                inputs[user]['events'] = [];
             }
         }
     }
@@ -154,8 +162,8 @@ $( document ).ready(function(){
         draw.lineWidth = size;
 
         draw.beginPath();
-        draw.moveTo(x+0.5, y+0.5);
-        draw.lineTo(x1+0.5, y1+0.5);
+        draw.moveTo(x, y);
+        draw.lineTo(x1, y1);
         draw.stroke();
     }
 
@@ -164,7 +172,7 @@ $( document ).ready(function(){
         draw.lineWidth = size;
 
         draw.beginPath();
-        draw.arc(x+0.5, y+0.5, (size / 2), 0, 2 * Math.PI);
+        draw.arc(x, y, (size / 2), 0, 2 * Math.PI);
         draw.fill();
     }
 
@@ -206,28 +214,48 @@ $( document ).ready(function(){
         update_users();
     });
 
+    socket.on('setup', function(src){
+        var img_state = new Image();
+        img_state.onload = function() {
+            draw.drawImage(img_state,0,0)
+            $('#drawing_area').show()
+        }
+        img_state.src = src;
+    });
+
+    socket.on('clear', function(){
+        draw.clearRect(0, 0, $('#drawing_area').width(), $('#drawing_area').height());
+    });
+
+    socket.on('alert', function(msg){
+        alert(msg);
+    })
     /*
-    TODO bug - if mouse button is held down, and mouse leaves drawing
+    BUG: If mouse button is held down, and mouse leaves drawing
     area, and mouse is brought back into drawing area with mouse button still
     held down, then upon releasong the mouse button, a dot is drawn.
     No dot should be drawn there.
     */
 
     /*
-    TODO feature - Add support for rectangle dragging
+    IDEA: Add support for rectangle dragging
     */
 
     /*
-    TODO feature - Add canvas sync on connect
+    DONE
+    IDEA: Add canvas sync on connect
     */
 
     /*
-    TODO feature - Make clear screen affect the whole server, and
+    DONE
+    IDEA: Make clear screen affect the whole server, and
     add a system for restricting it
     */
 
     /*
-    TODO feature - Add admin tools for erasing
+    IDEA: Add admin tools for erasing
+    add energy bar that is used when using the eraser, so that
+    one person can't just replace everything by spamming
     */
 
     $('#drawing_area').on('mousemove', function(event){
@@ -267,7 +295,7 @@ $( document ).ready(function(){
     });
 
     $('#clear_screen').on('click', function(){
-        draw.clearRect(0, 0, $('#drawing_area').width(), $('#drawing_area').height());
+        socket.emit('clear');
     });
 
     $('#nickname').submit(function(e){
