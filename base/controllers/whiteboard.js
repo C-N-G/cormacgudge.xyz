@@ -108,7 +108,7 @@ exports.index = function(io) {
             console.log('CONNECTED TO WHITEBOARD');
 
             const fs = require('fs');
-            const out = fs.createWriteStream('./public/images/state.png')
+            const out = fs.createWriteStream('../public/images/state.png')
             const stream = canvas.createPNGStream()
             stream.pipe(out)
             out.on('finish', function (){
