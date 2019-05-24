@@ -167,8 +167,8 @@ $( document ).ready(function(){
     socket.on('setup', function(src){
         var img_state = new Image();
         img_state.onload = function() {
-            draw.drawImage(img_state,0,0)
             $('#drawing_area').show()
+            draw.drawImage(img_state,0,0)
             setInterval(draw_event, 20);
         }
         img_state.src = src;
