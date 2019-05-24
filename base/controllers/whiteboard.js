@@ -150,7 +150,7 @@ exports.index = function(io) {
             });
 
             socket.on('size update', function(msg){
-                if (data.size > 20 && admin == false) {
+                if (msg > 20 && admin == false) {
                     socket.emit('alert', 'PLEASE ENTER A VALUE BETWEEN 1 AND 20')
                 } else {
                     clients[socket.id].size = msg;
