@@ -112,7 +112,8 @@ exports.index = function(io) {
             whiteboard.emit('client update', clients);
 
             const fs = require('fs');
-            const out = fs.createWriteStream(__dirname + './public/images/state.png')
+            console.log(__dirname);
+            const out = fs.createWriteStream('./public/images/state.png')
             const stream = canvas.createPNGStream()
             stream.pipe(out)
             out.on('finish', function (){
