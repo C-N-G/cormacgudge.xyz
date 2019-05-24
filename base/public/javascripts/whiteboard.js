@@ -63,8 +63,6 @@ $( document ).ready(function(){
         return "#" + padZero(r) + padZero(g) + padZero(b);
     }
 
-    setInterval(draw_event, 20);
-
     // Main draw function
     function draw_event() {
         for (var user in inputs) {
@@ -171,6 +169,7 @@ $( document ).ready(function(){
         img_state.onload = function() {
             draw.drawImage(img_state,0,0)
             $('#drawing_area').show()
+            setInterval(draw_event, 20);
         }
         img_state.src = src;
     });
@@ -185,6 +184,7 @@ $( document ).ready(function(){
 
     socket.on('client update', function(clients){
         draw_size = clients[socket.id].size;
+        draw_color = clients[socket.id].color;
         $('#users').empty();
         for (var client in clients) {
             $('#users').append('<li style="background-color: '
