@@ -68,6 +68,9 @@ $( document ).ready(function(){
         for (var user in inputs) {
             if (inputs[user]['events'].length > 0) {
                 for (var i = 0; i < inputs[user]['events'].length; i++) {
+                    if (dot_was_last[user] == undefined) {
+                        inputs[user]['events'][i].is_drawing = false;
+                    }
                     if (inputs[user]['events'][i].is_drawing == false && (line_was_last[user] == false || line_was_last[user] == undefined)) {
                         dot_draw(
                             inputs[user]['events'][i].x,
@@ -169,7 +172,7 @@ $( document ).ready(function(){
         img_state.onload = function() {
             $('#drawing_area').show()
             draw.drawImage(img_state,0,0)
-            setInterval(draw_event, 20);
+            setTimeout(function(){ setInterval(draw_event, 20); }, 500);
         }
         img_state.src = src;
     });
@@ -197,6 +200,8 @@ $( document ).ready(function(){
         );
         }
     })
+    // BUG: When loading the page, the first few draw messages seem to get dropped
+    
     /*
     BUG: If mouse button is held down, and mouse leaves drawing
     area, and mouse is brought back into drawing area with mouse button still

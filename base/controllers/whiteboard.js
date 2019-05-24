@@ -146,7 +146,6 @@ exports.index = function(io) {
                 } else {
                     socket.emit('alert', 'PERMISSION DENIED');
                 }
-
             });
 
             socket.on('size update', function(msg){
@@ -180,7 +179,6 @@ exports.index = function(io) {
             });
 
             socket.on('disconnect', function(){
-                socket.broadcast.emit('remove user', socket.id);
                 delete clients[socket.id];
                 whiteboard.emit('client update', clients);
                 console.log('remove user ' + socket.id);
