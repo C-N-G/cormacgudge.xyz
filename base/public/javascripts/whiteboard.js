@@ -6,9 +6,8 @@ $( document ).ready(function(){
     var mouse_y = 0;
     var mouse_click = false;
     var mouse_drawing = false;
-    var draw_size = 4;
+    var draw_size = 0;
     var draw_color = '#000000';
-    var local_name = 'local';
 
     var draw = $('#drawing_area')[0].getContext('2d');
     $('#drawing_area').hide();
@@ -23,56 +22,15 @@ $( document ).ready(function(){
     var inputs = {};
     inputs['local'] = {};
     inputs['local']['events'] = [];
-    inputs['local']['client_name'] = local_name;
     inputs['local']['client_color'] = draw_color;
 
-    var nicknames = {};
-    var nickname_colors = {};
-
-    function store_inputs(x, y, size, color, is_drawing, id, client_name) {
+    function store_inputs(x, y, size, color, is_drawing, id) {
         if (inputs[id] == undefined) {
             inputs[id] = {};
             inputs[id]['events'] = [];
-            inputs[id]['client_name'] = client_name;
-            nicknames[id] = client_name;
-            inputs[id]['client_color'] = color;
-            nickname_colors[id] = color;
-            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing, 'client_name': client_name});
-            update_users();
+            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
         } else {
-            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing, 'client_name': client_name});
-            inputs[id]['client_name'] = client_name;
-            inputs[id]['client_color'] = color;
-            if (inputs[id].client_name != nicknames[id]) {
-                nicknames[id] = client_name;
-                update_users();
-            }
-            if (inputs[id].client_color != nickname_colors[id]) {
-                nickname_colors[id] = color;
-                update_users();
-            }
-        }
-    }
-
-    // TODO: Move text sanitiation to server
-    function sanitise_text(text) {
-        text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        return text;
-    }
-
-    // TODO: Move user updating to server, and making it centralised to load on new connection
-    function update_users() {
-        $('#users').empty();
-        var keys = Object.keys(inputs);
-        for (var user in inputs) {
-            $('#users').append('<li style="background-color: '
-            + inputs[user].client_color
-            + '; color: '
-            + invertColor(inputs[user].client_color , true)
-            + '">'
-            + sanitise_text(inputs[user].client_name)
-            + '</li>'
-        );
+            inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
         }
     }
 
@@ -107,7 +65,7 @@ $( document ).ready(function(){
 
     setInterval(draw_event, 20);
 
-    // IF LAST DRAW HAD IS DRAWING == TRUE THEN GO FROM LAST POSITION
+    // Main draw function
     function draw_event() {
         for (var user in inputs) {
             if (inputs[user]['events'].length > 0) {
@@ -183,8 +141,7 @@ $( document ).ready(function(){
             draw_size,
             draw_color,
             mouse_drawing,
-            'local',
-            local_name
+            'local'
         )
         socket.emit('draw', {
             'cord_x': mouse_x,
@@ -192,10 +149,11 @@ $( document ).ready(function(){
             'size': draw_size,
             'color': draw_color,
             'is_drawing': mouse_drawing,
-            'id': socket.id,
-            'client_name': local_name
+            'id': socket.id
         });
     }
+
+    // Socket updates
 
     socket.on('draw', function(data){
         store_inputs(
@@ -204,14 +162,8 @@ $( document ).ready(function(){
             data.size,
             data.color,
             data.is_drawing,
-            data.id,
-            data.client_name
+            data.id
         );
-    });
-
-    socket.on('remove user', function(msg){
-        delete inputs[msg];
-        update_users();
     });
 
     socket.on('setup', function(src){
@@ -230,6 +182,21 @@ $( document ).ready(function(){
     socket.on('alert', function(msg){
         alert(msg);
     })
+
+    socket.on('client update', function(clients){
+        draw_size = clients[socket.id].size;
+        $('#users').empty();
+        for (var client in clients) {
+            $('#users').append('<li style="background-color: '
+            + clients[client].color
+            + '; color: '
+            + invertColor(clients[client].color , true)
+            + '">'
+            + clients[client].name
+            + '</li>'
+        );
+        }
+    })
     /*
     BUG: If mouse button is held down, and mouse leaves drawing
     area, and mouse is brought back into drawing area with mouse button still
@@ -242,22 +209,12 @@ $( document ).ready(function(){
     */
 
     /*
-    DONE
-    IDEA: Add canvas sync on connect
-    */
-
-    /*
-    DONE
-    IDEA: Make clear screen affect the whole server, and
-    add a system for restricting it
-    */
-
-    /*
     IDEA: Add admin tools for erasing
     add energy bar that is used when using the eraser, so that
     one person can't just replace everything by spamming
     */
 
+    // Event listeners
     $('#drawing_area').on('mousemove', function(event){
         offset = $('#drawing_area').offset();
         mouse_x = (event.pageX - offset.left);
@@ -284,14 +241,13 @@ $( document ).ready(function(){
     });
 
     $('#color_picker').on('change', function(){
-        draw_color = $(this).val();
-        inputs['local'].client_color = draw_color;
-        nickname_colors['local'] = draw_color;
-        update_users();
+        var color = $(this).val();
+        socket.emit('color update', color);
     });
 
     $('#size_picker').on('change', function(){
-        draw_size = $(this).val();
+        var size = $(this).val();
+        socket.emit('size update', size);
     });
 
     $('#clear_screen').on('click', function(){
@@ -300,13 +256,8 @@ $( document ).ready(function(){
 
     $('#nickname').submit(function(e){
         e.preventDefault(); // prevents page reloading
-        if ($('#nickname_entry').val()) {
-            local_name = $('#nickname_entry').val();
-            inputs['local'].client_name = local_name;
-            nicknames['local'] = local_name;
-            update_users();
-        }
-        $('#nickname_entry').val('');
+        var name = $('#nickname_entry').val();
+        socket.emit('name update', name)
         return false;
     });
 });

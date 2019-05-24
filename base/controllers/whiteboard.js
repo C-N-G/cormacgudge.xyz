@@ -13,6 +13,7 @@ exports.index = function(io) {
     draw.lineCap = 'round';
     draw.lineJoin = "round";
 
+    var clients = {};
 
     var line_last_pos = {};
     var line_was_last = {};
@@ -24,7 +25,6 @@ exports.index = function(io) {
         if (inputs[id] == undefined) {
             inputs[id] = {};
             inputs[id]['events'] = [];
-            inputs[id]['client_color'] = color;
             inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
         } else {
             inputs[id]['events'].push({'x': x, 'y': y, 'size': size, 'color': color, 'is_drawing': is_drawing});
@@ -81,7 +81,6 @@ exports.index = function(io) {
     }
 
     function line_draw(x ,y, x1, y1, size, color) {
-        //console.log('draw line');
         draw.strokeStyle = color;
         draw.lineWidth = size;
 
@@ -92,7 +91,6 @@ exports.index = function(io) {
     }
 
     function dot_draw(x ,y , size, color) {
-        console.log('draw dot ' + x + ' ' + y + ' ' + size + ' ' + color);
         draw.fillStyle = color;
         draw.lineWidth = size;
 
@@ -104,8 +102,14 @@ exports.index = function(io) {
     var whiteboard = io
         .of('/whiteboard')
         .on('connection', function(socket){
-            var admin = false;
             console.log('CONNECTED TO WHITEBOARD');
+
+            var admin = false;
+            clients[socket.id] = {};
+            clients[socket.id].name = 'User' + Math.floor((Math.random() * 99999999) + 1);
+            clients[socket.id].color = '#000000';
+            clients[socket.id].size = 4;
+            whiteboard.emit('client update', clients);
 
             const fs = require('fs');
             const out = fs.createWriteStream('./public/images/state.png')
@@ -114,23 +118,20 @@ exports.index = function(io) {
             out.on('finish', function (){
                 console.log('The PNG file was created.');
                 socket.emit('setup', '/images/state.png');
-            })
+            });
+
+            function sanitise_text(text) {
+                text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                return text;
+            }
 
             socket.on('draw', function(data){
 
-                if (data.size > 10 && admin == false) {
-                    data.size = 10
+                if (data.size > 20 && admin == false) {
+                    data.size = 20
+                    socket.emit
                 } else if (data.size < 1) {
                     data.size = 1
-                }
-
-                if (data.client_name.length > 40) {
-                    data.client_name = data.client_name.slice(0,40);
-                }
-
-                if (data.client_name == 'Cormac password') {
-                    admin = true;
-                    data.client_name = 'Cormac';
                 }
 
                 store_inputs(data.cord_x, data.cord_y, data.size, data.color, data.is_drawing, data.id);
@@ -148,8 +149,40 @@ exports.index = function(io) {
 
             });
 
+            socket.on('size update', function(msg){
+                if (msg > 20) {
+                    socket.emit('alert', 'PLEASE ENTER A VALUE BETWEEN 1 AND 20')
+                } else {
+                    clients[socket.id].size = msg;
+                    whiteboard.emit('client update', clients);
+                }
+                console.log('size update');
+            });
+
+            socket.on('name update', function(msg){
+                if (msg.length > 40){
+                    socket.emit('alert', 'NAMES MAY ONLY BE 40 CHARACTERS LONG');
+                } else if (msg == 'Cormac password') {
+                    admin = true;
+                    clients[socket.id].name = 'Cormac';
+                    whiteboard.emit('client update', clients);
+                } else {
+                    clients[socket.id].name = sanitise_text(msg);
+                    whiteboard.emit('client update', clients);
+                }
+                console.log('name update');
+            });
+
+            socket.on('color update', function(msg){
+                clients[socket.id].color = msg;
+                whiteboard.emit('client update', clients);
+                console.log('color update');
+            });
+
             socket.on('disconnect', function(){
                 socket.broadcast.emit('remove user', socket.id);
+                delete clients[socket.id];
+                whiteboard.emit('client update', clients);
                 console.log('remove user ' + socket.id);
             });
         });
