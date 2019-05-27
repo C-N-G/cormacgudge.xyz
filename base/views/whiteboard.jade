@@ -4,6 +4,11 @@ block content
   .content
     ul#menu
       li
+        select#tool_picker
+          option(value='draw') Draw
+          option(value='rectangle') Rectangle
+          option(value='eraser') Eraser
+      li
         span Colour>
         input(type='color', id='color_picker', value='#000000')
       li
@@ -20,6 +25,7 @@ block content
         span.testing X = 0, Y = 0
     .canvas_container
       canvas#drawing_area(width='1500' height='1500')
+      canvas#drawing_area_overlay(width='1500' height='1500')
     #user_wrapper
       p#user_header USERS
       ul#users

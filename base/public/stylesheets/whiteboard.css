@@ -1,7 +1,9 @@
 .content {
 
 }
-#drawing_area {
+#drawing_area_overlay {
+    position: absolute;
+    left: 13px;
 }
 .canvas_container {
     border: 5px solid black;
