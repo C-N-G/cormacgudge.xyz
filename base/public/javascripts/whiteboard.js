@@ -82,7 +82,7 @@ $( document ).ready(function(){
                 for (var i = 0; i < inputs[user]['events'].length; i++) {
                     switch (inputs[user]['events'][i].tool) {
                         case 'draw': // Draw tool
-                            if (dot_was_last[user] == undefined) {
+                            if (dot_last_pos[user] == undefined && line_last_pos[user] == undefined) {
                                 inputs[user]['events'][i].is_drawing = false;
                             }
                             if (inputs[user]['events'][i].is_drawing == false && (line_was_last[user] == false || line_was_last[user] == undefined)) {
