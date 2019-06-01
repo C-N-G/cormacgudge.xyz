@@ -3,6 +3,7 @@ var router = express.Router();
 var joker_controller = require('../controllers/joker');
 var chatroom_controller = require('../controllers/chatroom');
 var whiteboard_controller = require('../controllers/whiteboard');
+var reflex_controller = require('../controllers/reflex');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -14,5 +15,6 @@ router.get('/joker_result_type1', function(req, res, next) {
 });
 router.get('/chatroom', chatroom_controller.render);
 router.get('/whiteboard', whiteboard_controller.render);
+router.get('/reflex', reflex_controller.render);
 
 module.exports = router;

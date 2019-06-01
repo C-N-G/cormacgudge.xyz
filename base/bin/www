@@ -32,6 +32,8 @@ const joker_controller = require('../controllers/joker');
 joker_controller.index(io);
 const whiteboard_controller = require('../controllers/whiteboard');
 whiteboard_controller.index(io);
+const reflex_controller = require('../controllers/reflex');
+reflex_controller.index(io);
 
 
 /**

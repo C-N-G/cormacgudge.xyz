@@ -1,0 +1,1 @@
+GAME: RTS where all commands are issue with text input
