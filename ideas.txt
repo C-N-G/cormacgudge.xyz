@@ -1,1 +1,2 @@
 GAME: RTS where all commands are issue with text input
+TOOL: quick steam integrated paypal pooling tool for a group of people to buy a game for someone
