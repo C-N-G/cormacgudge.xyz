@@ -21,11 +21,13 @@ $( document ).ready(function(){
     app.renderer.autoDensity = true;
     app.renderer.resize(768,768);
 
-    // Resize stage to screen size
-    // app.renderer.view.style.position = "absolute";
-    // app.renderer.view.style.display = "block";
-    // app.renderer.autoDensity = true;
-    // app.renderer.resize(window.innerWidth, window.innerHeight);
+    /*
+    Resize stage to screen size
+    app.renderer.view.style.position = "absolute";
+    app.renderer.view.style.display = "block";
+    app.renderer.autoDensity = true;
+    app.renderer.resize(window.innerWidth, window.innerHeight);
+     */
 
     // Show browser webgl support
     let type = "WebGL"
@@ -39,7 +41,8 @@ $( document ).ready(function(){
         loader = PIXI.Loader.shared,
         sprite = PIXI.Sprite,
         rectangle = PIXI.Rectangle,
-        texture_cache = PIXI.utils.TextureCache;
+        texture_cache = PIXI.utils.TextureCache,
+        text = PIXI.Text;
 
     loader
         //.add('player', 'images/reflex.png')
@@ -50,29 +53,43 @@ $( document ).ready(function(){
         })
         .load(setup);
 
-    let state, player, foe, gravity, speed, cooldown_off;
-    var projectiles = [];
-    var foes = [];
-    //Capture the keyboard arrow keys
-    let left = keyboard("ArrowLeft"),
-        up = keyboard("ArrowUp"),
-        right = keyboard("ArrowRight"),
-        down = keyboard("ArrowDown");
+    let state, player, foe, wall, gravity, stop_point, next_state;
+    let projectiles = [];
+    let foes = [];
+    let map_data = [];
+    let map = [
+        [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2],
+        [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
+        [1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
+
+    let left = keyboard('ArrowLeft'),
+        up = keyboard('ArrowUp'),
+        right = keyboard('ArrowRight'),
+        down = keyboard('ArrowDown'),
+        esc = keyboard ('Escape');
 
     let mouse = {};
     mouse.x = 0;
     mouse.y = 0;
     mouse.pressed = false;
 
+    let settings = {};
+
+    let play_screen_made = false,
+        lose_screen_made = false;
+
     function setup() {
         console.log('setup')
-
-        create_player('player.png', 256, 256, 11, 0.5, 10, 30)
-
-        create_foe('foe.png', 100, 32, 6, 0.2, 4, 600)
-        create_foe('foe.png', 200, 32, 6, 0.2, 4, 600)
-        create_foe('foe.png', 300, 32, 6, 0.2, 4, 600)
-        create_foe('foe.png', 400, 32, 6, 0.2, 4, 600)
 
         $(window).on('mousemove', function(event){
             mouse.x = event.pageX;
@@ -85,23 +102,7 @@ $( document ).ready(function(){
             mouse.pressed = false;
         })
 
-        // Position the spirte
-        // player.anchor.x = 0.5;
-        // player.anchor.y = 0.5;
-        // player.position.set(256, 256);
-
-        // Scale the sprites
-        // player.scale.set(1, 1);
-
-
-        // Add sprite to stage
-        // app.stage.addChild(player);
-        // app.stage.addChild(foe);
-
-        // Removing Sprites
-        // app.stage.removeChild(anySprite)
-        // anySprite.visible = false;
-        state = play;
+        state = play_screen;
 
         app.ticker.add(delta => game_loop(delta));
 
@@ -111,18 +112,77 @@ $( document ).ready(function(){
         state(delta);
     }
 
-    function play(delta){
+    function play_screen(delta){
+
+        if (play_screen_made == false) {
+            create_text('Reflex', 450, 650, true);
+            create_text('Are you fast enough?', 450, 675, true);
+            create_text('Menu', 10, 720, false);
+            set_settings();
+            create_map();
+            play_screen_made = true;
+        }
 
         gravity = 0.95;
-        stop_point = 0.1
+        stop_point = 0.1;
+        next_state = 0;
 
         player_update();
         foe_update();
         projectile_update();
+        wall_update();
+
+        switch (next_state) {
+            case 1:
+                change_state(1);
+                break;
+            case 2:
+                change_state(2);
+                break;
+        }
 
     }
+
+    function lose_screen(delta) {
+        if (lose_screen_made == false) {
+            create_text('You Died', 384, 384, true);
+            create_text('Press Escape to retry', 384, 408, true);
+            lose_screen_made = true;
+        }
+
+        next_state = 0;
+
+        if (esc.isDown == true) {
+            next_state = 1;
+        }
+
+        switch (next_state) {
+            case 1:
+                change_state(1);
+                break;
+            case 2:
+                change_state(2);
+                break;
+        }
+
+    }
+
+    function wall_update() {
+        for (var m = 0; m < map_data.length; m++) {
+
+            for (var p = 0; p < projectiles.length; p++) {
+
+                if (collision_check(projectiles[p], map_data[m])) {
+                    projectiles[p].alive = false;
+                }
+
+            }
+
+        }
+    }
+
     function projectile_update() {
-        
+
         let projectiles_remove = [];
 
         for (var i = 0; i < projectiles.length; i++) {
@@ -131,12 +191,15 @@ $( document ).ready(function(){
 
             keep_in(projectiles[i], true);
 
-            for (var ii = 0; ii < projectiles.length; ii++) {
-                if (collision_check(projectiles[i], projectiles[ii]) && projectiles[i].team != projectiles[ii].team) {
-                    projectiles[i].alive = false;
-                    projectiles[ii].alive = false;
+            if (settings.projectile_collision) {
+                for (var ii = 0; ii < projectiles.length; ii++) {
+                    if (collision_check(projectiles[i], projectiles[ii]) && projectiles[i].team != projectiles[ii].team) {
+                        projectiles[i].alive = false;
+                        projectiles[ii].alive = false;
+                    }
                 }
             }
+
 
             if (projectiles[i].alive == false) {
                 projectiles[i].visible = false;
@@ -192,10 +255,37 @@ $( document ).ready(function(){
         }
 
         if (player.alive) {
+
             player.x += player.vx;
+
+            for (var i = 0; i < map_data.length; i++) {
+                if (collision_check(player, map_data[i])) {
+                    if (player.vx > 0) {
+                        player.x = map_data[i].x - (player.hitbox_size / 2) - (map_data[i].hitbox_size / 2) - 1;
+                    } else if (player.vx < 0) {
+                        player.x = map_data[i].x + (player.hitbox_size / 2) + (map_data[i].hitbox_size / 2) + 1;
+                    }
+                    player.vx = 0;
+                }
+            }
+
             player.y += player.vy;
+
+            for (var i = 0; i < map_data.length; i++) {
+
+                if (collision_check(player, map_data[i])) {
+                    if (player.vy > 0) {
+                        player.y = map_data[i].y - (player.hitbox_size / 2) - (map_data[i].hitbox_size / 2) - 1;
+                    } else if (player.vy < 0) {
+                        player.y = map_data[i].y + (player.hitbox_size / 2) + (map_data[i].hitbox_size / 2) + 1;
+                    }
+                    player.vy = 0;
+                }
+            }
+
         } else if (player.alive == false) {
             player.visible = false;
+            next_state = 2;
         }
 
         keep_in(player, false);
@@ -204,11 +294,16 @@ $( document ).ready(function(){
     function foe_update() {
 
         for (var i = 0; i < foes.length; i++) {
-            foes[i].rotation = Math.atan2(player.x - foes[i].x, foes[i].y - player.y);
 
-            if (foes[i].alive && foes[i].shoot) {
-                create_projectile(foes[i]);
-                foes[i].shoot = false;
+            if (vision_check(foes[i], player) == true) {
+
+                foes[i].rotation = Math.atan2(player.x - foes[i].x, foes[i].y - player.y);
+
+                if (foes[i].alive && foes[i].shoot) {
+                    create_projectile(foes[i]);
+                    foes[i].shoot = false;
+                }
+
             }
 
             foes[i].projectile_cooldown -= (!foes[i].shoot) ? random_int(10) : 0;
@@ -254,6 +349,44 @@ $( document ).ready(function(){
         }
     }
 
+    function vision_check(obj1, obj2) {
+        let point_x = obj1.x,
+            point_y = obj1.y,
+            line_length = Math.sqrt(Math.pow(Math.abs(obj1.x - obj2.x), 2) + Math.pow(Math.abs(obj1.y - obj2.y), 2)),
+            x_length = obj2.x - obj1.x,
+            y_length = obj2.y - obj1.y,
+            right_edge = 0,
+            left_edge = 0,
+            bottom_edge = 0,
+            top_edge = 0,
+            has_vision = true;
+        for (var i = 0; i < line_length; i++) {
+
+            point_x += x_length / line_length;
+            point_y += y_length / line_length;
+            //console.log(point_y);
+            for (var m = 0; m < map_data.length; m++) {
+                right_edge = map_data[m].x + (map_data[m].hitbox_size / 2);
+                left_edge = map_data[m].x - (map_data[m].hitbox_size / 2);
+                bottom_edge = map_data[m].y + (map_data[m].hitbox_size / 2);
+                top_edge = map_data[m].y - (map_data[m].hitbox_size / 2);
+
+                if (
+                    point_x >= left_edge && point_x <= right_edge
+                    &&
+                    point_y >= top_edge && point_y <= bottom_edge
+                ) {
+                    has_vision = false;
+                    break;
+                }
+            }
+
+            if (has_vision == false) {break;}
+
+        }
+        return has_vision;
+    }
+
     function keep_in(obj, kill) {
         let x_bounds = app.renderer.width,
             y_bounds = app.renderer.height;
@@ -291,9 +424,8 @@ $( document ).ready(function(){
         projectile.position.set(obj.x, obj.y);
         projectile.team = obj.team;
         projectile.rotation = obj.rotation;
-        projectile.hitbox_size = 16;
-        projectile.anchor.x = 0.5;
-        projectile.anchor.y = 0.5;
+        projectile.hitbox_size = 14;
+        projectile.anchor.set(0.5);
         projectile.alive = true;
         projectile.speed = obj.projectile_speed;
         app.stage.addChild(projectile);
@@ -305,8 +437,7 @@ $( document ).ready(function(){
         player.position.set(x_start, y_start);
         player.team = 1;
         player.hitbox_size = 22;
-        player.anchor.x = 0.5;
-        player.anchor.y = 0.5;
+        player.anchor.set(0.5);
         player.vx = 0;
         player.vy = 0;
         player.alive = true;
@@ -324,8 +455,7 @@ $( document ).ready(function(){
         foe.position.set(x_start, y_start);
         foe.team = 2;
         foe.hitbox_size = 32;
-        foe.anchor.x = 0.5;
-        foe.anchor.y = 0.5;
+        foe.anchor.set(0.5);
         foe.vx = 0;
         foe.vy = 0;
         foe.alive = true;
@@ -337,6 +467,56 @@ $( document ).ready(function(){
         foe.top_speed = top_speed;
         foes.push(foe);
         app.stage.addChild(foe);
+    }
+
+    function create_wall(file, x, y) {
+        wall = new sprite(texture_cache[file]);
+        wall.position.set(x, y);
+        wall.team = 3;
+        wall.hitbox_size = 64;
+        wall.alive = true;
+        wall.anchor.set(0.5);
+        map_data.push(wall);
+        app.stage.addChild(wall);
+    }
+
+    function create_text(input, x, y, center) {
+        let message = new text(input);
+        message.position.set(x,y);
+        if (center == true) { message.anchor.set(0.5); };
+        app.stage.addChild(message);
+    }
+
+    function create_map() {
+        let map_x = -32,
+            map_y = -32;
+        for (var i = 0; i < map.length; i++) {
+            map_y += 64;
+
+            for (var ii = 0; ii < map[i].length; ii++) {
+                map_x += 64;
+
+                switch (map[i][ii]) {
+                    case 1:
+                        create_wall('wall.png', map_x, map_y);
+                        break;
+                    case 2:
+                        create_foe('foe.png', map_x, map_y, 6, 0.2, 4, 600)
+                        break;
+                    case 3:
+                        create_player('player.png', map_x, map_y, 11, 0.5, 10, 20)
+                        break;
+                }
+
+            }
+            map_x = -32;
+
+        }
+
+    }
+
+    function set_settings() {
+        settings.projectile_collision = true;
     }
 
     function keyboard(value) {
@@ -389,5 +569,35 @@ $( document ).ready(function(){
     function random_int(max) {
         return Math.floor((Math.random() * Math.floor(max)) + 1);
     }
+
+    function clear_stage() {
+
+        for (var i = app.stage.children.length + 1; i > -1; i--) {
+            app.stage.removeChild(app.stage.children[i]);
+        }
+        projectiles = [];
+        foes = [];
+        map_data = [];
+
+    }
+
+    function change_state(num) {
+
+        clear_stage()
+
+        switch (num) {
+            case 1:
+                state = play_screen;
+                play_screen_made = false;
+                break;
+            case 2:
+                state = lose_screen;
+                lose_screen_made = false;
+                break;
+        }
+
+    }
+
+
 
 })
