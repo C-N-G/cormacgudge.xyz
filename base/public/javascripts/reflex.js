@@ -19,7 +19,7 @@ $( document ).ready(function(){
 
     // Resize the stage
     app.renderer.autoDensity = true;
-    app.renderer.resize(768,768);
+    app.renderer.resize(832,832);
 
     /*
     Resize stage to screen size
@@ -53,24 +53,24 @@ $( document ).ready(function(){
         })
         .load(setup);
 
-    let state, player, foe, wall, gravity, stop_point, next_state;
+    let state, player, foe, wall, gravity, stop_point, next_state, room;
     let projectiles = [];
     let foes = [];
-    let map_data = [];
-    let map = [
-        [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2],
-        [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2],
-        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0],
-        [1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
+    let room_data = [];
+
+    let map = {};
+    map.data = [
+        []
+    ];
+    map.y_offset = 0;
+    map.x_offset = 0;
+
+    let rooms = [];
+
+    let current_map = {};
+    current_map.level_change_direction = '0000';
+    current_map.x = 0;
+    current_map.y = 0;
 
     let left = keyboard('ArrowLeft'),
         up = keyboard('ArrowUp'),
@@ -112,14 +112,17 @@ $( document ).ready(function(){
         state(delta);
     }
 
+
+    // GAME STATES
+
     function play_screen(delta){
 
         if (play_screen_made == false) {
-            create_text('Reflex', 450, 650, true);
-            create_text('Are you fast enough?', 450, 675, true);
-            create_text('Menu', 10, 720, false);
+            // create_text('Reflex', 450, 650, true);
+            // create_text('Are you fast enough?', 450, 675, true);
+            // create_text('Menu', 10, 720, false);
             set_settings();
-            create_map();
+            change_room('start');
             play_screen_made = true;
         }
 
@@ -132,13 +135,12 @@ $( document ).ready(function(){
         projectile_update();
         wall_update();
 
-        switch (next_state) {
-            case 1:
-                change_state(1);
-                break;
-            case 2:
-                change_state(2);
-                break;
+        if (current_map.level_change_direction != '0000') {
+            change_room(current_map.level_change_direction);
+        }
+
+        if (next_state != 0) {
+            change_state(next_state);
         }
 
     }
@@ -156,23 +158,21 @@ $( document ).ready(function(){
             next_state = 1;
         }
 
-        switch (next_state) {
-            case 1:
-                change_state(1);
-                break;
-            case 2:
-                change_state(2);
-                break;
+        if (next_state != 0) {
+            change_state(next_state);
         }
 
     }
 
+
+    // PLAY UPDATES
+
     function wall_update() {
-        for (var m = 0; m < map_data.length; m++) {
+        for (var m = 0; m < room_data.length; m++) {
 
             for (var p = 0; p < projectiles.length; p++) {
 
-                if (collision_check(projectiles[p], map_data[m])) {
+                if (collision_check(projectiles[p], room_data[m])) {
                     projectiles[p].alive = false;
                 }
 
@@ -258,12 +258,12 @@ $( document ).ready(function(){
 
             player.x += player.vx;
 
-            for (var i = 0; i < map_data.length; i++) {
-                if (collision_check(player, map_data[i])) {
+            for (var i = 0; i < room_data.length; i++) {
+                if (collision_check(player, room_data[i])) {
                     if (player.vx > 0) {
-                        player.x = map_data[i].x - (player.hitbox_size / 2) - (map_data[i].hitbox_size / 2) - 1;
+                        player.x = room_data[i].x - (player.hitbox_size / 2) - (room_data[i].hitbox_size / 2) - 1;
                     } else if (player.vx < 0) {
-                        player.x = map_data[i].x + (player.hitbox_size / 2) + (map_data[i].hitbox_size / 2) + 1;
+                        player.x = room_data[i].x + (player.hitbox_size / 2) + (room_data[i].hitbox_size / 2) + 1;
                     }
                     player.vx = 0;
                 }
@@ -271,13 +271,13 @@ $( document ).ready(function(){
 
             player.y += player.vy;
 
-            for (var i = 0; i < map_data.length; i++) {
+            for (var i = 0; i < room_data.length; i++) {
 
-                if (collision_check(player, map_data[i])) {
+                if (collision_check(player, room_data[i])) {
                     if (player.vy > 0) {
-                        player.y = map_data[i].y - (player.hitbox_size / 2) - (map_data[i].hitbox_size / 2) - 1;
+                        player.y = room_data[i].y - (player.hitbox_size / 2) - (room_data[i].hitbox_size / 2) - 1;
                     } else if (player.vy < 0) {
-                        player.y = map_data[i].y + (player.hitbox_size / 2) + (map_data[i].hitbox_size / 2) + 1;
+                        player.y = room_data[i].y + (player.hitbox_size / 2) + (room_data[i].hitbox_size / 2) + 1;
                     }
                     player.vy = 0;
                 }
@@ -365,11 +365,11 @@ $( document ).ready(function(){
             point_x += x_length / line_length;
             point_y += y_length / line_length;
             //console.log(point_y);
-            for (var m = 0; m < map_data.length; m++) {
-                right_edge = map_data[m].x + (map_data[m].hitbox_size / 2);
-                left_edge = map_data[m].x - (map_data[m].hitbox_size / 2);
-                bottom_edge = map_data[m].y + (map_data[m].hitbox_size / 2);
-                top_edge = map_data[m].y - (map_data[m].hitbox_size / 2);
+            for (var m = 0; m < room_data.length; m++) {
+                right_edge = room_data[m].x + (room_data[m].hitbox_size / 2);
+                left_edge = room_data[m].x - (room_data[m].hitbox_size / 2);
+                bottom_edge = room_data[m].y + (room_data[m].hitbox_size / 2);
+                top_edge = room_data[m].y - (room_data[m].hitbox_size / 2);
 
                 if (
                     point_x >= left_edge && point_x <= right_edge
@@ -393,18 +393,22 @@ $( document ).ready(function(){
         if (kill == false) {
             if (obj.x + (obj.hitbox_size / 2) > x_bounds) {
                 obj.x = x_bounds - (obj.hitbox_size / 2);
-                obj.vx = 0;
+                current_map.level_change_direction = (obj == player) ? '0001' : '0000';
+                //obj.vx = (current_map.level_change_direction == '0000') ? obj.vx : 0;
             } else if (obj.x - (obj.hitbox_size / 2) < 0) {
                 obj.x = (obj.hitbox_size / 2);
-                obj.vx = 0;
+                current_map.level_change_direction = (obj == player) ? '0100' : '0000';
+                //obj.vx = (current_map.level_change_direction == '0000') ? obj.vx : 0;
             }
 
             if (obj.y + (obj.hitbox_size / 2) > y_bounds) {
                 obj.y = y_bounds - (obj.hitbox_size / 2);
-                obj.vy = 0;
+                current_map.level_change_direction = (obj == player) ? '1000' : '0000';
+                //obj.vy = (current_map.level_change_direction == '0000') ? obj.vy : 0;
             } else if (obj.y - (obj.hitbox_size / 2) < 0) {
                 obj.y = (obj.hitbox_size / 2);
-                obj.vy = 0;
+                current_map.level_change_direction = (obj == player) ? '0010' : '0000';
+                //obj.vy = (current_map.level_change_direction == '0000') ? obj.vy : 0;
             }
         } else if (kill == true) {
             if (
@@ -416,7 +420,6 @@ $( document ).ready(function(){
                 obj.alive = false;
             }
         }
-
     }
 
     function create_projectile(obj) {
@@ -476,7 +479,7 @@ $( document ).ready(function(){
         wall.hitbox_size = 64;
         wall.alive = true;
         wall.anchor.set(0.5);
-        map_data.push(wall);
+        room_data.push(wall);
         app.stage.addChild(wall);
     }
 
@@ -487,24 +490,177 @@ $( document ).ready(function(){
         app.stage.addChild(message);
     }
 
-    function create_map() {
+
+    // ROOMS
+
+    function change_room(room_type) {
+        // if game start
+        if (room_type == 'start') {
+            room = new create_room(current_map.x, current_map.y, '10000');
+            room.fill(room);
+            create_player('player.png', 416, 416, 11, 0.5, 10, 20);
+        } else {
+
+            // clear current stage
+            clear_stage(player);
+
+            // update current rooms variable and player location based on exit direction
+            switch (room_type) {
+                case '1000':
+                    current_map.y++;
+                    player.y = 40;
+                    break;
+                case '0010':
+                    current_map.y--;
+                    player.y = app.renderer.height - 40;
+                    break;
+                case '0100':
+                    current_map.x--;
+                    player.x = app.renderer.height - 40;
+                    break;
+                case '0001':
+                    current_map.x++;
+                    player.x = 40;
+                    break;
+            }
+
+            // check if room exists in rooms variable, and use it if it does
+            let map_exists = false;
+            for (var i = 0; i < rooms.length; i++) {
+                if (rooms[i].x == current_map.x && rooms[i].y == current_map.y) {
+                    room = rooms[i];
+                    map_exists = true;
+                    break;
+                }
+            }
+
+            // otherwise make a new room
+            if (!map_exists) {
+                let parm = room_type.split('');
+                let total_exits = 0, entrance, possible_exits = '';
+
+                // randomise room configuration, while keeping in mine connecting exists to adjacent rooms
+                for (var i = 0; i < parm.length; i++) {
+                    let room_check;
+                    if (parm[i] != 1) {
+                        switch (i) {
+                            case 0:
+                                 room_check = check_if_room_exists(current_map.x, current_map.y - 1);
+                                if (room_check != false) {
+                                    parm[i] = (room_check.exits[2] == 0) ? '0' : '1';
+                                    possible_exits += (room_check.exits[2] == 0) ? '0' : '1';
+                                } else {
+                                    parm[i] = String(Math.round(Math.random()));
+                                    possible_exits += '1';
+                                }
+                                break;
+                            case 1:
+                                room_check = check_if_room_exists(current_map.x + 1, current_map.y);
+                                if (room_check != false) {
+                                    parm[i] = (room_check.exits[3] == 0) ? '0' : '1';
+                                    possible_exits += (room_check.exits[3] == 0) ? '0' : '1';
+                                } else {
+                                    parm[i] = String(Math.round(Math.random()));
+                                    possible_exits += '1';
+                                }
+                                break;
+                            case 2:
+                                room_check = check_if_room_exists(current_map.x, current_map.y + 1);
+                                if (room_check != false) {
+                                    parm[i] = (room_check.exits[0] == 0) ? '0' : '1';
+                                    possible_exits += (room_check.exits[0] == 0) ? '0' : '1';
+                                } else {
+                                    parm[i] = String(Math.round(Math.random()));
+                                    possible_exits += '1';
+                                }
+                                break;
+                            case 3:
+                                room_check = check_if_room_exists(current_map.x - 1, current_map.y);
+                                if (room_check != false) {
+                                    parm[i] = (room_check.exits[1] == 0) ? '0' : '1';
+                                    possible_exits += (room_check.exits[1] == 0) ? '0' : '1';
+                                } else {
+                                    parm[i] = String(Math.round(Math.random()));
+                                    possible_exits += '1';
+                                }
+                                break;
+                        }
+                        total_exits += (parm[i] == 1) ? 1 : 0;
+                    } else if (parm[i] == 1) {
+                        entrance = i
+                        total_exits++;
+                        possible_exits += '0';
+                    }
+                }
+
+                // if no exits have been placed, add one while respecting adjacent rooms
+                let new_exit;
+                if (total_exits == 1) {
+                    while(total_exits == 1) {
+                        new_exit = Math.round(Math.random() * 3);
+                        if (new_exit != entrance && possible_exits[new_exit] == 1) {
+                            parm[new_exit] = 1;
+                            total_exits++;
+                        }
+                    }
+                }
+
+                // add room fill configuraton
+                parm.push(String(Math.round(Math.random())));
+
+                // join room configuration array back into string
+                room_type = parm.join('');
+
+                // create new room with room configeration
+                room = new create_room(current_map.x, current_map.y, room_type);
+            }
+
+            // update stage
+            room.fill(room);
+
+            // reset change directon
+            current_map.level_change_direction = '0000';
+
+        }
+    }
+
+    function check_if_room_exists(x,y) {
+        for (var i = 0; i < rooms.length; i++) {
+            if (rooms[i].x == x && rooms[i].y == y) {
+                return rooms[i];
+            }
+        }
+        return false;
+    }
+
+    function create_room(x, y, room_type) {
+        this.exits = room_type.slice(0,4);
+        this.tile_data = set_room_type(room_type);
+        this.x = x;
+        this.y = y;
+        this.fill = place_objects_in_room;
+        rooms.push(this);
+        add_room_to_map(this);
+    }
+
+    function place_objects_in_room(room_obj) {
         let map_x = -32,
             map_y = -32;
-        for (var i = 0; i < map.length; i++) {
+        for (var i = 0; i < room_obj.tile_data.length; i++) {
             map_y += 64;
 
-            for (var ii = 0; ii < map[i].length; ii++) {
+            for (var ii = 0; ii < room_obj.tile_data[i].length; ii++) {
                 map_x += 64;
 
-                switch (map[i][ii]) {
+                switch (room_obj.tile_data[i][ii]) {
                     case 1:
                         create_wall('wall.png', map_x, map_y);
                         break;
                     case 2:
-                        create_foe('foe.png', map_x, map_y, 6, 0.2, 4, 600)
+                        create_foe('foe.png', map_x, map_y, 6, 0.2, 4, 600);
                         break;
                     case 3:
-                        create_player('player.png', map_x, map_y, 11, 0.5, 10, 20)
+                        create_player('player.png', map_x, map_y, 11, 0.5, 10, 20);
                         break;
                 }
 
@@ -514,6 +670,174 @@ $( document ).ready(function(){
         }
 
     }
+
+    function set_room_type(room_type) {
+        let parm = room_type.split('');
+        let room = [];
+        if (parm[4] == 0) {
+            room = [
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+            ];
+            room[0][6] = (parm[0] == 1) ? 0 : 1;
+            room[6][12] = (parm[1] == 1) ? 0 : 1;
+            room[12][6] = (parm[2] == 1) ? 0 : 1;
+            room[6][0] = (parm[3] == 1) ? 0 : 1;
+        } else if (parm[4] == 1) {
+            room = [
+                [1, 1, 1, 1, 1, 1, 9, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 9, 9, 9, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 9, 9, 9, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 9, 9, 9, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 9, 9, 9, 1, 1, 1, 1, 1],
+                [1, 6, 6, 6, 6, 0, 0, 0, 8, 8, 8, 8, 1],
+                [6, 6, 6, 6, 6, 0, 0, 0, 8, 8, 8, 8, 8],
+                [1, 6, 6, 6, 6, 0, 0, 0, 8, 8, 8, 8, 1],
+                [1, 1, 1, 1, 1, 7, 7, 7, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 7, 7, 7, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 7, 7, 7, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 7, 7, 7, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 7, 1, 1, 1, 1, 1, 1]
+            ];
+            for (var i = 0; i < room.length; i++) {
+                for (var ii = 0; ii < room[i].length; ii++) {
+                    switch (room[i][ii]) {
+                        case 9:
+                            room[i][ii] = (parm[0] == 1) ? 0 : 1;
+                            break;
+                        case 8:
+                            room[i][ii] = (parm[1] == 1) ? 0 : 1;
+                            break;
+                        case 7:
+                            room[i][ii] = (parm[2] == 1) ? 0 : 1;
+                            break;
+                        case 6:
+                            room[i][ii] = (parm[3] == 1) ? 0 : 1;
+                            break;
+                    }
+                }
+            }
+        }
+
+        // RANDOMLY PLACE ENEMIES ON FREE TILES
+        // for (var i = 0; i < room.length; i++) {
+        //     for (var ii = 0; ii < room[i].length; ii++) {
+        //         if (random_int(50) > 48 && room[i][ii] == 0) {
+        //             room[i][ii] = 2;
+        //         }
+        //     }
+        // }
+
+        return room;
+
+    }
+
+    function clear_stage(obj) {
+
+        for (var i = app.stage.children.length + 1; i > -1; i--) {
+            if (app.stage.children[i] != obj) {
+                app.stage.removeChild(app.stage.children[i]);
+            }
+        }
+        projectiles = [];
+        foes = [];
+        room_data = [];
+
+    }
+
+    function add_room_to_map(room) {
+        let extend = false;
+
+        // detect if matrix needs to be extended
+        if (room.y < map.y_offset ||
+            room.x < map.x_offset ||
+            room.y > (map.data.length - 1) + map.y_offset ||
+            room.x > (map.data[0].length - 1) + map.x_offset
+        ) {
+            extend = true;
+        }
+
+        // if current map current location is outside map, extend array
+        if (room.y < map.y_offset && extend == true) {
+            // TOP
+            map.y_offset--;
+            map.data.unshift([])
+
+            for (var i = 0; i < map.data[1].length; i++) {
+                if (i == room.x - map.x_offset) {
+                    map.data[0].push(1);
+                } else {
+                    map.data[0].push(0);
+                }
+            }
+
+        } else if (room.x < map.x_offset && extend == true) {
+            // LEFT
+            map.x_offset--;
+
+            for (var i = 0; i < map.data.length; i++) {
+                if (i == room.y - map.y_offset) {
+                    map.data[i].unshift(1);
+                } else {
+                    map.data[i].unshift(0);
+                }
+            }
+
+        } else if (room.y > (map.data.length - 1) + map.y_offset && extend == true) {
+            // BOTTOM
+            map.data.push([]);
+
+            for (var i = 0; i < map.data[0].length; i++) {
+                if (i == room.x - map.x_offset) {
+                    map.data[map.data.length - 1].push(1);
+                } else {
+                    map.data[map.data.length - 1].push(0);
+                }
+            }
+
+        } else if (room.x > (map.data[0].length - 1) + map.x_offset && extend == true) {
+            // RIGHT
+
+            for (var i = 0; i < map.data.length; i++) {
+                if (i == room.y - map.y_offset) {
+                    map.data[i].push(1);
+                } else {
+                    map.data[i].push(0);
+                }
+            }
+        }
+
+        // if map doesn't need extending, simply fill in the blank
+        if (extend == false) {
+            for (var i = 0; i < map.data.length; i++) {
+                for (var ii = 0; ii < map.data[i].length; ii++) {
+                    if (
+                        room.x - map.x_offset == ii &&
+                        room.y - map.y_offset == i
+                    ) {
+                        console.log('filled in');
+                        map.data[i][ii] = 1;
+                    }
+                }
+            }
+        }
+
+        console.log(map.data);
+    }
+
+
+    // MISC
 
     function set_settings() {
         settings.projectile_collision = true;
@@ -570,17 +894,6 @@ $( document ).ready(function(){
         return Math.floor((Math.random() * Math.floor(max)) + 1);
     }
 
-    function clear_stage() {
-
-        for (var i = app.stage.children.length + 1; i > -1; i--) {
-            app.stage.removeChild(app.stage.children[i]);
-        }
-        projectiles = [];
-        foes = [];
-        map_data = [];
-
-    }
-
     function change_state(num) {
 
         clear_stage()
@@ -597,6 +910,7 @@ $( document ).ready(function(){
         }
 
     }
+
 
 
 
