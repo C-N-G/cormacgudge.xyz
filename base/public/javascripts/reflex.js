@@ -254,7 +254,7 @@ $( document ).ready(function(){
 
         for (var i = 0; i < projectiles.length; i++) {
             if (collision_check(projectiles[i], player) && projectiles[i].team != player.team) {
-                //player.alive = false;
+                player.alive = false;
                 projectiles[i].alive = false;
             }
         }
