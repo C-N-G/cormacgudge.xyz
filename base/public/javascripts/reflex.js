@@ -53,7 +53,7 @@ $( document ).ready(function(){
         })
         .load(setup);
 
-    let state, player, foe, wall, gravity, stop_point, next_state, room;
+    let state, player, foe, wall, gravity, stop_point, next_state, room, timer = 0;
     let projectiles = [];
     let foes = [];
     let room_data = [];
@@ -76,7 +76,11 @@ $( document ).ready(function(){
         up = keyboard('ArrowUp'),
         right = keyboard('ArrowRight'),
         down = keyboard('ArrowDown'),
-        esc = keyboard ('Escape');
+        esc = keyboard('Escape');
+        left_alt = keyboard('a');
+        up_alt = keyboard('w');
+        right_alt = keyboard('d');
+        down_alt = keyboard('s');
 
     let mouse = {};
     mouse.x = 0;
@@ -183,6 +187,7 @@ $( document ).ready(function(){
 
     function projectile_update() {
 
+        // list of projectiles to remove at every update
         let projectiles_remove = [];
 
         for (var i = 0; i < projectiles.length; i++) {
@@ -215,10 +220,10 @@ $( document ).ready(function(){
 
     function player_update() {
 
-        if (left.isDown == true) { player.vx -= player.acceleration_speed }
-        if (right.isDown == true) { player.vx += player.acceleration_speed }
-        if (up.isDown == true) { player.vy -= player.acceleration_speed }
-        if (down.isDown == true) { player.vy += player.acceleration_speed }
+        if (left.isDown == true || left_alt.isDown == true) { player.vx -= player.acceleration_speed }
+        if (right.isDown == true || right_alt.isDown == true) { player.vx += player.acceleration_speed }
+        if (up.isDown == true || up_alt.isDown == true) { player.vy -= player.acceleration_speed }
+        if (down.isDown == true || down_alt.isDown == true) { player.vy += player.acceleration_speed }
 
         player.vy *= gravity;
         player.vx *= gravity;
@@ -249,7 +254,7 @@ $( document ).ready(function(){
 
         for (var i = 0; i < projectiles.length; i++) {
             if (collision_check(projectiles[i], player) && projectiles[i].team != player.team) {
-                player.alive = false;
+                //player.alive = false;
                 projectiles[i].alive = false;
             }
         }
@@ -258,6 +263,7 @@ $( document ).ready(function(){
 
             player.x += player.vx;
 
+            // check x-axis wall collision
             for (var i = 0; i < room_data.length; i++) {
                 if (collision_check(player, room_data[i])) {
                     if (player.vx > 0) {
@@ -271,8 +277,8 @@ $( document ).ready(function(){
 
             player.y += player.vy;
 
+            // check y-axis wall collision
             for (var i = 0; i < room_data.length; i++) {
-
                 if (collision_check(player, room_data[i])) {
                     if (player.vy > 0) {
                         player.y = room_data[i].y - (player.hitbox_size / 2) - (room_data[i].hitbox_size / 2) - 1;
@@ -293,9 +299,25 @@ $( document ).ready(function(){
 
     function foe_update() {
 
+        // list of foes to remove at every update
+        let foes_remove = [];
+        let check_vision = false;
+        timer++;
+        if (timer == 30) {
+            check_vision = true;
+            timer = 0;
+        }
+
         for (var i = 0; i < foes.length; i++) {
 
-            if (vision_check(foes[i], player) == true) {
+            if (check_vision) {
+                // vision_check serious performance bottleneck
+                foes[i].vision = vision_check(foes[i], player);
+            }
+
+
+
+            if (foes[i].vision) {
 
                 foes[i].rotation = Math.atan2(player.x - foes[i].x, foes[i].y - player.y);
 
@@ -306,6 +328,7 @@ $( document ).ready(function(){
 
             }
 
+
             foes[i].projectile_cooldown -= (!foes[i].shoot) ? random_int(10) : 0;
 
             if (foes[i].projectile_cooldown <= 0) {
@@ -313,7 +336,7 @@ $( document ).ready(function(){
                 foes[i].shoot = true;
             }
 
-            if (collision_check(foes[i], player)) {
+            if (collision_check(player, foes[i])) {
                 player.alive = false;
             }
 
@@ -326,12 +349,36 @@ $( document ).ready(function(){
 
             if (foes[i].alive == false) {
                 foes[i].visible = false;
+
+                // remove for from current room tile data
+                for (var r = 0; r < rooms.length; r++) {
+                    if (rooms[r].x == current_map.x && rooms[r].y == current_map.y) {
+                        for (var y = 0; y < rooms[r].tile_data.length; y++) {
+                            for (var x = 0; x < rooms[r].tile_data[y].length; x++) {
+                                if (
+                                    foes[i].room.x == x &&
+                                    foes[i].room.y == y
+                                ) {
+                                    rooms[r].tile_data[y][x] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                foes_remove.push(i);
             }
+
+        }
+
+        for (var i = (foes_remove.length - 1); i > -1; i--) {
+            foes.splice(foes_remove[i], 1);
         }
 
     }
 
     function collision_check(obj1, obj2) {
+        // check if SMALLER object colides with BIGGER object
         if (
             (((obj1.x + (obj1.hitbox_size / 2)) >= (obj2.x - (obj2.hitbox_size / 2)) && (obj1.x + (obj1.hitbox_size / 2)) <= (obj2.x + (obj2.hitbox_size / 2)))
             ||
@@ -391,31 +438,31 @@ $( document ).ready(function(){
         let x_bounds = app.renderer.width,
             y_bounds = app.renderer.height;
         if (kill == false) {
-            if (obj.x + (obj.hitbox_size / 2) > x_bounds) {
+            if (obj.x > x_bounds) {
                 obj.x = x_bounds - (obj.hitbox_size / 2);
                 current_map.level_change_direction = (obj == player) ? '0001' : '0000';
                 //obj.vx = (current_map.level_change_direction == '0000') ? obj.vx : 0;
-            } else if (obj.x - (obj.hitbox_size / 2) < 0) {
+            } else if (obj.x < 0) {
                 obj.x = (obj.hitbox_size / 2);
                 current_map.level_change_direction = (obj == player) ? '0100' : '0000';
                 //obj.vx = (current_map.level_change_direction == '0000') ? obj.vx : 0;
             }
 
-            if (obj.y + (obj.hitbox_size / 2) > y_bounds) {
+            if (obj.y > y_bounds) {
                 obj.y = y_bounds - (obj.hitbox_size / 2);
                 current_map.level_change_direction = (obj == player) ? '1000' : '0000';
                 //obj.vy = (current_map.level_change_direction == '0000') ? obj.vy : 0;
-            } else if (obj.y - (obj.hitbox_size / 2) < 0) {
+            } else if (obj.y < 0) {
                 obj.y = (obj.hitbox_size / 2);
                 current_map.level_change_direction = (obj == player) ? '0010' : '0000';
                 //obj.vy = (current_map.level_change_direction == '0000') ? obj.vy : 0;
             }
         } else if (kill == true) {
             if (
-                obj.x + (obj.hitbox_size / 2) > x_bounds ||
-                obj.x - (obj.hitbox_size / 2) < 0 ||
-                obj.y + (obj.hitbox_size / 2) > y_bounds ||
-                obj.y - (obj.hitbox_size / 2) < 0
+                obj.x > x_bounds ||
+                obj.x < 0 ||
+                obj.y > y_bounds ||
+                obj.y < 0
             ) {
                 obj.alive = false;
             }
@@ -453,8 +500,11 @@ $( document ).ready(function(){
         app.stage.addChild(player);
     }
 
-    function create_foe(file, x_start, y_start, projectile_speed, acceleration_speed, top_speed, shoot_speed) {
+    function create_foe(file, x_start, y_start, projectile_speed, acceleration_speed, top_speed, shoot_speed, room_x, room_y) {
         foe = new sprite(texture_cache[file]);
+        foe.room = {};
+        foe.room.x = room_x;
+        foe.room.y = room_y;
         foe.position.set(x_start, y_start);
         foe.team = 2;
         foe.hitbox_size = 32;
@@ -463,6 +513,7 @@ $( document ).ready(function(){
         foe.vy = 0;
         foe.alive = true;
         foe.shoot = true;
+        foe.vision = false;
         foe.projectile_speed = projectile_speed;
         foe.projectile_cooldown = shoot_speed;
         foe.projectile_cooldown_reset = shoot_speed;
@@ -508,19 +559,19 @@ $( document ).ready(function(){
             switch (room_type) {
                 case '1000':
                     current_map.y++;
-                    player.y = 40;
+                    player.y = 2;
                     break;
                 case '0010':
                     current_map.y--;
-                    player.y = app.renderer.height - 40;
+                    player.y = app.renderer.height - 2;
                     break;
                 case '0100':
                     current_map.x--;
-                    player.x = app.renderer.height - 40;
+                    player.x = app.renderer.height - 2;
                     break;
                 case '0001':
                     current_map.x++;
-                    player.x = 40;
+                    player.x = 2;
                     break;
             }
 
@@ -535,9 +586,10 @@ $( document ).ready(function(){
             }
 
             // otherwise make a new room
+            let entrance;
             if (!map_exists) {
                 let parm = room_type.split('');
-                let total_exits = 0, entrance, possible_exits = '';
+                let total_exits = 0, possible_exits = '';
 
                 // randomise room configuration, while keeping in mine connecting exists to adjacent rooms
                 for (var i = 0; i < parm.length; i++) {
@@ -612,7 +664,7 @@ $( document ).ready(function(){
                 room_type = parm.join('');
 
                 // create new room with room configeration
-                room = new create_room(current_map.x, current_map.y, room_type);
+                room = new create_room(current_map.x, current_map.y, room_type, entrance);
             }
 
             // update stage
@@ -633,9 +685,9 @@ $( document ).ready(function(){
         return false;
     }
 
-    function create_room(x, y, room_type) {
+    function create_room(x, y, room_type, room_entrance) {
         this.exits = room_type.slice(0,4);
-        this.tile_data = set_room_type(room_type);
+        this.tile_data = set_room_type(room_type, room_entrance);
         this.x = x;
         this.y = y;
         this.fill = place_objects_in_room;
@@ -646,18 +698,18 @@ $( document ).ready(function(){
     function place_objects_in_room(room_obj) {
         let map_x = -32,
             map_y = -32;
-        for (var i = 0; i < room_obj.tile_data.length; i++) {
+        for (var y = 0; y < room_obj.tile_data.length; y++) {
             map_y += 64;
 
-            for (var ii = 0; ii < room_obj.tile_data[i].length; ii++) {
+            for (var x = 0; x < room_obj.tile_data[y].length; x++) {
                 map_x += 64;
 
-                switch (room_obj.tile_data[i][ii]) {
+                switch (room_obj.tile_data[y][x]) {
                     case 1:
                         create_wall('wall.png', map_x, map_y);
                         break;
                     case 2:
-                        create_foe('foe.png', map_x, map_y, 6, 0.2, 4, 600);
+                        create_foe('foe.png', map_x, map_y, 6, 0.2, 4, 600, x, y);
                         break;
                     case 3:
                         create_player('player.png', map_x, map_y, 11, 0.5, 10, 20);
@@ -671,7 +723,7 @@ $( document ).ready(function(){
 
     }
 
-    function set_room_type(room_type) {
+    function set_room_type(room_type, room_entrance) {
         let parm = room_type.split('');
         let room = [];
         if (parm[4] == 0) {
@@ -730,14 +782,95 @@ $( document ).ready(function(){
             }
         }
 
-        // RANDOMLY PLACE ENEMIES ON FREE TILES
-        // for (var i = 0; i < room.length; i++) {
-        //     for (var ii = 0; ii < room[i].length; ii++) {
-        //         if (random_int(50) > 48 && room[i][ii] == 0) {
-        //             room[i][ii] = 2;
-        //         }
-        //     }
-        // }
+
+        if (room_type != '10000') {
+            // randomly place enemies on free tiles
+            for (var i = 0; i < room.length; i++) {
+                for (var ii = 0; ii < room[i].length; ii++) {
+                    // IDEA: make enemy spawn chance scale based on number of rooms generated and distance from spawn
+                    if (random_int(50) > 48 && room[i][ii] == 0) {
+                        room[i][ii] = 2;
+                    }
+                }
+            }
+
+            // remove any enemies on entrance quadrant
+            let area_width_left, area_width_right, area_depth;
+            switch (room_entrance) {
+                case 0:
+                    // TOP
+                    area_width_left = 11;
+                    area_width_right = 1;
+                    area_depth = 0;
+                    for (var i = area_depth; i < 7; i++) {
+                        for (var ii = area_width_right; ii <= area_width_left; ii++) {
+                            if (
+                                room[i][ii] == 2
+                            ) {
+                                room[i][ii] = 0;
+                            }
+                        }
+                        area_depth++;
+                        area_width_left--;
+                        area_width_right++;
+                    }
+                    break;
+                case 1:
+                    // RIGHT
+                    area_width_left = 6;
+                    area_width_right = 6;
+                    area_depth = 7;
+                    for (var i = area_depth; i < room.length; i++) {
+                        for (var ii = area_width_right; ii <=  area_width_left; ii++) {
+                            if (
+                                room[ii][i] == 2
+                            ) {
+                                room[ii][i] = 0;
+                            }
+                        }
+                        area_depth--;
+                        area_width_left++;
+                        area_width_right--;
+                    }
+                    break;
+                case 2:
+                    // BOTTOM
+                    area_width_left = 6;
+                    area_width_right = 6;
+                    area_depth = 7;
+                    for (var i = area_depth; i < room.length; i++) {
+                        for (var ii = area_width_left; ii <= area_width_right; ii++) {
+                            if (
+                                room[i][ii] == 2
+                            ) {
+                                room[i][ii] = 0;
+                            }
+                        }
+                        area_depth++;
+                        area_width_left--;
+                        area_width_right++;
+                    }
+                    break;
+                case 3:
+                    // LEFT
+                    area_width_left = 1;
+                    area_width_right = 11;
+                    area_depth = 0;
+                    for (var i = area_depth; i < 7; i++) {
+                        for (var ii = area_width_left; ii <= area_width_right; ii++) {
+                            if (
+                                room[ii][i] == 2
+                            ) {
+                                room[ii][i] = 0;
+                            }
+                        }
+                        area_depth++;
+                        area_width_left++;
+                        area_width_right--;
+                    }
+                    break;
+            }
+        }
 
         return room;
 
@@ -826,14 +959,12 @@ $( document ).ready(function(){
                         room.x - map.x_offset == ii &&
                         room.y - map.y_offset == i
                     ) {
-                        console.log('filled in');
                         map.data[i][ii] = 1;
                     }
                 }
             }
         }
 
-        console.log(map.data);
     }
 
 
