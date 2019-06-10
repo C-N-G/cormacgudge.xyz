@@ -195,7 +195,9 @@ $( document ).ready(function(){
 
     // Check for collision between two rectangles
     function check_collision(obj1, obj2) {
-        let hit = false;
+        let hit = false, side;
+        vx = obj1.vx;
+        vy = obj1.vy;
         obj1 = obj1.getBounds();
         obj2 = obj2.getBounds();
         if(obj1.bottom > obj2.top
@@ -204,7 +206,7 @@ $( document ).ready(function(){
            && obj1.right > obj2.left) {
             hit = true;
         }
-        return [hit, side]
+        return [hit, side];
     }
 
     // Create a player object
