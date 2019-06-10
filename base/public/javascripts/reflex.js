@@ -20,6 +20,7 @@ $( document ).ready(function(){
     // Resize the stage
     app.renderer.autoDensity = true;
     app.renderer.resize(832,832);
+    app.stage.sortableChildren = true;
 
     /*
     Resize stage to screen size
@@ -53,7 +54,7 @@ $( document ).ready(function(){
         })
         .load(setup);
 
-    let state, player, foe, wall, gravity, stop_point, next_state, room, timer = 0;
+    let state, player, foe, wall, gravity, stop_point, next_state, room, timer = 0, score, difficulty = 1;
     let projectiles = [];
     let foes = [];
     let room_data = [];
@@ -127,6 +128,7 @@ $( document ).ready(function(){
             // create_text('Menu', 10, 720, false);
             set_settings();
             change_room('start');
+            create_score();
             play_screen_made = true;
         }
 
@@ -138,6 +140,7 @@ $( document ).ready(function(){
         foe_update();
         projectile_update();
         wall_update();
+        score_update();
 
         if (current_map.level_change_direction != '0000') {
             change_room(current_map.level_change_direction);
@@ -152,7 +155,9 @@ $( document ).ready(function(){
     function lose_screen(delta) {
         if (lose_screen_made == false) {
             create_text('You Died', 384, 384, true);
-            create_text('Press Escape to retry', 384, 408, true);
+            create_text('Your Score was ' + score.score_value, 384, 408, true);
+            score = 0;
+            create_text('Press Escape to retry', 384, 432, true);
             lose_screen_made = true;
         }
 
@@ -349,6 +354,7 @@ $( document ).ready(function(){
 
             if (foes[i].alive == false) {
                 foes[i].visible = false;
+                score.score_value++;
 
                 // remove for from current room tile data
                 for (var r = 0; r < rooms.length; r++) {
@@ -541,6 +547,30 @@ $( document ).ready(function(){
         app.stage.addChild(message);
     }
 
+    function score_update() {
+        score.text = 'Score: ' + score.score_value;
+    }
+
+    function add_score() {
+        app.stage.addChild(score);
+    }
+
+    function create_score() {
+        const score_style = new PIXI.TextStyle({
+            fontFamily: "Arial Black",
+            fontSize: 30,
+            lineJoin: "round",
+            stroke: "aqua",
+            strokeThickness: 6
+        });
+        score = new text('Score: ', score_style);
+        score.score_value = 0;
+        score.position.set(10,10);
+        score.text = 'Score: ' + score.score_value;
+        score.zIndex = 2;
+        app.stage.addChild(score);
+        console.log(app.stage);
+    }
 
     // ROOMS
 
@@ -554,6 +584,7 @@ $( document ).ready(function(){
 
             // clear current stage
             clear_stage(player);
+            add_score();
 
             // update current rooms variable and player location based on exit direction
             switch (room_type) {
@@ -665,6 +696,12 @@ $( document ).ready(function(){
 
                 // create new room with room configeration
                 room = new create_room(current_map.x, current_map.y, room_type, entrance);
+
+                // increase difficulty with each new room
+                difficulty += 0.1;
+
+                // add score for new opened room
+                score.score_value += 5;
             }
 
             // update stage
@@ -784,11 +821,12 @@ $( document ).ready(function(){
 
 
         if (room_type != '10000') {
-            // randomly place enemies on free tiles
+            console.log(difficulty)
+            // randomly place enemies on fr;ee tiles
             for (var i = 0; i < room.length; i++) {
                 for (var ii = 0; ii < room[i].length; ii++) {
                     // IDEA: make enemy spawn chance scale based on number of rooms generated and distance from spawn
-                    if (random_int(50) > 48 && room[i][ii] == 0) {
+                    if (random_int(50) > (48 - difficulty) && room[i][ii] == 0) {
                         room[i][ii] = 2;
                     }
                 }
@@ -967,6 +1005,20 @@ $( document ).ready(function(){
 
     }
 
+    function clear_map() {
+        map.data = [
+            []
+        ];
+        map.y_offset = 0;
+        map.x_offset = 0;
+
+        current_map.level_change_direction = '0000';
+        current_map.x = 0;
+        current_map.y = 0;
+
+        rooms = [];
+    }
+
 
     // MISC
 
@@ -1027,7 +1079,8 @@ $( document ).ready(function(){
 
     function change_state(num) {
 
-        clear_stage()
+        clear_stage();
+        clear_map();
 
         switch (num) {
             case 1:
