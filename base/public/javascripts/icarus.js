@@ -29,7 +29,10 @@ $( document ).ready(function(){
     player_view, environment,
 
     // Physics
-    gravity = 1.1;
+    gravity = 1.1,
+
+    // Mechanics
+     jump_height = 17, jumping = false, can_jump = true;
 
     // Make stage and assign global vars
     initialize();
@@ -105,6 +108,7 @@ $( document ).ready(function(){
         create_platform(384, 600);
         create_platform(512, 600);
         create_platform(640, 600);
+        create_platform(740, 400);
         create_player(500, 500);
         app.stage.addChild(player_view);
         app.stage.addChild(environment);
@@ -171,33 +175,54 @@ $( document ).ready(function(){
     // Update player object
     function player_update() {
         // Move player from inputs
+        console.log(can_jump + ' | ' + jumping);
         if (action_left) { player.vx-- };
-        if (action_up) { player.vy-- };
-        if (action_down) { player.vy++ };
         if (action_right) { player.vx++ };
+        if (action_up) { jumping = true } else { jumping = false };
 
-
-        for (var i = 0; i < platforms.length; i++) {
-            if (check_collision(player, platforms[i])[0] == true) {
-                let list = check_collision(player, platforms[i])
-                console.log(list[0] + ' | ' + list[1]);
-            }
+        if (jumping && can_jump) {
+            player.vy -= jump_height;
+            can_jump = false;
+            jumping = false;
         }
 
+
+        // If velocity approaches zero then set it to zero
         player.vx = (Math.abs(player.vx) < 0.1) ? 0 : player.vx;
         player.vy = (Math.abs(player.vy) < 0.1) ? 0 : player.vy;
 
+        // Move horizontally
         player.x += player.vx;
+        platforms_length = platforms.length;
+        for (var i = 0; i < platforms_length; i++) {
+            if (check_collision(player,platforms[i])) {
+                let hitter = player.getBounds(),
+                    hitte = platforms[i].getBounds();
+                player.x = (player.vx > 0) ? (hitte.x - hitter.width) : (hitte.x + hitte.width );
+                player.vx = 0;
+            }
+        }
+
+        // Move vertically
         player.y += player.vy;
+        for (var i = 0; i < platforms_length; i++) {
+            if (check_collision(player,platforms[i])) {
+                let hitter = player.getBounds(),
+                    hitte = platforms[i].getBounds();
+                player.y = (player.vy > 0) ? (hitte.y - hitter.height) : (hitte.y + hitte.height);
+                can_jump = (player.vy > 0) ? true : false;
+                player.vy = 0;
+            }
+        }
+
+        // Divide velocity by gravity to slowly decrease it
         player.vx /= gravity;
-        player.vy /= gravity;
+        player.vy += gravity / 2;
     }
 
     // Check for collision between two rectangles
     function check_collision(obj1, obj2) {
-        let hit = false, side;
-        vx = obj1.vx;
-        vy = obj1.vy;
+        let hit = false;
         obj1 = obj1.getBounds();
         obj2 = obj2.getBounds();
         if(obj1.bottom > obj2.top
@@ -206,7 +231,7 @@ $( document ).ready(function(){
            && obj1.right > obj2.left) {
             hit = true;
         }
-        return [hit, side];
+        return hit;
     }
 
     // Create a player object
