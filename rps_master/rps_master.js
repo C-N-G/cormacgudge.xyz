@@ -14,7 +14,12 @@ const insults = [
   'despicable'
 ];
 const commands = {
-  'channel': {'make': 'make channel', 'delete': 'delete channel'},
+  'channel': {
+    'voice': {'make': 'make voice channel'},
+    'text': {'make': 'make text channel'},
+    'delete': 'delete channel'
+  },
+  'best_of': 'best of',
 }
 const loss_cases = {
   'timeout': 'taking too long',
@@ -31,9 +36,10 @@ let state = states.ready;
 let scores = {'player': 0, 'bot': 0};
 let current_match = {
   'opponent': 0,
-  'objective': 0,
+  'objective': [],
   'channel': 0,
-  'difficulty': 0,
+  'difficulty_length': 0,
+  'difficulty_height': 0,
   'round': 0,
   'score': {'player': 0, 'bot': 0}
 };
@@ -55,6 +61,8 @@ function endMatch(outcome) {
     case 'PLAYER_WIN':
       scores.player++;
       verdict = 'win';
+      if (current_match.objective[0]) { current_match.objective[0](); }
+      if (current_match.objective[1]) { current_match.channel.send(current_match.objective[1]); }
       break;
     case 'BOT_WIN':
       scores.bot++;
@@ -75,9 +83,10 @@ function endMatch(outcome) {
   }
   current_match.channel.send(`Match Ended! Verdict is a ${verdict}. TOTAL SCORE: Players=${scores.player}, Bot=${scores.bot}`);
   current_match.opponent = 0;
-  current_match.objective = 0;
+  current_match.objective = [];
   current_match.channel = 0;
-  current_match.difficulty = 0;
+  current_match.difficulty_length = 0;
+  current_match.difficulty_height = 0;
   current_match.round = 0;
   current_match.score.player = 0;
   current_match.score.bot = 0;
@@ -85,25 +94,35 @@ function endMatch(outcome) {
 }
 
 function startMatch(objective, message) {
+  current_match.opponent = message.author.tag; // make sure only the battle initiator can communicate with the bot during a battle
+  current_match.channel = message.channel;
   switch (objective) {
     case 'NONE':
-      message.reply("Let's duel! Your move!");
-      current_match.opponent = message.author.tag; // make sure only the battle initiator can communicate with the bot during a battle
-      current_match.channel = message.channel;
-      current_match.difficulty = 1;
-      state = states.waiting;
-      start_timeout = setTimeout(matchTimeOut, timeOutDelay);
+      current_match.difficulty_length = 1;
+      current_match.difficulty_height = 0.5;
       break;
     case 'FIVE':
-      message.reply("Let's duel! Your move!");
-      current_match.opponent = message.author.tag;
-      current_match.channel = message.channel;
-      current_match.difficulty = 5;
-      state = states.waiting;
-      start_timeout = setTimeout(matchTimeOut, timeOutDelay);
+      current_match.difficulty_length = 5;
+      current_match.difficulty_height = 0.5;
+      break;
+    case 'MAKE_CHANNEL':
+      current_match.difficulty_length = 5;
+      current_match.difficulty_height = 0.5;
+      current_match.objective[2] = message.content.substr(19,16);
+      current_match.objective[3] = message.content.split(" ")[1];
+      current_match.objective[1] = `You have succeded in creating channel ${current_match.objective[2]}.`;
+      current_match.objective[0] = function() {
+        current_match.channel.guild.createChannel(current_match.objective[2], { type: current_match.objective[3] });
+      };
+    case 'BEST_OF':
+      current_match.difficulty_length = message.content.slice(9);
+      current_match.difficulty_height = 0.5;
       break;
     default:
   }
+  message.reply(`Let's duel! Match length is ${current_match.difficulty_length} rounds. Required win rate is ${current_match.difficulty_height*100}%. Your move!`);
+  state = states.waiting;
+  start_timeout = setTimeout(matchTimeOut, timeOutDelay);
 }
 
 client.on('ready', () => {
@@ -111,21 +130,30 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
+  message.content = message.content.toLowerCase();
 //TODO Make regex match for setting objectives for the match
+
   switch (state) {
     case states.ready:
       if (message.content.startsWith('!')) {
-        if (message.content === '!scores') { message.reply(`SCORE: Players=${scores.player}, Bot=${scores.bot}`); }
-        else if (message.content.startsWith(`!${commands.channel.make}`.toLowerCase())) {
-          message.guild.createChannel(`test`, { type: 'text' });
+        if (message.content === '!scores') {
+          message.reply(`SCORE: Players=${scores.player}, Bot=${scores.bot}`);
         }
-        for (var i = 0; i < fighting_words.length; i++) {
-          if (message.content.toLowerCase() === '!' + fighting_words[i]) {
-            startMatch('NONE', message);
-            break;
-          } else if (message.content.toLowerCase() === `!${fighting_words[i]} best of 5`) {
-            startMatch('FIVE', message);
-            break;
+        else if (message.content.startsWith(`!${commands.channel.text.make}`) || message.content.startsWith(`!${commands.channel.voice.make}`)) {
+          startMatch('MAKE_CHANNEL', message);
+        }
+        else if (message.content.startsWith(`!${commands.best_of} `) && !isNaN(message.content.slice(9))) {
+          startMatch('BEST_OF', message);
+        }
+        else {
+          for (var i = 0; i < fighting_words.length; i++) {
+            if (message.content === '!' + fighting_words[i]) {
+              startMatch('NONE', message);
+              break;
+            } else if (message.content === `!${fighting_words[i]} best of 5`) {
+              startMatch('FIVE', message);
+              break;
+            }
           }
         }
       }
@@ -134,7 +162,7 @@ client.on('message', message => {
       if (message.content[0] === '!' && current_match.opponent === message.author.tag && message.channel === current_match.channel) {
         let match_found = false;
         for (var i = 0; i < moves.length; i++) {
-          if (message.content.toLowerCase() === '!' +  moves[i]) { // if user response matches a move then respond
+          if (message.content === '!' +  moves[i]) { // if user response matches a move then respond
             response_move = getRandomInt(3);
             //message.reply('I choose ' + moves[response_move]);
             bot_message = `I choose ${moves[response_move]}. `;
@@ -147,7 +175,7 @@ client.on('message', message => {
             else if (i === 2 && response_move === 0) { bot_message += `YOU LOSE!, Scissors vs Rock. `; outcome = 'BOT_WIN'; }
             else if (i === 2 && response_move === 1) { bot_message += `YOU WIN!, Scissors vs Paper. `; outcome = 'PLAYER_WIN'; }
             else if (i === 2 && response_move === 2) { bot_message += `YOU TIE!, Scissors vs Scissors. `; outcome = 0; }
-            if (current_match.round < current_match.difficulty) {
+            if (current_match.round < current_match.difficulty_length) {
               clearTimeout(start_timeout);
               start_timeout = setTimeout(matchTimeOut, timeOutDelay);
               switch (outcome) {
@@ -159,17 +187,17 @@ client.on('message', message => {
                   break;
                 default:
               }
-              if (current_match.score.player > current_match.score.bot) { outcome = 'PLAYER_WIN' }
-              else if (current_match.score.player < current_match.score.bot) { outcome = 'BOT_WIN' }
+              if (current_match.score.player / (current_match.score.player + current_match.score.bot) > current_match.difficulty_height) { outcome = 'PLAYER_WIN' }
+              else if (current_match.score.player / (current_match.score.player + current_match.score.bot) < current_match.difficulty_height) { outcome = 'BOT_WIN' }
               else if (current_match.score.player = current_match.score.bot) { outcome = 0 }
               current_match.round++;
               bot_message += `Round ${current_match.round} over! Player=${current_match.score.player}, Bot=${current_match.score.bot}. `;
-              if (current_match.round != current_match.difficulty) { bot_message += `Your move! `; }
+              if (current_match.round != current_match.difficulty_length) { bot_message += `Your move! `; }
               message.reply(bot_message);
               bot_message = 0;
               match_found = true;
             }
-            if (current_match.round == current_match.difficulty) {
+            if (current_match.round == current_match.difficulty_length) {
               endMatch(outcome);
             }
             break;
