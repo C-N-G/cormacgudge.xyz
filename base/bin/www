@@ -37,6 +37,12 @@ reflex_controller.index(io);
 const icarus_controller = require('../controllers/icarus');
 icarus_controller.index(io);
 
+/**
+ * Start NW DB Crawler
+ */
+
+var nw_controller = require('../controllers/nw');
+nw_controller.start_crawler();
 
 /**
  * Listen on provided port, on all network interfaces.

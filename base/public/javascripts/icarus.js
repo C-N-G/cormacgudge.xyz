@@ -23,13 +23,16 @@ $( document ).ready(function(){
     player,
 
     // Object lists
-    platforms = [],
+    platforms = [], players = [], entities = {'players': players, 'platforms': platforms},
 
     // Containers
     player_view, environment,
 
     // Physics
     gravity = 1.1,
+
+    // Collision
+    endpoints = [],
 
     // Mechanics
      //jump_height = 17, jumping = false, can_jump = true;
@@ -129,7 +132,7 @@ $( document ).ready(function(){
         create_player(500, 500);
         app.stage.addChild(player_view);
         app.stage.addChild(environment);
-        console.log(player.getBounds());
+        //console.log(player.getBounds());
 
         state = play_screen;
 
@@ -204,6 +207,59 @@ $( document ).ready(function(){
         return hit;
     }
 
+    // AABB sweep and prune function
+    function endpoints_update(action, obj) {
+        obj_bounds = obj.getBounds();
+        switch (action) {
+            case 'insert':
+                endpoints.push({
+                    'entity': obj.name,
+                    'place': obj.place,
+                    'type': 'bottom',
+                    'position': obj.worldy + obj_bounds.height
+                });
+                for (var i = endpoints.length - 1; i > 0; i--) {
+                    if (i != 0) {
+                        if (endpoints[i].position < endpoints[i-1].position) {
+                            let temp_pos = endpoints[i-1];
+                            endpoints[i-1] = endpoints[i];
+                            endpoints[i] = temp_pos;
+                            entities[obj.name + 's'][obj.place].point_bottom = i;
+                        }
+                    }
+                }
+                endpoints.push({
+                    'entity': obj.name,
+                    'place': obj.place,
+                    'type': 'top',
+                    'position': obj.worldy
+                });
+                for (var i = endpoints.length - 1; i > 0; i--) {
+                    if (i != 0) {
+                        if (endpoints[i].position < endpoints[i-1].position) {
+                            let temp_pos = endpoints[i-1];
+                            endpoints[i-1] = endpoints[i];
+                            endpoints[i] = temp_pos;
+                            entities[obj.name + 's'][obj.place].point_top = i;
+                        }
+                    }
+                }
+                console.log(endpoints);
+                console.log(obj);
+                break;
+            case 'update':
+                for (var i = endpoints.length - 1; i > 0; i--) {
+                    
+                }
+                break;
+            case 'remove':
+
+                break;
+            default:
+                break;
+        }
+    }
+
     // Update player object
     function player_update() {
         // Move player from inputs
@@ -248,7 +304,7 @@ $( document ).ready(function(){
                 let hitter = player.getBounds(),
                     hitte = platforms[i].getBounds();
                 //console.log(global_hitte.y + ' | ' + hitte.y);
-                console.log(player.worldy + ' | ' + platforms[i].worldy);
+                //console.log(player.worldy + ' | ' + platforms[i].worldy);
                 environment.y = (player.vy > 0) ? (platforms[i].worldy - hitter.height) * -1 : (platforms[i].worldy + hitte.height) * -1;
                 //environment.y = (platforms[i].worldy - hitter.height) * -1;
                 player.can_jump = (player.vy > 0) ? true : false;
@@ -265,7 +321,7 @@ $( document ).ready(function(){
     function camera_update() {
         //environment.x = (window.innerWidth / 2) - 16;
         let bounds = player.getBounds();
-        console.log(player.worldx);
+        //console.log(player.worldx);
         app.stage.position.y = (window.innerHeight / 2) - (cam_y + (bounds.height / 2));
         app.stage.position.x = (window.innerWidth / 2) - (cam_x + (bounds.width / 2));
     }
@@ -273,6 +329,7 @@ $( document ).ready(function(){
     // Create a player object
     function create_player(x, y) {
         player = new sprite(texture_cache['player.png']);
+        player.name = 'player';
         player.position.set(x, y);
         player.vx = 0;
         player.vy = 0;
@@ -282,16 +339,24 @@ $( document ).ready(function(){
         player.jumping = false;
         player.can_jump = true;
         player_view.addChild(player);
+        players.push(player);
+        player.place = players.length - 1;
+        player.point_top = 0;
+        player.point_bottom = 0;
+        endpoints_update('insert', player);
     }
 
     // Create a platform object
     function create_platform(x, y) {
         platform = new sprite(texture_cache['platform.png']);
+        platform.name = 'platform';
         platform.position.set(x, y);
         platform.worldy = y - cam_y;
         platform.worldx = x - cam_x;
         environment.addChild(platform);
         platforms.push(platform);
+        platform.place = platforms.length - 1;
+        endpoints_update('insert', platform);
     }
 
     function create_platform_group(x, y, number) {
