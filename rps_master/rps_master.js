@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const auth = require('./auth.json');
+const auth = require('./authentication.json');
 
 const fighting_words = [
   'fight me', 'fight', 'lets fight', 'come at me',
