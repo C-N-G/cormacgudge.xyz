@@ -3,3 +3,4 @@ base/public/images/state.png
 DO-node/
 socketplayground/
 rps_master/node_modules/
+rps_master/auth.json/
