@@ -5,6 +5,7 @@ var chatroom_controller = require('../controllers/chatroom');
 var whiteboard_controller = require('../controllers/whiteboard');
 var reflex_controller = require('../controllers/reflex');
 var icarus_controller = require('../controllers/icarus');
+var battleship_controller = require('../controllers/battleship');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -18,5 +19,6 @@ router.get('/chatroom', chatroom_controller.render);
 router.get('/whiteboard', whiteboard_controller.render);
 router.get('/reflex', reflex_controller.render);
 router.get('/icarus', icarus_controller.render);
+router.get('/battleship', battleship_controller.render);
 
 module.exports = router;

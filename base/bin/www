@@ -36,6 +36,8 @@ const reflex_controller = require('../controllers/reflex');
 reflex_controller.index(io);
 const icarus_controller = require('../controllers/icarus');
 icarus_controller.index(io);
+const battleship_controller = require('../controllers/battleship');
+battleship_controller.index(io);
 
 /**
  * Start NW DB Crawler

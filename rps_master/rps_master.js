@@ -14,34 +14,35 @@ const insults = [
   'despicable'
 ];
 const commands = {
-  'channel': {
-    'voice': {'make': 'make voice channel'},
-    'text': {'make': 'make text channel'},
-    'delete': 'delete channel'
+  channel: {
+    voice: {make: 'make voice channel'},
+    text: {make: 'make text channel'},
+    delete: 'delete channel'
   },
-  'best_of': 'best of',
+  best_of: 'best of',
+  give_role: 'role me',
 }
 const loss_cases = {
-  'timeout': 'taking too long',
-  'bad_move': 'not using an appropriate move'
+  timeout: 'taking too long',
+  bad_move: 'not using an appropriate move'
 } //You forfiet this match by XYZ
 const moves = ['rock', 'paper', 'scissors'];
 const states = {
-  'ready': 'ready',
-  'waiting': 'waiting'
+  ready: 'ready',
+  waiting: 'waiting'
 };
 const timeOutDelay = 1000*15
 var start_timeout;
 let state = states.ready;
-let scores = {'player': 0, 'bot': 0};
+let scores = {player: 0, bot: 0};
 let current_match = {
-  'opponent': 0,
-  'objective': [],
-  'channel': 0,
-  'difficulty_length': 0,
-  'difficulty_height': 0,
-  'round': 0,
-  'score': {'player': 0, 'bot': 0}
+  opponent: 0,
+  objective: [],
+  channel: 0,
+  difficulty_length: 0,
+  difficulty_height: 0,
+  round: 0,
+  score: {player: 0, bot: 0}
 };
 let bot_message = 0;
 
@@ -107,17 +108,28 @@ function startMatch(objective, message) {
       break;
     case 'MAKE_CHANNEL':
       current_match.difficulty_length = 5;
-      current_match.difficulty_height = 0.5;
+      current_match.difficulty_height = 0.6;
       current_match.objective[2] = message.content.substr(19,16);
       current_match.objective[3] = message.content.split(" ")[1];
       current_match.objective[1] = `You have succeded in creating channel ${current_match.objective[2]}.`;
       current_match.objective[0] = function() {
         current_match.channel.guild.createChannel(current_match.objective[2], { type: current_match.objective[3] });
       };
-    case 'BEST_OF':
+    case commands.best_of:
       current_match.difficulty_length = message.content.slice(9);
       current_match.difficulty_height = 0.5;
       break;
+    case commands.give_role:
+      current_match.difficulty_length = 1;
+      current_match.difficulty_height = 0.1;
+      current_match.objective[2] = current_match.opponent;
+      current_match.objective[3] = message.member;
+      current_match.objective[1] = `You have been given your role`;
+      current_match.objective[0] = function() {
+        current_match.channel.guild.createRole({name:current_match.objective[2]})
+        .then(role => console.log(`${role.id}   A${current_match.objective[2]}A`));
+      //  .then(role => current_match.objective[3].addRole(role.id));
+      };
     default:
   }
   message.reply(`Let's duel! Match length is ${current_match.difficulty_length} rounds. Required win rate is ${current_match.difficulty_height*100}%. Your move!`);
@@ -143,7 +155,10 @@ client.on('message', message => {
           startMatch('MAKE_CHANNEL', message);
         }
         else if (message.content.startsWith(`!${commands.best_of} `) && !isNaN(message.content.slice(9))) {
-          startMatch('BEST_OF', message);
+          startMatch(commands.best_of, message);
+        }
+        else if (message.content === `!${commands.give_role}` && !message.guild.roles.find(role => role.name === message.author.tag)) {
+          startMatch(commands.give_role, message);
         }
         else {
           for (var i = 0; i < fighting_words.length; i++) {
