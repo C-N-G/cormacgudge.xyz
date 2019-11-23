@@ -8,6 +8,7 @@ let mouse_x;
 let mouse_y;
 let last_pos = {};
 let mp = {}
+let display_message = {};
 
 function setup() {
 
@@ -22,11 +23,13 @@ function setup() {
   mouse_offset.x = 0;
   mouse_offset.y = 0;
 
+  display_message.display = false;
+
   last_pos.x = 0;
   last_pos.y = 0;
   last_pos.rotation = 0;
 
-  bt.size = 100*7;
+  bt.size = 100*4;
   bt.width = bt.size/200
 
   mp.p1_ready = false;
@@ -34,6 +37,7 @@ function setup() {
   mp.player = 'joined';
   mp.game_started = false;
   mp.turn = false;
+  mp.ended = false;
 
   let myCanvas = createCanvas(bt.size*2 , bt.size);
   myCanvas.parent('content');
@@ -77,7 +81,7 @@ function ship(id, x, y, r, s, c) {
   this.y = y;
   this.rotation = r;
   this.size = s;
-  this.hits = trim('0 '.repeat(this.size));
+  this.hits = 0;
   this.color = c;
   this.moving = false;
   this.rotating = false;
@@ -272,12 +276,70 @@ function draw_foreign_board() {
           ellipse(circle_x, circle_y, bt.size/20);
           break;
         default:
+        strokeWeight(bt.width*1.2);
+        stroke('dodgerblue');
+        ellipse(circle_x, circle_y, bt.size/20);
+        strokeWeight(bt.width);
+        stroke('yellow');
+        fill('yellow');
+        ellipse(circle_x, circle_y, bt.size/20);
       }
       circle_y += bt.size/11;
     }
     circle_x += bt.size/11;
 
   }
+}
+
+function reset_boards() {
+  friendly_map = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ];
+
+  foreign_map = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ];
+
+  for (var i = 0; i < ships.length; i++) {
+    ships[i].y = 0;
+    ships[i].x = i;
+    ships[i].r = 0;
+    ships[i].hits = 0;
+  }
+
+  mp.game_started = false;
+  mp.p1_ready = false;
+}
+
+function print_message(text, time) {
+  // if (display_message.display != true) {
+  //   display_message.display = true;
+  //   display_message.text = text;
+  //   display_message.time = time;
+  //   display_message.start_time = millis();
+  // }
+  display_message.display = true;
+  display_message.text = text;
+  display_message.time = time;
+  display_message.start_time = millis();
 }
 
 function ship_collision_check(ship1, ship2) {
@@ -446,7 +508,22 @@ function menu_state() {
     strokeWeight(bt.width);
     fill('blue');
     stroke('blue');
-    text('waiting for game start', bt.size, bt.size/2);
+    text('w.i.p', bt.size, bt.size/2);
+  }
+
+  if (display_message.display) {
+    rectMode(RADIUS);
+    fill('black');
+    stroke('white');
+    rect(bt.size, bt.size/2, bt.size/3, bt.size/6)
+    rectMode(CORNER);
+    strokeWeight(bt.width);
+    fill('black');
+    stroke('white');
+    text(display_message.text, bt.size, bt.size/2);
+    if (display_message.start_time + display_message.time < millis()) {
+      display_message.display = false;
+    }
   }
 }
 
@@ -458,6 +535,7 @@ function mp_update() {
   });
 
   socket.on('game full', function(){
+    print_message('game full', 2*1000);
     console.log('game full cannot join');
   });
 
@@ -465,17 +543,44 @@ function mp_update() {
     friendly_map = data;
   });
 
+  socket.on('hit update', function(data){
+    foreign_map = data;
+  });
+
   socket.on('player status', function(data){
     mp.p2_ready = data;
   });
 
-  if (mp.p1_ready && mp.p2_ready && mp.game_started == false) {
-    socket.emit('start game request');
-  }
-
-  socket.on('game started', function(){
-    mp.game_started = true;
+  socket.on('game status', function(data){
+    mp.game_started = data;
   });
+
+  socket.on('turn update', function(data){
+    mp.turn = data;
+  });
+
+  socket.on('reset game', function(){
+    print_message('player left', 3*1000);
+    reset_boards();
+  });
+
+  socket.on('game won', function(){
+    setTimeout(function(){ location.reload(); }, 6000);
+    if (mp.ended == false) {
+      print_message('you have won', 5*1000);
+      setTimeout(function(){ location.reload(); }, 6000);
+      mp.ended = true;
+    }
+  });
+
+  socket.on('game lost', function(){
+    if (mp.ended == false) {
+      print_message('you have lost', 5*1000);
+      setTimeout(function(){ location.reload(); }, 6000);
+      mp.ended = true;
+    }
+  });
+
 }
 
 function draw() {
@@ -533,6 +638,7 @@ function mouseClicked() {
 
   console.log(`x:${mouse_x}, y:${mouse_y}`);
 
+  // ready click
   if (mouse_y == -1 && mouse_x == -1 && mp.player == 'playing' && mp.game_started == false) {
     if (mp.p1_ready) {
       mp.p1_ready = false;
@@ -542,29 +648,28 @@ function mouseClicked() {
     let data = []
     data[0] = mp.p1_ready;
     data[1] = make_ship_map();
+    data[2] = ships;
     socket.emit('player status', data);
   }
 
+  // map click
   mouse_x -=  11;
-
-  if (mp.p1_ready && mp.player == 'playing') {
+  if (mp.game_started && mp.player == 'playing' && mp.turn) {
     if (mouse_y >= 0
       && mouse_x >= 0
       && mouse_y <= 9
       && mouse_x <= 9
       ) {
       if (foreign_map[mouse_y][mouse_x] == 0) {
-        foreign_map[mouse_y][mouse_x] = 1;
-      } else if (foreign_map[mouse_y][mouse_x] == 1) {
-        foreign_map[mouse_y][mouse_x] = 2;
-      } else {
-        foreign_map[mouse_y][mouse_x] = 0;
+        foreign_map[mouse_y][mouse_x] = 3;
+        mp.turn = false;
+        socket.emit('map update', foreign_map);
       }
-      socket.emit('map update', foreign_map);
     }
   }
+  mouse_x +=  11;
 
-
+  // main menu click
   if (mp.player == 'joined') {
     if (mouseX >= (bt.size/2)-(bt.size/22) &&
         mouseX <= (bt.size/2)-(bt.size/22)+(bt.size/11) &&
@@ -581,9 +686,6 @@ function mouseClicked() {
       socket.emit('player spectating');
     }
   }
-
-
-  mouse_x +=  11;
 
   return false;
 
