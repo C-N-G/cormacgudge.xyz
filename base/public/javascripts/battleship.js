@@ -29,7 +29,7 @@ function setup() {
   last_pos.y = 0;
   last_pos.rotation = 0;
 
-  bt.size = 100*4;
+  bt.size = 100*7;
   bt.width = bt.size/200
 
   mp.p1_ready = false;
