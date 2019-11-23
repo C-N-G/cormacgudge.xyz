@@ -1,60 +1,157 @@
-$( document ).ready(function(){
-
-  var socket = io('/battleship');
-
-})
-
-var map;
-var bt = {};
+let socket;
+let foreign_map;
+let friendly_map;
+let bt = {};
+let ships = [];
+let mouse_offset = {};
+let mouse_x;
+let mouse_y;
+let last_pos = {};
+let mp = {}
 
 function setup() {
 
-  bt.size = 100*8;
+  socket = io('/battleship');
+
+  ships.push(new ship('carrier', 0, 0, 0, 5, 'darkorchid'));
+  ships.push(new ship('battleship', 1, 0, 0, 4, 'orange'));
+  ships.push(new ship('cruiser', 2, 0, 0, 3, 'yellow'));
+  ships.push(new ship('submarine', 3, 0, 0, 3, 'chartreuse'));
+  ships.push(new ship('destoryer', 4, 0, 0, 2, 'pink'));
+
+  mouse_offset.x = 0;
+  mouse_offset.y = 0;
+
+  last_pos.x = 0;
+  last_pos.y = 0;
+  last_pos.rotation = 0;
+
+  bt.size = 100*7;
   bt.width = bt.size/200
 
-  let myCanvas = createCanvas(bt.size , bt.size);
+  mp.p1_ready = false;
+  mp.p2_ready = false;
+  mp.player = 'joined';
+  mp.game_started = false;
+  mp.turn = false;
+
+  let myCanvas = createCanvas(bt.size*2 , bt.size);
   myCanvas.parent('content');
 
-  map = [
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1],
+  friendly_map = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
   ];
 
-  strokeWeight(bt.width);
-  rect(0,0,bt.size,bt.size);
+  foreign_map = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ];
 
-  let top_letters = {x: bt.size/22+bt.size/11, y: bt.size/22, value: 1};
-  let side_letters = {x: bt.size/22, y: bt.size/22+bt.size/11, value: ['A','B','C','D','E','F','G','H','I','J']};
-
-  let line_X = bt.size/11;
-  let line_y = bt.size/11;
-  let circle_y = bt.size/22+bt.size/11;
-  let circle_x = bt.size/22+bt.size/11;
+  smooth();
 
   textSize(bt.size/14);
   textAlign(CENTER, CENTER);
 
-  for (var i = 0; i < 10; i++) {
-    line(line_X, 0, line_X, bt.size);
-    line(0, line_y, bt.size, line_y);
-    line_X += bt.size/11;
-    line_y += bt.size/11;
+}
 
-    circle_y = bt.size/22+bt.size/11;
+function ship(id, x, y, r, s, c) {
+  this.id = id
+  this.x = x;
+  this.y = y;
+  this.rotation = r;
+  this.size = s;
+  this.hits = trim('0 '.repeat(this.size));
+  this.color = c;
+  this.moving = false;
+  this.rotating = false;
+}
 
-    for (var i1 = 0; i1 < 10; i1++) {
-      ellipse(circle_x, circle_y, bt.size/13.5);
-      circle_y += bt.size/11;
+function make_ship_map() {
+  let ship_map = [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ];
+  for (var i_x = 0; i_x < ship_map.length; i_x++) {
+    for (var i_y = 0; i_y < ship_map[i_x].length; i_y++) {
+      for (var i_s = 0; i_s < ships.length; i_s++) {
+        if (ships[i_s].rotation == 0 &&
+            i_y == ships[i_s].x &&
+             i_x >= ships[i_s].y &&
+             i_x <= (ships[i_s].y + (ships[i_s].size - 1))
+            ||
+            ships[i_s].rotation == 1 &&
+            i_x == ships[i_s].y &&
+            i_y >= ships[i_s].x &&
+            i_y <= (ships[i_s].x + (ships[i_s].size - 1))
+          ) {
+          ship_map[i_x][i_y] = 1;
+        }
+      }
     }
-    circle_x += bt.size/11;
+  }
+  console.log(ship_map);
+  return ship_map;
+}
+
+function draw_friendly_board() {
+  let line_x = bt.size/11;
+  let line_y = bt.size/11;
+  let circle_y = bt.size/22+bt.size/11;
+  let circle_x = bt.size/22+bt.size/11;
+  let top_letters = {x: (bt.size/22)+(bt.size/11), y: bt.size/22, value: 1};
+  let side_letters = {x: bt.size/22, y: (bt.size/22)+(bt.size/11), value: ['A','B','C','D','E','F','G','H','I','J']};
+  let tri = bt.size/22;
+
+  fill('royalblue');
+  stroke('black');
+  strokeWeight(bt.width);
+  rect(0,0,bt.size,bt.size);
+
+  if (mp.p1_ready) {
+    fill('lawngreen');
+  } else {
+    fill('red');
+  }
+  triangle (
+    tri, tri-(bt.size/33),
+    tri+(bt.size/33), tri+(bt.size/33),
+    tri-(bt.size/33), tri+(bt.size/33)
+  );
+
+  for (var i = 0; i < 10; i++) {
+
+    fill('black');
+    stroke('black');
+    strokeWeight(bt.width);
+    line(line_x, 0, line_x, bt.size);
+    line(0, line_y, bt.size, line_y);
+    line_x += bt.size/11;
+    line_y += bt.size/11;
 
     text(top_letters.value, top_letters.x, top_letters.y);
     top_letters.value++;
@@ -62,36 +159,38 @@ function setup() {
     text(side_letters.value[i], side_letters.x, side_letters.y);
     side_letters.y += bt.size/11;
 
-  }
-
-  noLoop();
-
-}
-
-function draw() {
-
-  let black = color(0);
-  let red = color(255,0,0);
-  let white = color(255);
-
-  circle_y = bt.size/22+bt.size/11;
-  circle_x = bt.size/22+bt.size/11;
-
-  for (var i = 0; i < 10; i++) {
     circle_y = bt.size/22+bt.size/11;
 
     for (var i1 = 0; i1 < 10; i1++) {
-      if (map[i1][i] == 1) {
-        strokeWeight(bt.width);
-        stroke(black);
-        ellipse(circle_x, circle_y, bt.size/13.5);
-      } else if (map[i1][i] == 0) {
-        strokeWeight(bt.width*1.5);
-        stroke(white);
-        ellipse(circle_x, circle_y, bt.size/13.5);
-        strokeWeight(bt.width);
-        stroke(red);
-        ellipse(circle_x, circle_y, bt.size/13.5);
+      switch (friendly_map[i1][i]) {
+        case 0:
+          strokeWeight(bt.width*1.2);
+          stroke('royalblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('black');
+          fill('black');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        case 1:
+          strokeWeight(bt.width*1.2);
+          stroke('royalblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('red');
+          fill('red');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        case 2:
+          strokeWeight(bt.width*1.2);
+          stroke('royalblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('white');
+          fill('white');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        default:
       }
       circle_y += bt.size/11;
     }
@@ -100,18 +199,419 @@ function draw() {
   }
 }
 
-function mouseClicked(event) {
+function draw_foreign_board() {
+  let line_x = bt.size/11 + bt.size;
+  let line_y = bt.size/11;
+  let circle_x = bt.size/22+bt.size/11 + bt.size;
+  let circle_y = bt.size/22+bt.size/11;
+  let top_letters = {x: (bt.size/22)+(bt.size/11) + bt.size, y: bt.size/22, value: 1};
+  let side_letters = {x: bt.size/22 + bt.size, y: (bt.size/22)+(bt.size/11), value: ['A','B','C','D','E','F','G','H','I','J']};
+  let tri = bt.size/22;
 
-  console.log(`x:${floor(mouseX/(bt.size/11))}, y:${floor(mouseY/(bt.size/11))}`);
-  if (floor(mouseY/(bt.size/11))-1 >= 0 && floor(mouseX/(bt.size/11))-1 >= 0) {
-    if (map[floor(mouseY/(bt.size/11))-1][floor(mouseX/(bt.size/11))-1] == 1) {
-      map[floor(mouseY/(bt.size/11))-1][floor(mouseX/(bt.size/11))-1] = 0;
-    } else {
-      map[floor(mouseY/(bt.size/11))-1][floor(mouseX/(bt.size/11))-1] = 1;
+  fill('dodgerblue');
+  stroke('black');
+  strokeWeight(bt.width);
+  rect(bt.size,0,bt.size,bt.size);
+
+  if (mp.p2_ready) {
+    fill('lawngreen');
+  } else {
+    fill('red');
+  }
+  triangle (
+    bt.size+tri, tri-(bt.size/33),
+    bt.size+tri+(bt.size/33), tri+(bt.size/33),
+    bt.size+tri-(bt.size/33), tri+(bt.size/33)
+  );
+
+  for (var i = 0; i < 10; i++) {
+
+    fill('black');
+    stroke('black');
+    strokeWeight(bt.width);
+    line(line_x, 0, line_x, bt.size);
+    line(bt.size, line_y, bt.size*2, line_y);
+    line_x += bt.size/11;
+    line_y += bt.size/11;
+
+    text(top_letters.value, top_letters.x, top_letters.y);
+    top_letters.value++;
+    top_letters.x += bt.size/11;
+    text(side_letters.value[i], side_letters.x, side_letters.y);
+    side_letters.y += bt.size/11;
+
+    circle_y = bt.size/22+bt.size/11;
+
+    for (var i1 = 0; i1 < 10; i1++) {
+      switch (foreign_map[i1][i]) {
+        case 0:
+          strokeWeight(bt.width*1.2);
+          stroke('dodgerblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('black');
+          fill('black');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        case 1:
+          strokeWeight(bt.width*1.2);
+          stroke('dodgerblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('red');
+          fill('red');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        case 2:
+          strokeWeight(bt.width*1.2);
+          stroke('dodgerblue');
+          ellipse(circle_x, circle_y, bt.size/20);
+          strokeWeight(bt.width);
+          stroke('white');
+          fill('white');
+          ellipse(circle_x, circle_y, bt.size/20);
+          break;
+        default:
+      }
+      circle_y += bt.size/11;
+    }
+    circle_x += bt.size/11;
+
+  }
+}
+
+function ship_collision_check(ship1, ship2) {
+  return (
+      ships[ship1].id != ships[ship2].id &&
+      ships[ship1].rotation == 0 &&
+      ships[ship2].rotation == 0 &&
+      ships[ship1].x == ships[ship2].x &&
+      ships[ship1].y + (ships[ship1].size-1) >= ships[ship2].y &&
+      ships[ship1].y <= ships[ship2].y + (ships[ship2].size-1)
+      ||
+      ships[ship1].id != ships[ship2].id &&
+      ships[ship1].rotation == 1 &&
+      ships[ship2].rotation == 0 &&
+      ships[ship1].y >= ships[ship2].y &&
+      ships[ship1].y <= ships[ship2].y + (ships[ship2].size-1) &&
+      ships[ship1].x + (ships[ship1].size-1) >= ships[ship2].x &&
+      ships[ship1].x <= ships[ship2].x
+      ||
+      ships[ship1].id != ships[ship2].id &&
+      ships[ship1].rotation == 0 &&
+      ships[ship2].rotation == 1 &&
+      ships[ship1].y + (ships[ship1].size-1) >= ships[ship2].y &&
+      ships[ship1].y <= ships[ship2].y &&
+      ships[ship1].x >= ships[ship2].x &&
+      ships[ship1].x <= ships[ship2].x + (ships[ship2].size-1)
+      ||
+      ships[ship1].id != ships[ship2].id &&
+      ships[ship1].rotation == 1 &&
+      ships[ship2].rotation == 1 &&
+      ships[ship1].y == ships[ship2].y &&
+      ships[ship1].x + (ships[ship1].size-1) >= ships[ship2].x &&
+      ships[ship1].x <= ships[ship2].x + (ships[ship2].size-1)
+    );
+}
+
+function out_of_bounds_check(ship) {
+  let out_of_bounds = false;
+  if (ships[ship].rotation == 0) {
+    if (ships[ship].x < 0) {
+      out_of_bounds = true;
+    } if (ships[ship].x > 9) {
+      out_of_bounds = true;
+    } if (ships[ship].y < 0) {
+      out_of_bounds = true;
+    } if (ships[ship].y + ships[ship].size - 1 > 9) {
+      out_of_bounds = true;
+    }
+  } else if (ships[ship].rotation == 1) {
+    if (ships[ship].y < 0) {
+      out_of_bounds = true;
+    } if (ships[ship].y > 9) {
+      out_of_bounds = true;
+    } if (ships[ship].x < 0) {
+      out_of_bounds = true;
+    } if (ships[ship].x + ships[ship].size - 1 > 9) {
+      out_of_bounds = true;
+    }
+  }
+  return out_of_bounds;
+}
+
+function update_ships() {
+
+  for (var i = 0; i < ships.length; i++) {
+
+    if (ships[i].moving == true) {
+      last_pos.x = ships[i].x;
+      last_pos.y = ships[i].y;
+      ships[i].x = mouse_x - mouse_offset.x;
+      ships[i].y = mouse_y - mouse_offset.y;
+    }
+
+    if (ships[i].rotating == true) {
+      last_pos.rotation = ships[i].rotation;
+      if (ships[i].rotation == 1) {
+        ships[i].rotation = 0;
+      } else if (ships[i].rotation == 0) {
+        ships[i].rotation = 1;
+      }
+      ships[i].rotating = false;
+      for (var i1 = 0; i1 < ships.length; i1++) {
+        if(ship_collision_check(i,i1)) {
+          ships[i].rotation = last_pos.rotation;
+        }
+      }
+      if (out_of_bounds_check(i)) {
+        ships[i].rotation = last_pos.rotation;
+      }
+    }
+
+    if (ships[i].rotation == 0) {
+      if (ships[i].x < 0) {
+        ships[i].x = 0;
+      } if (ships[i].x > 9) {
+        ships[i].x = 9;
+      } if (ships[i].y < 0) {
+        ships[i].y = 0;
+      } if (ships[i].y + ships[i].size - 1 > 9) {
+        ships[i].y = 10 - ships[i].size;
+      }
+    } else if (ships[i].rotation == 1) {
+      if (ships[i].y < 0) {
+        ships[i].y = 0;
+      } if (ships[i].y > 9) {
+        ships[i].y = 9;
+      } if (ships[i].x < 0) {
+        ships[i].x = 0;
+      } if (ships[i].x + ships[i].size - 1 > 9) {
+        ships[i].x = 10 - ships[i].size;
+      }
+    }
+
+    for (var i1 = 0; i1 < ships.length; i1++) {
+      if (ship_collision_check(i,i1)) {
+        ships[i].x = last_pos.x;
+        ships[i].y = last_pos.y;
+      }
+    }
+
+    noFill();
+    let slot = bt.size/11;
+    stroke(ships[i].color);
+    strokeWeight(bt.width*2.65);
+    if (ships[i].rotation == 0) {
+      rect(slot * (ships[i].x + 1) + (bt.width*2),
+      slot * (ships[i].y + 1) + (bt.width*2),
+      slot - (bt.width*4),
+      slot * ships[i].size - (bt.width*4),
+      35);
+    } else if (ships[i].rotation == 1) {
+      rect(slot * (ships[i].x + 1) + (bt.width*2),
+      slot * (ships[i].y + 1) + (bt.width*2),
+      slot * ships[i].size - (bt.width*4),
+      slot - (bt.width*4),
+      35);
+    }
+
+  }
+
+}
+
+function menu_state() {
+  if (mp.player == 'joined') {
+    strokeWeight(bt.width*3);
+    stroke('black');
+    fill('gray');
+    rect(0,0,bt.size*2,bt.size);
+    strokeWeight(bt.width);
+    fill('red');
+    rect((bt.size/2)-(bt.size/22), (bt.size/2)-(bt.size/22), bt.size/11,bt.size/11, 15);
+    stroke('red');
+    text('JOIN', bt.size/2, bt.size/2 - bt.size/11);
+    fill('blue');
+    stroke('black');
+    rect((bt.size/2)-(bt.size/22)+bt.size, (bt.size/2)-(bt.size/22), bt.size/11,bt.size/11, 15);
+    stroke('blue');
+    text('SPEC', bt.size/2 + bt.size, bt.size/2 - bt.size/11);
+  }
+
+  if (mp.player == 'spectating' && mp.game_started == false) {
+    strokeWeight(bt.width*3);
+    stroke('black');
+    fill('gray');
+    rect(0,0,bt.size*2,bt.size);
+    strokeWeight(bt.width);
+    fill('blue');
+    stroke('blue');
+    text('waiting for game start', bt.size, bt.size/2);
+  }
+}
+
+function mp_update() {
+
+  socket.on('join request granted', function(){
+    mp.player = 'playing';
+    console.log('game joined');
+  });
+
+  socket.on('game full', function(){
+    console.log('game full cannot join');
+  });
+
+  socket.on('map update', function(data){
+    friendly_map = data;
+  });
+
+  socket.on('player status', function(data){
+    mp.p2_ready = data;
+  });
+
+  if (mp.p1_ready && mp.p2_ready && mp.game_started == false) {
+    socket.emit('start game request');
+  }
+
+  socket.on('game started', function(){
+    mp.game_started = true;
+  });
+}
+
+function draw() {
+
+  mouse_x = floor(mouseX/(bt.size/11))-1;
+  mouse_y = floor(mouseY/(bt.size/11))-1;
+
+  mp_update();
+  draw_friendly_board();
+  draw_foreign_board();
+  update_ships();
+  menu_state();
+
+}
+
+function mouseReleased() {
+
+  for (var i = 0; i < ships.length; i++) {
+    ships[i].moving = false;
+  }
+
+  return false;
+
+}
+
+function mousePressed() {
+
+  if (!mp.p1_ready && mp.player == 'playing') {
+    for (var i = 0; i < ships.length; i++) {
+      if (ships[i].rotation == 0 &&
+          mouse_x == ships[i].x &&
+          mouse_y >= ships[i].y &&
+          mouse_y <= (ships[i].y + (ships[i].size - 1)) &&
+          ships[i].moving == false
+          ||
+          ships[i].rotation == 1 &&
+          mouse_y == ships[i].y &&
+          mouse_x >= ships[i].x &&
+          mouse_x <= (ships[i].x + (ships[i].size - 1)) &&
+          ships[i].moving == false
+      ) {
+        mouse_offset.x = mouse_x - ships[i].x;
+        mouse_offset.y = mouse_y - ships[i].y;
+        ships[i].moving = true;
+      }
     }
   }
 
 
-  redraw()
+  return false;
+
+}
+
+function mouseClicked() {
+
+  console.log(`x:${mouse_x}, y:${mouse_y}`);
+
+  if (mouse_y == -1 && mouse_x == -1 && mp.player == 'playing' && mp.game_started == false) {
+    if (mp.p1_ready) {
+      mp.p1_ready = false;
+    } else {
+      mp.p1_ready = true;
+    }
+    let data = []
+    data[0] = mp.p1_ready;
+    data[1] = make_ship_map();
+    socket.emit('player status', data);
+  }
+
+  mouse_x -=  11;
+
+  if (mp.p1_ready && mp.player == 'playing') {
+    if (mouse_y >= 0
+      && mouse_x >= 0
+      && mouse_y <= 9
+      && mouse_x <= 9
+      ) {
+      if (foreign_map[mouse_y][mouse_x] == 0) {
+        foreign_map[mouse_y][mouse_x] = 1;
+      } else if (foreign_map[mouse_y][mouse_x] == 1) {
+        foreign_map[mouse_y][mouse_x] = 2;
+      } else {
+        foreign_map[mouse_y][mouse_x] = 0;
+      }
+      socket.emit('map update', foreign_map);
+    }
+  }
+
+
+  if (mp.player == 'joined') {
+    if (mouseX >= (bt.size/2)-(bt.size/22) &&
+        mouseX <= (bt.size/2)-(bt.size/22)+(bt.size/11) &&
+        mouseY >= (bt.size/2)-(bt.size/22) &&
+        mouseY <= (bt.size/2)-(bt.size/22)+(bt.size/11)
+    ) {
+      socket.emit('join request');
+    } else if (mouseX >= bt.size+(bt.size/2)-(bt.size/22) &&
+        mouseX <= bt.size+(bt.size/2)-(bt.size/22)+(bt.size/11) &&
+        mouseY >= (bt.size/2)-(bt.size/22) &&
+        mouseY <= (bt.size/2)-(bt.size/22)+(bt.size/11)
+    ) {
+      mp.player = 'spectating';
+      socket.emit('player spectating');
+    }
+  }
+
+
+  mouse_x +=  11;
+
+  return false;
+
+}
+
+function doubleClicked() {
+  console.log(`${mouse_x} ${mouse_y}`);
+
+  if (!mp.p1_ready && mp.player == 'playing') {
+    for (var i = 0; i < ships.length; i++) {
+      if (ships[i].rotation == 0 &&
+          mouse_x == ships[i].x &&
+          mouse_y >= ships[i].y &&
+          mouse_y <= (ships[i].y + (ships[i].size - 1)) &&
+          ships[i].moving == false
+          ||
+          ships[i].rotation == 1 &&
+          mouse_y == ships[i].y &&
+          mouse_x >= ships[i].x &&
+          mouse_x <= (ships[i].x + (ships[i].size - 1)) &&
+          ships[i].moving == false
+      ) {
+        ships[i].rotating = true;
+      }
+    }
+  }
+
+
+  return false;
 
 }
