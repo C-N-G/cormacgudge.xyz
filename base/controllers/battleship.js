@@ -45,17 +45,19 @@ exports.index = function(io) {
 
       function deduct_ship_health(i_x, i_y, player) {
         for (var i = 0; i < player.ships.length; i++) {
+          console.log(`${i_x}, ${i_y}, ${player.ships[i].x}, ${player.ships[i].y},`)
           if (player.ships[i].rotation == 0 &&
               i_x == player.ships[i].x &&
               i_y >= player.ships[i].y &&
-              i_y <= player.ships[i].y + player.ships[i].size
+              i_y <= player.ships[i].y + (player.ships[i].size - 1)
               ||
               player.ships[i].rotation == 1 &&
               i_y == player.ships[i].y &&
               i_x >= player.ships[i].x &&
-              i_x <= player.ships[i].x + player.ships[i].size
+              i_x <= player.ships[i].x + (player.ships[i].size - 1)
           ) {
             player.ships[i].hits++;
+            console.log(`total health is ${check_health(player)}`)
           }
         }
       }
@@ -67,7 +69,7 @@ exports.index = function(io) {
           for (var i_y = 0; i_y < player_1.ship_map.length; i_y++) {
             if (player_1.hit_map[i_x][i_y] == 3 && player_2.ship_map[i_x][i_y] == 1) {
               player_1.hit_map[i_x][i_y] = 1;
-              deduct_ship_health(i_x, i_y, player_2);
+              deduct_ship_health(i_y, i_x, player_2);
               check_game_over(player_1, player_2);
             } else if (player_1.hit_map[i_x][i_y] == 3 && player_2.ship_map[i_x][i_y] == 0) {
               player_1.hit_map[i_x][i_y] = 2;
@@ -107,19 +109,29 @@ exports.index = function(io) {
       });
 
       socket.on('disconnect', function(){
-        if (this_player.id == current_game.players[1].id) {
-          current_game.players[1] = current_game.players[2];
-          current_game.players[2] = {};
+
+        if (this_player.id == current_game.players[1].id || this_player.id == current_game.players[2].id) {
+          console.log(`player with id ${this_player.id} has left game. total players = ${current_game.player_count}`)
           current_game.player_count--;
           if (current_game.player_count < 0) {
             current_game.player_count = 0;
           }
         }
+
+        if (this_player.id == current_game.players[1].id) {
+          current_game.players[1] = current_game.players[2];
+          current_game.players[2] = {};
+        } else if (this_player.id == current_game.players[2].id) {
+          current_game.players[2] = {};
+        }
+
         if (current_game.started) {
           battleship.to(current_game.players[1].id).emit('reset game');
         }
-        battleship.emit('player status', false);
         current_game.started = false;
+
+        battleship.emit('player status', false);
+
         for (var i = 0; i < players.length; i++) {
           if (players[i].id == this_player.id) {
             console.log(`removed player with id ${players[i].id} from list`)
