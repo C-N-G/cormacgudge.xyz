@@ -3,6 +3,7 @@ let foreign_map;
 let friendly_map;
 let bt = {};
 let ships = [];
+let sunk_ships = [];
 let mouse_offset = {};
 let mouse_x;
 let mouse_y;
@@ -18,7 +19,7 @@ function setup() {
   ships.push(new ship('battleship', 1, 0, 0, 4, 'orange'));
   ships.push(new ship('cruiser', 2, 0, 0, 3, 'yellow'));
   ships.push(new ship('submarine', 3, 0, 0, 3, 'chartreuse'));
-  ships.push(new ship('destoryer', 4, 0, 0, 2, 'pink'));
+  ships.push(new ship('destroyer', 4, 0, 0, 2, 'pink'));
 
   mouse_offset.x = 0;
   mouse_offset.y = 0;
@@ -29,7 +30,8 @@ function setup() {
   last_pos.y = 0;
   last_pos.rotation = 0;
 
-  bt.size = 100*7;
+  // bt.size = 100*7;
+   bt.size = 100*4;
   bt.width = bt.size/200
 
   mp.p1_ready = false;
@@ -72,6 +74,7 @@ function setup() {
 
   textSize(bt.size/14);
   textAlign(CENTER, CENTER);
+  mp_update();
 
 }
 
@@ -118,7 +121,6 @@ function make_ship_map() {
       }
     }
   }
-  console.log(ship_map);
   return ship_map;
 }
 
@@ -141,11 +143,18 @@ function draw_friendly_board() {
   } else {
     fill('red');
   }
-  triangle (
-    tri, tri-(bt.size/33),
-    tri+(bt.size/33), tri+(bt.size/33),
-    tri-(bt.size/33), tri+(bt.size/33)
-  );
+
+  if (mp.turn == true && mp.game_started == true) {
+    triangle (
+      tri, tri-(bt.size/33),
+      tri+(bt.size/33), tri+(bt.size/33),
+      tri-(bt.size/33), tri+(bt.size/33)
+    );
+  } else if (mp.turn == false || mp.game_started == false) {
+    rectMode(RADIUS);
+    rect(tri, tri, bt.size/33, bt.size/33);
+    rectMode(CORNER);
+  }
 
   for (var i = 0; i < 10; i++) {
 
@@ -196,10 +205,34 @@ function draw_friendly_board() {
           break;
         default:
       }
+
       circle_y += bt.size/11;
+
     }
+
     circle_x += bt.size/11;
 
+  }
+
+  // draw ship
+  for (var i = 0; i < ships.length; i++) {
+    noFill();
+    let slot = bt.size/11;
+    stroke(mp.player == 'spectating' ? 'red' : ships[i].color);
+    strokeWeight(bt.width*2.65);
+    if (ships[i].rotation == 0) {
+      rect(slot * (ships[i].x + 1) + (bt.width*2),
+      slot * (ships[i].y + 1) + (bt.width*2),
+      slot - (bt.width*4),
+      slot * ships[i].size - (bt.width*4),
+      35);
+    } else if (ships[i].rotation == 1) {
+      rect(slot * (ships[i].x + 1) + (bt.width*2),
+      slot * (ships[i].y + 1) + (bt.width*2),
+      slot * ships[i].size - (bt.width*4),
+      slot - (bt.width*4),
+      35);
+    }
   }
 }
 
@@ -222,11 +255,18 @@ function draw_foreign_board() {
   } else {
     fill('red');
   }
-  triangle (
-    bt.size+tri, tri-(bt.size/33),
-    bt.size+tri+(bt.size/33), tri+(bt.size/33),
-    bt.size+tri-(bt.size/33), tri+(bt.size/33)
-  );
+
+  if (mp.turn == false && mp.game_started == true) {
+    triangle (
+      bt.size+tri, tri-(bt.size/33),
+      bt.size+tri+(bt.size/33), tri+(bt.size/33),
+      bt.size+tri-(bt.size/33), tri+(bt.size/33)
+    );
+  } else if (mp.turn == true || mp.game_started == false) {
+    rectMode(RADIUS);
+    rect(bt.size+tri, tri, bt.size/33, bt.size/33);
+    rectMode(CORNER);
+  }
 
   for (var i = 0; i < 10; i++) {
 
@@ -284,11 +324,36 @@ function draw_foreign_board() {
         fill('yellow');
         ellipse(circle_x, circle_y, bt.size/20);
       }
+
       circle_y += bt.size/11;
+
     }
+
     circle_x += bt.size/11;
 
   }
+
+  // draw sunk enemy ships
+  for (var i = 0; i < sunk_ships.length; i++) {
+    noFill();
+    let slot = bt.size/11;
+    stroke('red');
+    strokeWeight(bt.width*2.65);
+    if (sunk_ships[i].rotation == 0) {
+      rect(slot * (sunk_ships[i].x + 12) + (bt.width*2),
+      slot * (sunk_ships[i].y + 1) + (bt.width*2),
+      slot - (bt.width*4),
+      slot * sunk_ships[i].size - (bt.width*4),
+      35);
+    } else if (sunk_ships[i].rotation == 1) {
+      rect(slot * (sunk_ships[i].x + 12) + (bt.width*2),
+      slot * (sunk_ships[i].y + 1) + (bt.width*2),
+      slot * sunk_ships[i].size - (bt.width*4),
+      slot - (bt.width*4),
+      35);
+    }
+  }
+
 }
 
 function reset_boards() {
@@ -413,6 +478,7 @@ function update_ships() {
       ships[i].y = mouse_y - mouse_offset.y;
     }
 
+    // only allow ship rotation if there is space
     if (ships[i].rotating == true) {
       last_pos.rotation = ships[i].rotation;
       if (ships[i].rotation == 1) {
@@ -431,6 +497,7 @@ function update_ships() {
       }
     }
 
+    // keep sheep inside board area
     if (ships[i].rotation == 0) {
       if (ships[i].x < 0) {
         ships[i].x = 0;
@@ -453,29 +520,12 @@ function update_ships() {
       }
     }
 
+    // only update ship if there is no collision in new location
     for (var i1 = 0; i1 < ships.length; i1++) {
       if (ship_collision_check(i,i1)) {
         ships[i].x = last_pos.x;
         ships[i].y = last_pos.y;
       }
-    }
-
-    noFill();
-    let slot = bt.size/11;
-    stroke(ships[i].color);
-    strokeWeight(bt.width*2.65);
-    if (ships[i].rotation == 0) {
-      rect(slot * (ships[i].x + 1) + (bt.width*2),
-      slot * (ships[i].y + 1) + (bt.width*2),
-      slot - (bt.width*4),
-      slot * ships[i].size - (bt.width*4),
-      35);
-    } else if (ships[i].rotation == 1) {
-      rect(slot * (ships[i].x + 1) + (bt.width*2),
-      slot * (ships[i].y + 1) + (bt.width*2),
-      slot * ships[i].size - (bt.width*4),
-      slot - (bt.width*4),
-      35);
     }
 
   }
@@ -508,7 +558,7 @@ function menu_state() {
     strokeWeight(bt.width);
     fill('blue');
     stroke('blue');
-    text('w.i.p', bt.size, bt.size/2);
+    text('waiting for game to start', bt.size, bt.size/2);
   }
 
   if (display_message.display) {
@@ -531,12 +581,10 @@ function mp_update() {
 
   socket.on('join request granted', function(){
     mp.player = 'playing';
-    console.log('game joined');
   });
 
   socket.on('game full', function(){
     print_message('game full', 2*1000);
-    console.log('game full cannot join');
   });
 
   socket.on('map update', function(data){
@@ -581,6 +629,26 @@ function mp_update() {
     }
   });
 
+  socket.on('sunk ships update', function(data){
+    sunk_ships = data;
+  });
+
+  socket.on('spec update', function(current_game){
+    if (mp.player == 'spectating') {
+      friendly_map = current_game.players[1].hit_map;
+      ships = current_game.players[2].dead_ships;
+      mp.p1_ready = current_game.players[1].ready;
+      foreign_map = current_game.players[2].hit_map;
+      sunk_ships = current_game.players[1].dead_ships;
+      mp.p2_ready = current_game.players[2].ready;
+      if (current_game.players[1].turn == true) {
+        mp.turn = true;
+      } else if (current_game.players[2].turn == true) {
+        mp.turn = false;
+      }
+    }
+  });
+
 }
 
 function draw() {
@@ -588,7 +656,6 @@ function draw() {
   mouse_x = floor(mouseX/(bt.size/11))-1;
   mouse_y = floor(mouseY/(bt.size/11))-1;
 
-  mp_update();
   draw_friendly_board();
   draw_foreign_board();
   update_ships();
@@ -636,7 +703,7 @@ function mousePressed() {
 
 function mouseClicked() {
 
-  console.log(`x:${mouse_x}, y:${mouse_y}`);
+  //console.log(`x:${mouse_x}, y:${mouse_y}`);
 
   // ready click
   if (mouse_y == -1 && mouse_x == -1 && mp.player == 'playing' && mp.game_started == false) {
@@ -683,6 +750,7 @@ function mouseClicked() {
         mouseY <= (bt.size/2)-(bt.size/22)+(bt.size/11)
     ) {
       mp.player = 'spectating';
+      ships = [];
       socket.emit('player spectating');
     }
   }

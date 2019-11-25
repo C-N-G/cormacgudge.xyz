@@ -28,14 +28,26 @@ exports.index = function(io) {
       function player() {
         this.id = socket.id;
         this.ship_map;
-        this.hit_map;
+        this.hit_map = [
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+          [0,0,0,0,0,0,0,0,0,0],
+        ];
         this.ships;
+        this.dead_ships = [];
         this.turn = false;
         this.ready = false;
         this.status = 'joined';
       }
 
-      function check_health(player) {
+      function check_total_health(player) {
         let health = 0;
         for (var i = 0; i < player.ships.length; i++) {
           health += player.ships[i].size - player.ships[i].hits;
@@ -43,9 +55,36 @@ exports.index = function(io) {
         return health;
       }
 
+      function check_ship_in_array(array, ship_id) {
+        for (var i = 0; i < array.length; i++) {
+          if (array[i].id == ship_id) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function update_spec() {
+        battleship.emit('spec update', current_game);
+      }
+
+      function check_dead_ship(player) {
+        for (var i = 0; i < player.ships.length; i++) {
+          if (player.ships[i].hits == player.ships[i].size &&
+            check_ship_in_array(player.dead_ships, player.ships[i].id) == false) {
+            player.dead_ships.push(player.ships[i]);
+            console.log(`ship_dead`);
+            if (player.id == current_game.players[1].id) {
+              battleship.to(current_game.players[2].id).emit('sunk ships update', current_game.players[1].dead_ships);
+            } else if (player.id == current_game.players[2].id) {
+              battleship.to(current_game.players[1].id).emit('sunk ships update', current_game.players[2].dead_ships);
+            }
+          }
+        }
+      }
+
       function deduct_ship_health(i_x, i_y, player) {
         for (var i = 0; i < player.ships.length; i++) {
-          console.log(`${i_x}, ${i_y}, ${player.ships[i].x}, ${player.ships[i].y},`)
           if (player.ships[i].rotation == 0 &&
               i_x == player.ships[i].x &&
               i_y >= player.ships[i].y &&
@@ -57,19 +96,18 @@ exports.index = function(io) {
               i_x <= player.ships[i].x + (player.ships[i].size - 1)
           ) {
             player.ships[i].hits++;
-            console.log(`total health is ${check_health(player)}`)
+            console.log(`total health is ${check_total_health(player)}`)
           }
         }
       }
 
       function hit_detection(player_1, player_2) {
-        // TODO: change how maps work so that they're completely processed by the server
-        // detect if player_1 has hit any boats of player_2 with their shots
         for (var i_x = 0; i_x < player_1.ship_map.length; i_x++) {
           for (var i_y = 0; i_y < player_1.ship_map.length; i_y++) {
             if (player_1.hit_map[i_x][i_y] == 3 && player_2.ship_map[i_x][i_y] == 1) {
               player_1.hit_map[i_x][i_y] = 1;
               deduct_ship_health(i_y, i_x, player_2);
+              check_dead_ship(player_2);
               check_game_over(player_1, player_2);
             } else if (player_1.hit_map[i_x][i_y] == 3 && player_2.ship_map[i_x][i_y] == 0) {
               player_1.hit_map[i_x][i_y] = 2;
@@ -79,14 +117,14 @@ exports.index = function(io) {
       }
 
       function check_game_over(player_1, player_2) {
-        if (check_health(player_2) <= 0) {
+        if (check_total_health(player_2) <= 0) {
           battleship.to(player_1.id).emit('game won');
           battleship.to(player_2.id).emit('game lost');
+          current_game.started = false;
+          current_game.players[1].ready = false;
+          current_game.players[2].ready = false;
+          battleship.emit('game status', false);
         }
-        current_game.started = false;
-        current_game.players[1].ready = false;
-        current_game.players[2].ready = false;
-        battleship.emit('turn update', false);
       }
 
       socket.on('join request', function(){
@@ -106,6 +144,9 @@ exports.index = function(io) {
       socket.on('player spectating', function(){
         console.log('player is spectating');
         socket.emit('game status', current_game.started);
+        if (current_game.started) {
+          socket.emit('spec update', current_game);
+        }
       });
 
       socket.on('disconnect', function(){
@@ -116,21 +157,24 @@ exports.index = function(io) {
           if (current_game.player_count < 0) {
             current_game.player_count = 0;
           }
-        }
 
-        if (this_player.id == current_game.players[1].id) {
-          current_game.players[1] = current_game.players[2];
-          current_game.players[2] = {};
-        } else if (this_player.id == current_game.players[2].id) {
-          current_game.players[2] = {};
-        }
+          if (current_game.started) {
+            battleship.to(current_game.players[1].id).emit('reset game');
+            battleship.emit('game status', false);
+          }
 
-        if (current_game.started) {
-          battleship.to(current_game.players[1].id).emit('reset game');
-        }
-        current_game.started = false;
+          current_game.started = false;
 
-        battleship.emit('player status', false);
+          if (this_player.id == current_game.players[1].id) {
+            current_game.players[1] = current_game.players[2];
+            current_game.players[2] = {};
+          } else if (this_player.id == current_game.players[2].id) {
+            current_game.players[2] = {};
+          }
+
+          battleship.to(current_game.players[1].id).emit('player status', false);
+
+        }
 
         for (var i = 0; i < players.length; i++) {
           if (players[i].id == this_player.id) {
@@ -147,40 +191,44 @@ exports.index = function(io) {
         if (this_player.id == current_game.players[1].id) {
           current_game.players[1].hit_map = data;
           hit_detection(current_game.players[1], current_game.players[2]);
-          socket.broadcast.emit('map update', current_game.players[1].hit_map);
+          battleship.to(current_game.players[2].id).emit('map update', current_game.players[1].hit_map);
           socket.emit('hit update', current_game.players[1].hit_map);
           battleship.to(current_game.players[1].id).emit('turn update', false);
           current_game.players[1].turn = false;
           battleship.to(current_game.players[2].id).emit('turn update', true);
-          current_game.players[1].turn = true;
+          current_game.players[2].turn = true;
         } else if (this_player.id == current_game.players[2].id) {
           current_game.players[2].hit_map = data;
           hit_detection(current_game.players[2], current_game.players[1]);
-          socket.broadcast.emit('map update', current_game.players[2].hit_map);
+          battleship.to(current_game.players[1].id).emit('map update', current_game.players[2].hit_map);
           socket.emit('hit update', current_game.players[2].hit_map);
           battleship.to(current_game.players[2].id).emit('turn update', false);
-          current_game.players[1].turn = false;
+          current_game.players[2].turn = false;
           battleship.to(current_game.players[1].id).emit('turn update', true);
           current_game.players[1].turn = true;
         }
 
+        update_spec();
+
       });
 
       socket.on('player status', function(data){
-        socket.broadcast.emit('player status', data[0]);
         if (this_player.id == current_game.players[1].id) {
           current_game.players[1].ship_map = data[1];
           current_game.players[1].ready = data[0];
           current_game.players[1].ships = data[2];
+          battleship.to(current_game.players[2].id).emit('player status', data[0]);
         } else if (this_player.id == current_game.players[2].id) {
           current_game.players[2].ship_map = data[1];
           current_game.players[2].ready = data[0];
           current_game.players[2].ships = data[2];
+          battleship.to(current_game.players[1].id).emit('player status', data[0]);
         }
         console.log(`status update ${current_game.players[1].ready} ${current_game.players[2].ready}`);
         if (current_game.players[1].ready && current_game.players[2].ready && current_game.started == false) {
           current_game.players[1].turn = true;
           battleship.to(current_game.players[1].id).emit('turn update', current_game.players[1].turn);
+          update_spec();
           current_game.started = true;
           battleship.emit('game status', current_game.started);
           console.log(`game started`);
