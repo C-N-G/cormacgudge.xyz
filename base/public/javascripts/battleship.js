@@ -176,31 +176,22 @@ function draw_friendly_board() {
     for (var i1 = 0; i1 < 10; i1++) {
       switch (friendly_map[i1][i]) {
         case 0:
-          strokeWeight(bt.width*1.2);
-          stroke('royalblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('black');
           fill('black');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         case 1:
-          strokeWeight(bt.width*1.2);
-          stroke('royalblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('red');
           fill('red');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         case 2:
-          strokeWeight(bt.width*1.2);
-          stroke('royalblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('white');
           fill('white');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         default:
       }
@@ -288,40 +279,28 @@ function draw_foreign_board() {
     for (var i1 = 0; i1 < 10; i1++) {
       switch (foreign_map[i1][i]) {
         case 0:
-          strokeWeight(bt.width*1.2);
-          stroke('dodgerblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('black');
           fill('black');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         case 1:
-          strokeWeight(bt.width*1.2);
-          stroke('dodgerblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('red');
           fill('red');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         case 2:
-          strokeWeight(bt.width*1.2);
-          stroke('dodgerblue');
-          ellipse(circle_x, circle_y, bt.size/20);
           strokeWeight(bt.width);
           stroke('white');
           fill('white');
-          ellipse(circle_x, circle_y, bt.size/20);
+          circle(circle_x, circle_y, bt.size/20);
           break;
         default:
-        strokeWeight(bt.width*1.2);
-        stroke('dodgerblue');
-        ellipse(circle_x, circle_y, bt.size/20);
         strokeWeight(bt.width);
         stroke('yellow');
         fill('yellow');
-        ellipse(circle_x, circle_y, bt.size/20);
+        circle(circle_x, circle_y, bt.size/20);
       }
 
       circle_y += bt.size/11;
