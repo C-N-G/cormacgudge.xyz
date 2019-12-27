@@ -3,7 +3,11 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', {title: 'Frontdoor'});
+  res.render('index', {
+    meta_title: 'Frontdoor', 
+    meta_desc: 'Educational site used for showcasing projects that Cormac Gudge made',
+    meta_css: '/stylesheets/style.css'
+  });
 });
 
 var joker_controller = require('../controllers/joker');             router.get('/joker', joker_controller.render);
