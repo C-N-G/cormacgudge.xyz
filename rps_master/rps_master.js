@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const auth = require('./authentication.json');
+const quotes = require('./quotes.json');
 
 const fighting_words = [
   'fight me', 'fight', 'lets fight', 'come at me',
@@ -230,9 +231,6 @@ client.on('message', message => {
     console.log(message.channel);
   }
 
-
-
-
   if (message.content === '!ping') {
     message.reply('pong');
   }
@@ -256,6 +254,72 @@ client.on('message', message => {
     // Send the embed to the same channel as the message
     message.channel.send(embed);
   }
+
+  if (message.content === '!whq' ) { // main quote command
+    let randUnit = getRandomInt(quotes.Units.length);
+    let randQuote = getRandomInt(quotes[quotes.Units[randUnit]].length);
+    message.channel.send(quotes.Units[randUnit] + ': ' + quotes[quotes.Units[randUnit]][randQuote]);
+  }
+
+  if (message.content === '!whq u' ) { // list units that have quotes
+    let total = quotes.Units[0] + `\n`;
+    for (var i = 1; i < quotes.Units.length; i++) {
+      total += quotes.Units[i] + `\n`;
+    }
+    const embed = new Discord.RichEmbed()
+      .setTitle('Quotes available from these units')
+      .setColor(0xFF0000)
+      .setDescription(total);
+    message.channel.send(embed);
+  }
+
+  if (message.content === '!whq t' ) { // show total quotes
+    let num = 0;
+    for (var i = 0; i < quotes.Units.length; i++) {
+      num += quotes[quotes.Units[i]].length;
+    }
+    message.channel.send("Total quotes available: " + num);
+  }
+
+  let pattQuote = /(!whq\s([A-z]+\s?)+\s(\d+|all))/;
+  if (pattQuote.test(message.content)) { // show specific quote
+    let search = message.content.split(" ");
+    let upperSearch = "";
+    let name = "";
+    let num = search[search.length - 1];
+    for (var i = 1; i < (search.length - 1); i++) {
+      upperSearch = search[i].charAt(0).toUpperCase() + search[i].slice(1);
+      name += upperSearch + " ";
+    }
+    name = name.trim();
+    if (num == "all") {
+      let quoteList = ''
+      try {
+        for (var i = 0; i < quotes[name].length; i++) {
+          quoteList += (i+1) + ": " + quotes[name][i] + "\n";
+        }
+        const embed = new Discord.RichEmbed()
+          .setTitle(name)
+          .setColor(0xFF0000)
+          .setDescription(quoteList.trim());
+        message.channel.send(embed);
+      } catch (e) {
+        message.channel.send("That unit does not exist!");
+      }
+    } else {
+      num -= 1; // make the quotes start at 1 for simplicity to the user
+      try {
+        if (quotes[name][num] != undefined) {
+          message.channel.send(name + ': ' + quotes[name][num]);
+        } else {
+          message.channel.send("That quote does not exist!");
+        }
+      } catch (e) {
+        message.channel.send("That unit does not exist!");
+      }
+    }
+  }
+
 });
 
 // Create an event listener for new guild members
