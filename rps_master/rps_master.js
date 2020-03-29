@@ -257,26 +257,41 @@ client.on('message', message => {
 
   if (message.content === '!whq' ) { // main quote command
     let randUnit = getRandomInt(quotes.Units.length);
-    let randQuote = getRandomInt(quotes[quotes.Units[randUnit]].length);
-    message.channel.send(quotes.Units[randUnit] + ': ' + quotes[quotes.Units[randUnit]][randQuote]);
+    // let randQuote = getRandomInt(quotes[quotes.Units[randUnit]].length);
+    let randQuote = getRandomInt(quotes[quotes.Units[randUnit].name].length);
+    message.channel.send(quotes.Units[randUnit].name + ': ' + quotes[quotes.Units[randUnit].name][randQuote]);
   }
 
-  if (message.content === '!whq u' ) { // list units that have quotes
-    let total = quotes.Units[0] + `\n`;
-    for (var i = 1; i < quotes.Units.length; i++) {
-      total += quotes.Units[i] + `\n`;
-    }
+
+  if (message.content === '!whq units' ) { // list units that have quotes
+    let total = "";
+    let factions = [];
+    let last_fac_added = "";
     const embed = new Discord.RichEmbed()
       .setTitle('Quotes available from these units')
-      .setColor(0xFF0000)
-      .setDescription(total);
+      .setColor(0xFF0000);
+    for (var i = 0; i < quotes.Units.length; i++) { //get list of factions
+      if (last_fac_added !== quotes.Units[i].faction) {
+        factions.push(quotes.Units[i].faction);
+        last_fac_added = quotes.Units[i].faction;
+      }
+    }
+    for (var i = 0; i < factions.length; i++) { //use faction list to make embed fields.
+      for (var ii = 0; ii < quotes.Units.length; ii++) {
+        if (quotes.Units[ii].faction === factions[i]) {
+          total += quotes.Units[ii].name + `\n`;
+        }
+      }
+      embed.addField(factions[i], total, 1);
+      total = "";
+    }
     message.channel.send(embed);
   }
 
-  if (message.content === '!whq t' ) { // show total quotes
+  if (message.content === '!whq total' ) { // show total quotes
     let num = 0;
     for (var i = 0; i < quotes.Units.length; i++) {
-      num += quotes[quotes.Units[i]].length;
+      num += quotes[quotes.Units[i].name].length;
     }
     message.channel.send("Total quotes available: " + num);
   }
