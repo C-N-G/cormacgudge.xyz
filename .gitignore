@@ -4,3 +4,6 @@ DO-node/
 socketplayground/
 rps_master/node_modules/
 rps_master/authentication.json
+macbot/node_modules
+macbot/config.json
+macbot/run.bat

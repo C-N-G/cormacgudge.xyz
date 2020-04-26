@@ -3,6 +3,8 @@ const client = new Discord.Client();
 const auth = require('./authentication.json');
 const quotes = require('./quotes.json');
 
+const keyword = '!';
+
 const fighting_words = [
   'fight me', 'fight', 'lets fight', 'come at me',
   'come at me bro', 'i hate you', 'this bot sucks',
@@ -143,8 +145,14 @@ client.on('ready', () => {
 });
 
 client.on('message', message => {
+  if (message.author.bot) return;
+  if (!message.content.startsWith('!')) return;
   message.content = message.content.toLowerCase();
 //TODO Make regex match for setting objectives for the match
+//TODO make boss music command for playing an epic song
+  if (message.content === `${keyword}join`){
+    const connection = message.member.voice.channel.join();
+  }
 
   switch (state) {
     case states.ready:
@@ -231,108 +239,8 @@ client.on('message', message => {
     console.log(message.channel);
   }
 
-  if (message.content === '!ping') {
-    message.reply('pong');
-  }
-
   if (message.content === '!what is my avatar' ) {
     message.reply(message.author.avatarURL);
-  }
-
-  // If the message is "how to embed"
-  if (message.content === '!how to embed') {
-    // We can create embeds using the MessageEmbed constructor
-    // Read more about all that you can do with the constructor
-    // over at https://discord.js.org/#/docs/main/stable/class/RichEmbed
-    const embed = new Discord.RichEmbed()
-      // Set the title of the field
-      .setTitle('A slick little embed')
-      // Set the color of the embed
-      .setColor(0xFF0000)
-      // Set the main content of the embed
-      .setDescription('Hello, this is a slick embed!');
-    // Send the embed to the same channel as the message
-    message.channel.send(embed);
-  }
-
-  if (message.content === '!whq' ) { // main quote command
-    let randUnit = getRandomInt(quotes.Units.length);
-    // let randQuote = getRandomInt(quotes[quotes.Units[randUnit]].length);
-    let randQuote = getRandomInt(quotes[quotes.Units[randUnit].name].length);
-    message.channel.send(quotes.Units[randUnit].name + ': ' + quotes[quotes.Units[randUnit].name][randQuote]);
-  }
-
-
-  if (message.content === '!whq units' ) { // list units that have quotes
-    let total = "";
-    let factions = [];
-    let last_fac_added = "";
-    const embed = new Discord.RichEmbed()
-      .setTitle('Quotes available from these units')
-      .setColor(0xFF0000);
-    for (var i = 0; i < quotes.Units.length; i++) { //get list of factions
-      if (last_fac_added !== quotes.Units[i].faction) {
-        factions.push(quotes.Units[i].faction);
-        last_fac_added = quotes.Units[i].faction;
-      }
-    }
-    for (var i = 0; i < factions.length; i++) { //use faction list to make embed fields.
-      for (var ii = 0; ii < quotes.Units.length; ii++) {
-        if (quotes.Units[ii].faction === factions[i]) {
-          total += quotes.Units[ii].name + `\n`;
-        }
-      }
-      embed.addField(factions[i], total, 1);
-      total = "";
-    }
-    message.channel.send(embed);
-  }
-
-  if (message.content === '!whq total' ) { // show total quotes
-    let num = 0;
-    for (var i = 0; i < quotes.Units.length; i++) {
-      num += quotes[quotes.Units[i].name].length;
-    }
-    message.channel.send("Total quotes available: " + num);
-  }
-
-  let pattQuote = /(!whq\s([A-z]+\s?)+\s(\d+|all))/;
-  if (pattQuote.test(message.content)) { // show specific quote
-    let search = message.content.split(" ");
-    let upperSearch = "";
-    let name = "";
-    let num = search[search.length - 1];
-    for (var i = 1; i < (search.length - 1); i++) {
-      upperSearch = search[i].charAt(0).toUpperCase() + search[i].slice(1);
-      name += upperSearch + " ";
-    }
-    name = name.trim();
-    if (num == "all") {
-      let quoteList = ''
-      try {
-        for (var i = 0; i < quotes[name].length; i++) {
-          quoteList += (i+1) + ": " + quotes[name][i] + "\n";
-        }
-        const embed = new Discord.RichEmbed()
-          .setTitle(name)
-          .setColor(0xFF0000)
-          .setDescription(quoteList.trim());
-        message.channel.send(embed);
-      } catch (e) {
-        message.channel.send("That unit does not exist!");
-      }
-    } else {
-      num -= 1; // make the quotes start at 1 for simplicity to the user
-      try {
-        if (quotes[name][num] != undefined) {
-          message.channel.send(name + ': ' + quotes[name][num]);
-        } else {
-          message.channel.send("That quote does not exist!");
-        }
-      } catch (e) {
-        message.channel.send("That unit does not exist!");
-      }
-    }
   }
 
 });
