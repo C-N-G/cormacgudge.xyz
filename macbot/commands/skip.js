@@ -11,11 +11,11 @@ module.exports = {
     if (!voiceChannel || voiceChannel !== botVoiceChannel) {
       return message.reply('Please join my voice channel first!');
     }
-    
-    const client = message.client;
 
-    message.channel.send(`Skipping __***${client.queue.first().title}***__`);
-    client.playing.end();
+    const server = message.client.servers.get(message.guild.id);
+
+    message.channel.send(`Skipping __***${server.queue.first().title}***__`);
+    server.playing.end();
 
 	}
 };

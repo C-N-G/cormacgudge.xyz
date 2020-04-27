@@ -11,8 +11,10 @@ module.exports = {
       return message.reply('Please join my voice channel first!');
     }
 
-    message.client.queue.clear();
-    message.client.playing = '';
+    const server = message.client.servers.get(message.guild.id);
+
+    server.queue.clear();
+    server.playing = '';
     voiceChannel.leave();
 	}
 };

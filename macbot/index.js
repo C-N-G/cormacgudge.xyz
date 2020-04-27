@@ -13,6 +13,8 @@ for (const file of commandFiles) {
 
 const cooldowns = new Discord.Collection();
 
+client.servers = new Discord.Collection();
+
 client.once('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });

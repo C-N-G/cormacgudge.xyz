@@ -11,9 +11,11 @@ module.exports = {
       return message.reply('Please join my voice channel first!');
     }
 
-    if (!message.client.queue.get('song').paused) return;
+    const server = message.client.servers.get(message.guild.id);
 
-    message.client.queue.get('song').resume();
+    if (!server.playing.paused) return;
+
+    server.playing.resume();
     message.channel.send('Audio resumed.');
 	}
 };

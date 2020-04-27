@@ -35,7 +35,7 @@ module.exports = {
           if (queue.has(title)) return message.channel.send('That audio is already in the queue.');
           queue.set(title, {id: videoId, title: title, length: convert_time(length)});
           message.channel.send(`__***${title}***__ added to the queue.`);
-          if (!client.playing) {
+          if (!server.playing) {
             play_song();
           }
         });
@@ -45,17 +45,17 @@ module.exports = {
     }
 
     function play_song () {
-      voiceChannel.join().then(connection => {
+      server.voiceChannel.join().then(connection => {
         let audio = queue.first();
         let stream = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly'});
         let dispatcher = connection.play(stream);
-        client.playing = dispatcher;
+        server.playing = dispatcher;
         message.channel.send(`Now playing __***${audio.title}***__`);
         dispatcher.on('finish', () => {
           queue.delete(audio.title);
           if (!queue.size) {
-            voiceChannel.leave();
-            client.playing = '';
+            server.voiceChannel.leave();
+            server.playing = '';
             message.channel.send(`Queue finished.`);
           } else {
             play_song();
@@ -64,15 +64,18 @@ module.exports = {
       });
     }
 
-    const voiceChannel = message.member.voice.channel;
     const client = message.client;
+    if (!client.servers.has(message.guild.id)) client.servers.set(message.guild.id, {id: message.guild.id});
+    const server = client.servers.get(message.guild.id);
 
-    if (!client.queue) {
-      client.queue = new Discord.Collection();
+    server.voiceChannel = message.member.voice.channel;
+
+    if (!server.queue) {
+      server.queue = new Discord.Collection();
     }
-    const queue = client.queue;
+    const queue = server.queue;
 
-    if (!voiceChannel) {
+    if (!server.voiceChannel) {
       return message.channel.send('Please join a voice channel first!');
     }
 
