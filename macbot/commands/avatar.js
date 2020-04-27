@@ -8,7 +8,7 @@ module.exports = {
 	execute(message, args) {
 
     if (!args[0]) {
-      return message.channel.send(message.author.displayAvatarURL());
+      return message.channel.send(message.author.displayAvatarURL({format:'png', dynamic:true, size:4096}));
     }
 
 
@@ -28,7 +28,7 @@ module.exports = {
 
     if (args[0]) {
       const user = convertMention(args[0]);
-      return message.channel.send(user.displayAvatarURL());
+      return message.channel.send(user.displayAvatarURL({format:'png', dynamic:true, size:4096}));
     }
 	}
 };
