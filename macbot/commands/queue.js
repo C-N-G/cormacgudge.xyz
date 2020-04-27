@@ -6,6 +6,10 @@ module.exports = {
   cooldown: 5,
   guildOnly: true,
 	execute(message, args) {
+    if (!message.client.servers.get(message.guild.id)) {
+      return message.channel.send('The queue is empty, try playing a song!');
+    }
+
     const server = message.client.servers.get(message.guild.id);
 
     if (!server.queue || !server.queue.size) {
