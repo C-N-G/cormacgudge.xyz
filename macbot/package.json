@@ -12,6 +12,7 @@
     "@discordjs/opus": "^0.2.1",
     "discord.js": "^12.2.0",
     "ffmpeg-static": "^4.1.1",
+    "googleapis": "^49.0.0",
     "ytdl-core": "^2.1.1"
   }
 }
