@@ -26,7 +26,7 @@ module.exports = {
 
     if (args[0] === 'total') {
       let num = 0;
-      for (var i = 0; i < quotes.Units.length; i++) {
+      for (let i = 0; i < quotes.Units.length; i++) {
         num += quotes[quotes.Units[i].name].length;
       }
       return message.channel.send("Total quotes available: " + num);
@@ -39,14 +39,14 @@ module.exports = {
       const embed = new Discord.MessageEmbed()
         .setTitle('Quotes available from these units')
         .setColor(0xFF0000);
-      for (var i = 0; i < quotes.Units.length; i++) { //get list of factions
+      for (let i = 0; i < quotes.Units.length; i++) { //get list of factions
         if (last_fac_added !== quotes.Units[i].faction) {
           factions.push(quotes.Units[i].faction);
           last_fac_added = quotes.Units[i].faction;
         }
       }
-      for (var i = 0; i < factions.length; i++) { //use faction list to make embed fields.
-        for (var ii = 0; ii < quotes.Units.length; ii++) {
+      for (let i = 0; i < factions.length; i++) { //use faction list to make embed fields.
+        for (let ii = 0; ii < quotes.Units.length; ii++) {
           if (quotes.Units[ii].faction === factions[i]) {
             total += quotes.Units[ii].name + `\n`;
           }
@@ -54,7 +54,8 @@ module.exports = {
         embed.addField(factions[i], total, 1);
         total = "";
       }
-      return message.channel.send(embed);
+      message.author.send(embed);
+      return message.channel.send('I\'ve sent you a DM with all my quotable units!')
     }
 
     let searchType = 'random';

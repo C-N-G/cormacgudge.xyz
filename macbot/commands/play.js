@@ -1,9 +1,6 @@
-const https = require('https');
+const yts = require('yt-search');
 const ytdl = require('ytdl-core');
-const {google} = require('googleapis');
 const Discord = require('discord.js');
-const config = require('../config.json');
-const api_key = config.youtube_api_key;
 module.exports = {
 	name: 'play',
   aliases: ['p'],
@@ -30,23 +27,21 @@ module.exports = {
       return `[${Math.floor(hours)}h ${Math.floor(minutes)}m]`;
     }
 
-    function search_youtube(search, max) {
-      https.get(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=${max}&q=${search}&key=${api_key}`, (res) => {
-        let body = '';
-        res.on('data', (d) => {
-          body += d;
-        });
-        res.on('end', () => {
-          const response = JSON.parse(body);
-          queue_song(`https://www.youtube.com/watch?v=${response.items[0].id.videoId}`);
-        });
-      }).on('error', (err) => {
-        console.log(err);
-        return message.channel.send('An error occured, failed to retrieve api data.');
-      });
+    function search_youtube(search) {
+      const options = {
+        query: search,
+        pageStart: 1,
+        pageEnd: 1
+      };
+
+      yts(options, (err, r) => {
+        if (err) return err;
+        const video = r.videos[0].url;
+        queue_song(video, true);
+      })
     }
 
-    function queue_song (url) {
+    function queue_song (url, showURL) {
       if (ytdl.validateURL(url)) {
         ytdl.getInfo(url, (err, info) => {
           const title = info.player_response.videoDetails.title;
@@ -54,7 +49,8 @@ module.exports = {
           const length = info.player_response.videoDetails.lengthSeconds;
           if (queue.has(title)) return message.channel.send('That audio is already in the queue.');
           queue.set(title, {id: videoId, title: title, length: convert_time(length)});
-          message.channel.send(`__***${title}***__ added to the queue.`);
+          const link = showURL ? url : ''
+          message.channel.send(`__***${title}***__ added to the queue. ${link}`);
           if (!server.playing) {
             play_song();
           }
@@ -103,12 +99,8 @@ module.exports = {
       queue_song (args[0]);
     } else {
       const search = args.join('%20');
-      const maxSearches = 1;
-      search_youtube(search, maxSearches);
+      search_youtube(search);
     }
-
-
-
 
 	}
 };
