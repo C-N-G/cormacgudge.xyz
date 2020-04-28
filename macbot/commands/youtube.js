@@ -7,7 +7,7 @@ module.exports = {
   cooldown: 5,
   args: true,
 	execute(message, args) {
-    const search = args.join('%20');
+    const search = args.join(' ');
 
     const options = {
       query: search,

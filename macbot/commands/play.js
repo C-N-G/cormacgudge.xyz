@@ -98,7 +98,7 @@ module.exports = {
     if (args[0].startsWith('http')) {
       queue_song (args[0]);
     } else {
-      const search = args.join('%20');
+      const search = args.join(' ');
       search_youtube(search);
     }
 
