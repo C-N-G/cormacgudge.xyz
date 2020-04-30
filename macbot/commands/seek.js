@@ -30,14 +30,6 @@ module.exports = {
       return message.channel.send(`Please input a number within ${server.queue[0].timeLength} seconds`);
     }
 
-    // const currentTime = Math.floor(server.playing.streamTime / 1000);
-    // if (server.seekOffset) {
-    //   const oldOffset = server.seekOffset
-    //   server.seekOffset = args[0] >= server.seekOffset ?
-    // } else {
-    //   server.seekOffset = currentTime;
-    // }
-
     server.seekTime = args[0];
 
     p.execute(message, [`https://www.youtube.com/watch?v=${server.queue[0].id}`, args[0]] );
