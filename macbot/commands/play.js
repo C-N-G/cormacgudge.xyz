@@ -1,6 +1,5 @@
-const yts = require('yt-search');
 const ytdl = require('ytdl-core');
-const Discord = require('discord.js');
+const yts = require('yt-search');
 module.exports = {
 	name: 'play',
   aliases: ['p'],
@@ -10,22 +9,6 @@ module.exports = {
   guildOnly: true,
   args: true,
 	execute(message, args) {
-
-    function convert_time (seconds) {
-      if (seconds < 60) {
-        return `[${seconds}s]`;
-      }
-
-      let minutes = seconds/60;
-
-      if (minutes < 60) {
-        return `[${Math.floor(minutes)}m]`;
-      }
-
-      let hours = seconds/60/60;
-      minutes -= Math.floor(hours)*60;
-      return `[${Math.floor(hours)}h ${Math.floor(minutes)}m]`;
-    }
 
     function search_youtube(search) {
       const options = {
@@ -37,8 +20,14 @@ module.exports = {
       yts(options, (err, r) => {
         if (err) return err;
         const video = r.videos[0].url;
-        queue_song(video, true);
+        queue_song(video, false); // true = show url of searched song in confirmation message
       })
+    }
+
+    function leave_timer() {
+      if (server.playing == '') {
+        server.voiceChannel.leave();
+      }
     }
 
     function queue_song (url, showURL) {
@@ -46,11 +35,12 @@ module.exports = {
         ytdl.getInfo(url, (err, info) => {
           const title = info.player_response.videoDetails.title;
           const videoId = info.player_response.videoDetails.videoId;
-          const length = info.player_response.videoDetails.lengthSeconds;
-          if (queue.has(title)) return message.channel.send('That audio is already in the queue.');
-          queue.set(title, {id: videoId, title: title, length: convert_time(length)});
-          const link = showURL ? url : ''
+          const timeLength = info.player_response.videoDetails.lengthSeconds;
+          if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
+          queue.push({id: videoId, title: title, timeLength: timeLength});
+          const link = showURL ? url : '';
           message.channel.send(`__***${title}***__ added to the queue. ${link}`);
+          clearTimeout(timer);
           if (!server.playing) {
             play_song();
           }
@@ -60,19 +50,23 @@ module.exports = {
       }
     }
 
-    function play_song () {
+    function play_song (seek) {
       server.voiceChannel.join().then(connection => {
-        let audio = queue.first();
+        let audio = queue[0];
         let stream = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly'});
-        let dispatcher = connection.play(stream);
+        let dispatcher = connection.play(stream, {seek: seek});
         server.playing = dispatcher;
-        message.channel.send(`Now playing __***${audio.title}***__`);
+        server.playing = dispatcher;
+        if (!seek) {
+          message.channel.send(`Now playing __***${audio.title}***__`);
+        }
         dispatcher.on('finish', () => {
-          queue.delete(audio.title);
-          if (!queue.size) {
-            server.voiceChannel.leave();
+          server.seekTime = '';
+          queue.shift();
+          if (!queue.length) {
             server.playing = '';
             message.channel.send(`Queue finished.`);
+            timer = setTimeout(leave_timer, 60*1000);
           } else {
             play_song();
           }
@@ -80,14 +74,17 @@ module.exports = {
       });
     }
 
+    let timer;
+
     const client = message.client;
-    if (!client.servers.has(message.guild.id)) client.servers.set(message.guild.id, {id: message.guild.id});
+    const thisServer = message.guild.id;
+    if (!client.servers.has(thisServer)) client.servers.set(thisServer, {id: thisServer});
     const server = client.servers.get(message.guild.id);
 
     server.voiceChannel = message.member.voice.channel;
 
     if (!server.queue) {
-      server.queue = new Discord.Collection();
+      server.queue = [];
     }
     const queue = server.queue;
 
@@ -95,7 +92,9 @@ module.exports = {
       return message.channel.send('Please join a voice channel first!');
     }
 
-    if (args[0].startsWith('http')) {
+    if (args[0].startsWith('http') && !isNaN(args[1])) {
+      play_song (args[1]);
+    } else if (args[0].startsWith('http')) {
       queue_song (args[0]);
     } else {
       const search = args.join(' ');

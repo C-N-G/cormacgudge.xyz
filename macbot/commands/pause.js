@@ -5,6 +5,9 @@ module.exports = {
   guildOnly: true,
 	execute(message, args) {
     const voiceChannel = message.member.voice.channel;
+    if (!message.guild.voice) {
+      return message.reply('I have to join a channel first!');
+    }
     const botVoiceChannel = message.guild.voice.channel;
     if (!voiceChannel || voiceChannel !== botVoiceChannel) {
       return message.reply('Please join my voice channel first!');

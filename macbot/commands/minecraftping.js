@@ -1,8 +1,8 @@
 const https = require('https'); // powered by https://api.mcsrvstat.us
 const Discord = require('discord.js');
 module.exports = {
-	name: 'mcping',
-  aliases: ['mcp', 'minecraftping', 'minecraftp'],
+	name: 'minecraftping',
+  aliases: ['mcp', 'mcping', 'minecraftp'],
 	description: 'Provides information about a minecraft server.',
   usage: '<server ip> [player|list|mods|plugins|all]',
   cooldown: 5,
@@ -15,7 +15,7 @@ module.exports = {
       if (['list', 'mods', 'plugins', 'all'].find(ele => ele === args[1]) || !args[1]){
         msg = `**IP**: ${response.ip}:${response.port}`;
         msg += `\n**Version**: ${response.version}`;
-        msg += `\n**Player Count**: [${response.players.max}/${response.players.online}]`;
+        msg += `\n**Player Count**: [${response.players.online}/${response.players.max}]`;
         if (args[1] === 'all' || args[1] === 'list') {
           if (response.players.list) {
             msg += `\n**Player List**: ${response.players.list.join(', ')}`
