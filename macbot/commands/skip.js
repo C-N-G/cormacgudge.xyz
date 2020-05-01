@@ -17,7 +17,7 @@ module.exports = {
 
     const server = message.client.servers.get(message.guild.id);
 
-    message.channel.send(`Skipping __***${server.queue.first().title}***__`);
+    message.channel.send(`Skipping __***${server.queue[0].title}***__`);
     server.playing.end();
 
 	}
