@@ -13,6 +13,7 @@
     "discord.js": "^12.2.0",
     "ffmpeg-static": "^4.1.1",
     "googleapis": "^49.0.0",
+    "prism-media": "^1.2.2",
     "yt-search": "^1.1.2",
     "ytdl-core": "^2.1.1"
   }

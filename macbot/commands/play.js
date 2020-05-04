@@ -1,5 +1,6 @@
 const ytdl = require('ytdl-core');
 const yts = require('yt-search');
+const prism = require('prism-media');
 module.exports = {
 	name: 'play',
   aliases: ['p'],
@@ -32,15 +33,17 @@ module.exports = {
 
     function queue_song (url, showURL) {
       if (ytdl.validateURL(url)) {
+        clearTimeout(timer);
         ytdl.getInfo(url, (err, info) => {
+          const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
           const title = info.player_response.videoDetails.title;
           const videoId = info.player_response.videoDetails.videoId;
+          const directLink = audioFormats[0].url;
           const timeLength = info.player_response.videoDetails.lengthSeconds;
           if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
-          queue.push({id: videoId, title: title, timeLength: timeLength});
+          queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
           const link = showURL ? url : '';
           message.channel.send(`__***${title}***__ added to the queue. ${link}`);
-          clearTimeout(timer);
           if (!server.playing) {
             play_song();
           }
@@ -51,18 +54,30 @@ module.exports = {
     }
 
     function play_song (seek) {
+      clearTimeout(timer);
       server.voiceChannel.join().then(connection => {
         let audio = queue[0];
-        let stream = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly'});
-        let dispatcher = connection.play(stream, {seek: seek});
-        server.playing = dispatcher;
+        if (!seek) seek = 0;
+        const streamURL = audio.directLink;
+        const output = new prism.FFmpeg({
+          args: [
+            '-ss', seek,
+            '-i', streamURL,
+            '-analyzeduration', '0',
+            '-loglevel', '0',
+            '-f', 's16le',
+            '-ar', '48000',
+            '-ac', '2',
+          ],
+        });
+        let dispatcher = connection.play(output, {type: 'converted'});
         server.playing = dispatcher;
         if (!seek) {
           message.channel.send(`Now playing __***${audio.title}***__`);
         }
         dispatcher.on('finish', () => {
           server.seekTime = '';
-          queue.shift();
+          if (!server.looping) queue.shift();
           if (!queue.length) {
             server.playing = '';
             message.channel.send(`Queue finished.`);

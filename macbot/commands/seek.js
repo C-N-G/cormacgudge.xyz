@@ -5,17 +5,13 @@ module.exports = {
   aliases: ['jump'],
 	description: 'Seeks to a specific point in the current audio.',
   usage: '<seconds>',
-  cooldown: 0,
+  cooldown: 0.1,
   guildOnly: true,
   args: true,
 	execute(message, args) {
-    const voiceChannel = message.member.voice.channel;
-    if (!message.guild.voice) {
-      return message.reply('I have to join a channel first!');
-    }
-    const botVoiceChannel = message.guild.voice.channel;
-    if (!voiceChannel || voiceChannel !== botVoiceChannel) {
-      return message.reply('Please join my voice channel first!');
+
+    if (!util.check_bot_location(message, 'same-voice')) {
+      return message.reply('We need to be in the same VC.')
     }
 
     const server = message.client.servers.get(message.guild.id);
@@ -29,6 +25,8 @@ module.exports = {
     } else if (parseInt(args[0]) > parseInt(server.queue[0].timeLength)) {
       return message.channel.send(`Please input a number within ${server.queue[0].timeLength} seconds`);
     }
+
+    args[0] = Math.floor(args[0]);
 
     server.seekTime = args[0];
 
