@@ -13,9 +13,12 @@ module.exports = {
 
     const server = message.client.servers.get(message.guild.id);
 
-    server.queue = [];
-    server.playing = '';
-    server.seekTime = '';
+    if (server.queue) {
+      server.queue = [];
+      server.playing = '';
+      server.seekTime = '';
+    }
+    
     message.member.voice.channel.leave();
 	}
 };
