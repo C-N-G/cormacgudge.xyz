@@ -1,17 +1,18 @@
 {
   "name": "macbot",
   "version": "1.0.0",
-  "description": "",
+  "description": "multi purpose discord bot",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "cormac gudge",
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.2.1",
     "discord.js": "^12.2.0",
     "ffmpeg-static": "^4.1.1",
+    "fuse.js": "^6.0.0",
     "googleapis": "^49.0.0",
     "prism-media": "^1.2.2",
     "yt-search": "^1.1.2",

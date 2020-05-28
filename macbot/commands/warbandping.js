@@ -4,6 +4,8 @@
 const http = require('http');
 const net = require('net');
 const fs = require('fs');
+const Fuse = require('fuse.js');
+const Discord = require('discord.js');
 module.exports = {
 	name: 'warbandping',
   aliases: ['nwping', 'nwp'],
@@ -93,21 +95,29 @@ module.exports = {
       return server;
     }
 
-    function send_server_file() {
+    function check_server_file() {
       try {
         if (fs.existsSync('./nw_servers.txt')) {
-          message.channel.send({
-            files: [{
-              attachment: './nw_servers.txt',
-              name: 'nw_servers.txt'
-            }]
-          })
+          return true;
         } else {
-          message.channel.send('no file found, try updating');
+          return false;
         }
       } catch (e) {
         console.log(e);
-        message.channel.send(`error: ${e}`);
+        message.channel.send(`error`);
+      }
+    }
+
+    function send_server_file() {
+      if (check_server_file()) {
+        message.channel.send({
+          files: [{
+            attachment: './nw_servers.txt',
+            name: 'nw_servers.txt'
+          }]
+        })
+      } else {
+        message.channel.send('no file found, try updating');
       }
     }
 
@@ -120,10 +130,43 @@ module.exports = {
       .catch(result => message.channel.send(result))
     }
 
-    function stoptracking() {
+    function stop_tracking() {
       clearTimeout(timer);
       message.client.user.setActivity();
       message.channel.send('tracking stopped');
+    }
+
+    function server_search(args) {
+      if (check_server_file()) {
+        fs.readFile('./nw_servers.txt', 'utf8', (err, data) => {
+          let servers = data.split('\n').map(server => {
+            const data = server.split(']-[');
+            const ip = data[0].substring(1);
+            const name = data[1].slice(0, -1);
+            return {ip:ip, name:name};
+          });
+          const options = {
+            includeScore: true,
+            keys: ['name']
+          }
+          const fuzzy = new Fuse(servers, options);
+          const result = fuzzy.search(args.join(' '));
+          const maxResults = 10 < result.length ? 10 : result.length;
+          let response = '';
+          for (var i = 0; i < maxResults; i++) {
+            response += `${result[i].item.ip} - ${result[i].item.name}\n`;
+          }
+          if (!result.length) {
+            response = 'no servers found matching that query';
+          }
+          const embed = new Discord.MessageEmbed()
+            .setTitle(`result for "${args.join(' ')}"`)
+            .setDescription(response);
+          message.channel.send(embed);
+        });
+      } else {
+        message.channel.send('no file found, try updating');
+      }
     }
 
     if (args[0] === 'gf') {
@@ -146,7 +189,10 @@ module.exports = {
       track(args[0]);
       message.channel.send(`now tracking ${args[0]}`);
     } else if (args[0] === 'stoptracking') {
-      stoptracking();
+      stop_tracking();
+    } else if (args[0] === 'search') {
+      args.shift();
+      server_search(args)
     } else if (args.length === 1) {
       get_server_info(args[0])
       .then(server => message.channel.send(`${server.name} [${server.curPlayers}/${server.maxPlayers}]`))
