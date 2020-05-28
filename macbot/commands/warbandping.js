@@ -155,16 +155,25 @@ module.exports = {
           if (!result.length) {
             return message.channel.send('no servers found matching that query');
           }
-          message.channel.send('searching...').then(async (msg) => {
+          message.channel.send('searching...').then((msg) => {
             let response = '';
+            let response_count = 0;
             for (var i = 0; i < maxResults; i++) {
-              const servInfo = await get_server_info(result[i].item.ip);
-              response += `${result[i].item.ip} - ${result[i].item.name} [${servInfo.curPlayers}/${servInfo.maxPlayers}]\n`;
+              get_server_info(result[i].item.ip)
+              .then(server => {
+                response += `${server.address} - ${server.name} [${server.curPlayers}/${server.maxPlayers}]\n`;
+              })
+              .catch(result => console.log(result))
+              .finally(() => {
+                response_count++;
+                if (response_count == maxResults) {
+                  const embed = new Discord.MessageEmbed()
+                    .setTitle(`result for "${args.join(' ')}"`)
+                    .setDescription(response);
+                  msg.edit(embed);
+                }
+              })
             }
-            const embed = new Discord.MessageEmbed()
-              .setTitle(`result for "${args.join(' ')}"`)
-              .setDescription(response);
-            msg.edit(embed);
           })
         });
       } else {
