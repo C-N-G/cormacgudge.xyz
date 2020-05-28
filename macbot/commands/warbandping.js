@@ -10,9 +10,9 @@ module.exports = {
 	name: 'warbandping',
   aliases: ['nwping', 'nwp'],
 	description: 'Provides information about Mount and Blade Warband servers',
-  usage: '<server ip>',
-  cooldown: 1,
-  guildOnly: true,
+  usage: '<server ip> | search <string>',
+  cooldown: 5,
+  guildOnly: false,
   args: true,
 	execute(message, args) {
 
@@ -152,17 +152,20 @@ module.exports = {
           const fuzzy = new Fuse(servers, options);
           const result = fuzzy.search(args.join(' '));
           const maxResults = 10 < result.length ? 10 : result.length;
-          let response = '';
-          for (var i = 0; i < maxResults; i++) {
-            response += `${result[i].item.ip} - ${result[i].item.name}\n`;
-          }
           if (!result.length) {
-            response = 'no servers found matching that query';
+            return message.channel.send('no servers found matching that query');
           }
-          const embed = new Discord.MessageEmbed()
-            .setTitle(`result for "${args.join(' ')}"`)
-            .setDescription(response);
-          message.channel.send(embed);
+          message.channel.send('searching...').then(async (msg) => {
+            let response = '';
+            for (var i = 0; i < maxResults; i++) {
+              const servInfo = await get_server_info(result[i].item.ip);
+              response += `${result[i].item.ip} - ${result[i].item.name} [${servInfo.curPlayers}/${servInfo.maxPlayers}]\n`;
+            }
+            const embed = new Discord.MessageEmbed()
+              .setTitle(`result for "${args.join(' ')}"`)
+              .setDescription(response);
+            msg.edit(embed);
+          })
         });
       } else {
         message.channel.send('no file found, try updating');
