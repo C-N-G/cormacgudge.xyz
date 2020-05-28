@@ -1,0 +1,28 @@
+{"frames": {
+
+"platform.png":
+{
+	"frame": {"x":0,"y":0,"w":128,"h":16},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":128,"h":16},
+	"sourceSize": {"w":128,"h":16}
+},
+"player.png":
+{
+	"frame": {"x":129,"y":0,"w":32,"h":64},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":64},
+	"sourceSize": {"w":32,"h":64}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "icarus.png",
+	"format": "RGBA8888",
+	"size": {"w":161,"h":64},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:c32a204f1a1d1033fd0a0699442549de:4f1877cea9eef5e8f5aff97f709845c0:80aca898494d719941d9677aa3df5711$"
+}
+}

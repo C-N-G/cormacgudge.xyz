@@ -1,0 +1,9 @@
+REMINDER: finish reflex by addinhg a scoring system, a game over screen, and scaling difficulty.
+GAME: Vertically scaling playformer in the essence of isaacs tower map from mario maker.
+GAME: RTS where all commands are issued with text input.
+TOOL: quick steam integrated paypal pooling tool for a group of people to buy a game for someone.
+STORY: Fanatical religious hit squad, akin to 2011 Priest or hellsing.
+GAME: 2d platformer with commands issue like an rts, possible in the form of a moba
+TOOL: Synced video viewing, akin to watch2gether
+GAME: Game designer vs game player esq game, possibly in the form of an RPG, for example one player designs the game and encounters, while the rest have to try and fight against the maker, like a super meta version of DND.
+DISCORD BOT: Rock paper scissors master, everyone member is assigned their own unique role, they must play RPS with the bot to enable permissions for their unique role.
