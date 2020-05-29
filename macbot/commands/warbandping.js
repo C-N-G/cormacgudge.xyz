@@ -168,8 +168,8 @@ module.exports = {
                 response_count++;
                 if (response_count == maxResults) {
                   const embed = new Discord.MessageEmbed()
-                    .setTitle(`result for "${args.join(' ')}"`)
-                    .setDescription(response);
+                  .setTitle(`result for "${args.join(' ')}"`)
+                  .setDescription(response);
                   msg.edit(embed);
                 }
               })
