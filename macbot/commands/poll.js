@@ -111,7 +111,9 @@ module.exports = {
           console.log(`Collected ${collected.size} items`);
         });
 
-      })
+        collector.on('error', error => console.log('collector error'))
+
+      }).catch(error => console.log('collector message error'))
     }
 
     const input = format_input(args);
@@ -128,7 +130,7 @@ module.exports = {
     if (!isNaN(args[0]) && args[0] <= 600) {
       length = args[0];
       args.shift();
-    } else {
+    } else if (!isNaN(args[0]) && args[0] > 600) {
       return message.channel.send('A poll can only stay open for a maximum for 600 seconeds (10 minutes)');
     }
 
