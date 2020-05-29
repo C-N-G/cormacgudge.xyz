@@ -1,9 +1,9 @@
 const Discord = require('discord.js');
 module.exports = {
-	name: 'poll',
-  aliases: ['strawpoll', 'vote'],
-	description: 'Makes a poll that users can vote on with reactions',
-  usage: '[single] [<poll length>] <poll items> ...',
+	name: 'quickpoll',
+  aliases: ['qpoll', 'qp', 'quickvote', 'qvote', 'qv'],
+	description: 'Makes a quick poll that users can vote on with reactions',
+  usage: '<poll items> ...',
   cooldown: 1,
   guildOnly: true,
   args: true,
@@ -20,19 +20,19 @@ module.exports = {
 
     function update_message(msg) {
       const embed = new Discord.MessageEmbed()
-      .setTitle(`Poll Open for ${msg.time_length} seconds`)
+      .setTitle(`Quick Poll Open`)
       .setDescription(msg.embed_desc)
       for (var i = 0; i < input.length; i++) {
         embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
       }
       msg.edit(embed)
-      msg.timer = setTimeout(update_message, 3000, msg);
+      msg.timer = setTimeout(update_message, 2000, msg);
     }
 
     function send_collector(type, length) {
       const embed = new Discord.MessageEmbed()
-      .setTitle(`Poll Generating`)
-      message.channel.send(embed).then(msg => {
+      .setTitle(`Quick Poll Generating`)
+      message.channel.send(embed).then(async msg => {
 
         //CONFIG START
 
@@ -51,7 +51,9 @@ module.exports = {
 
         for (var i = 0; i < input.length; i++) {
           msg.reaction_count.push(0);
+          await msg.react(emojis[i]);
         }
+
 
         const filter = (reaction, user) => {
           return used_emojis.includes(reaction.emoji.name) && user.id !== msg.author.id;
@@ -60,7 +62,7 @@ module.exports = {
         //CONFIG END
 
         const embed = new Discord.MessageEmbed()
-        .setTitle(`Poll Open for ${msg.time_length} seconds`)
+        .setTitle(`Quick Poll Open`)
         .setDescription(msg.embed_desc)
         for (var i = 0; i < input.length; i++) {
           embed.addField(input[i].slice(0, 3) + '0', input[i].slice(2), true)
@@ -98,7 +100,7 @@ module.exports = {
         collector.on('end', collected => {
           clearTimeout(msg.timer);
           const embed = new Discord.MessageEmbed()
-          .setTitle(`Poll Completed`)
+          .setTitle(`Quick Poll Completed`)
           .setDescription(`Received ${msg.total_votes} vote(s) from ${Object.keys(msg.submitted_user).length} user(s)`)
           for (var i = 0; i < input.length; i++) {
             embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
@@ -111,32 +113,13 @@ module.exports = {
       }).catch(error => console.log('collector message error'))
     }
 
-    let type = '';
-    if (args[0] === 'single') {
-      args.shift();
-      type = 1; // only 1 vote per person
-    } else {
-      type = 2; // unlimited votes per person
-    }
-
-    let length = 30;
-    if (!isNaN(args[0]) && args[0] <= 600) {
-      length = args[0];
-      args.shift();
-    } else if (!isNaN(args[0]) && args[0] > 600) {
-      return message.channel.send('A poll can only stay open for a maximum for 600 seconeds (10 minutes)');
-    }
-
     const input = format_input(args);
 
-    if (input.length < emojis.length) {
-      send_collector(type, length)
+    if (input.length <= 7) {
+      send_collector(1, 60)
     } else {
-      message.channel.send(`too many options, only allowed ${emojis.length} max`);
+      message.channel.send(`too many options, only allowed 7 max`);
     }
-
-
-
 
 	}
 };
