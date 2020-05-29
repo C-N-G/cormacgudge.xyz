@@ -116,8 +116,6 @@ module.exports = {
       }).catch(error => console.log('collector message error'))
     }
 
-    const input = format_input(args);
-
     let type = '';
     if (args[0] === 'single') {
       args.shift();
@@ -133,6 +131,8 @@ module.exports = {
     } else if (!isNaN(args[0]) && args[0] > 600) {
       return message.channel.send('A poll can only stay open for a maximum for 600 seconeds (10 minutes)');
     }
+
+    const input = format_input(args);
 
     if (input.length < emojis.length) {
       send_collector(type, length)
