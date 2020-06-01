@@ -36,9 +36,9 @@ module.exports = {
         clearTimeout(timer);
         ytdl.getInfo(url, (err, info) => {
           const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+          const directLink = audioFormats[0].url;
           const title = info.player_response.videoDetails.title;
           const videoId = info.player_response.videoDetails.videoId;
-          const directLink = audioFormats[0].url;
           const timeLength = info.player_response.videoDetails.lengthSeconds;
           if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
           queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
@@ -55,22 +55,27 @@ module.exports = {
 
     function play_song (seek) {
       clearTimeout(timer);
-      server.voiceChannel.join().then(connection => {
+      server.voiceChannel.join().then(async connection => {
+        // let audio = queue[0];
+        // if (!seek) seek = 0;
+        // const streamURL = audio.directLink;
+        // const output = new prism.FFmpeg({
+        //   args: [
+        //     '-ss', seek,
+        //     '-i', streamURL,
+        //     '-analyzeduration', '0',
+        //     '-loglevel', '0',
+        //     '-f', 's16le',
+        //     '-ar', '48000',
+        //     '-ac', '2',
+        //   ],
+        // });
+        // let dispatcher = connection.play(output, {type: 'converted'});
+
         let audio = queue[0];
-        if (!seek) seek = 0;
-        const streamURL = audio.directLink;
-        const output = new prism.FFmpeg({
-          args: [
-            '-ss', seek,
-            '-i', streamURL,
-            '-analyzeduration', '0',
-            '-loglevel', '0',
-            '-f', 's16le',
-            '-ar', '48000',
-            '-ac', '2',
-          ],
-        });
-        let dispatcher = connection.play(output, {type: 'converted'});
+        const stream = await ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly', highWaterMark: 1<<25})
+        let dispatcher = connection.play(stream);
+
         server.playing = dispatcher;
         if (!seek) {
           message.channel.send(`Now playing __***${audio.title}***__`);

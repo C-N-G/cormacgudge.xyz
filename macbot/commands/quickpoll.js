@@ -4,7 +4,7 @@ module.exports = {
   aliases: ['qpoll', 'qp', 'quickvote', 'qvote', 'qv'],
 	description: 'Makes a quick poll that users can vote on with reactions',
   usage: '<poll items> ...',
-  cooldown: 1,
+  cooldown: 5,
   guildOnly: true,
   args: true,
 	execute(message, args) {
@@ -101,7 +101,7 @@ module.exports = {
           clearTimeout(msg.timer);
           const embed = new Discord.MessageEmbed()
           .setTitle(`Quick Poll Completed`)
-          .setDescription(`Received ${msg.total_votes} vote(s) from ${Object.keys(msg.submitted_user).length} user(s)`)
+          .setDescription(`Received ${msg.total_votes} vote(s)`)
           for (var i = 0; i < input.length; i++) {
             embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
           }

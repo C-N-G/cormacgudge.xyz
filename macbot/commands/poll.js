@@ -4,7 +4,7 @@ module.exports = {
   aliases: ['strawpoll', 'vote'],
 	description: 'Makes a poll that users can vote on with reactions',
   usage: '[single] [<poll length>] <poll items> ...',
-  cooldown: 1,
+  cooldown: 5,
   guildOnly: true,
   args: true,
 	execute(message, args) {
