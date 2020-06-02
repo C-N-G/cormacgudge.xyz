@@ -114,21 +114,21 @@ module.exports = {
 
     }
 
-    console.log(args);
-
     if (args[0] === 'piechart') {
       args.shift()
     } else {
-      return
+      return;
     }
 
-    console.log(args);
     let input = args.filter(val => val > 0);
-    console.log(input);
     for (var i = 0; i < input.length; i++) {
       if (isNaN(input[i])) {
         return message.channel.send('some of your input values were not numbers');
       }
+    }
+
+    if (input.length === 0) {
+      return;
     }
 
     const values = input.length > 1 ? sort(input) : input ;
