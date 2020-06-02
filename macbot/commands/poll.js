@@ -1,4 +1,5 @@
-const canvas_cmd = require('./canvas.js');
+const canvas = require('../util/canvas.js');
+const util = require('../util/util.js');
 const Discord = require('discord.js');
 module.exports = {
 	name: 'poll',
@@ -10,7 +11,10 @@ module.exports = {
   args: true,
 	execute(message, args) {
 
-    const emojis = ['🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲','🇳','🇴','🇵','🇶','🇷','🇸','🇹','🇺','🇻','🇼','🇽','🇾','🇿']
+    const emojis = [
+      '🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲',
+      '🇳','🇴','🇵','🇶','🇷','🇸','🇹','🇺','🇻','🇼','🇽','🇾','🇿'
+    ]
 
     function format_input(args) {
       let response = args.join(' ')
@@ -30,10 +34,10 @@ module.exports = {
       msg.timer = setTimeout(update_message, 3000, msg);
     }
 
-    function send_collector(type, length) {
+    function send_collector(type, length, quick) {
       const embed = new Discord.MessageEmbed()
       .setTitle(`Poll Generating`)
-      message.channel.send(embed).then(msg => {
+      message.channel.send(embed).then(async msg => {
 
         //CONFIG START
 
@@ -42,6 +46,7 @@ module.exports = {
         msg.time_length = Math.round(length);
         msg.type = type;
         msg.total_votes = 0;
+        msg.quickpoll = quick;
 
         if (msg.type === 1) {
           msg.embed_desc = 'Only Single Voting Allowed';
@@ -52,6 +57,9 @@ module.exports = {
 
         for (var i = 0; i < input.length; i++) {
           msg.reaction_count.push(0);
+          if (msg.quickpoll) {
+            await msg.react(emojis[i]);
+          }
         }
 
         const filter = (reaction, user) => {
@@ -107,9 +115,12 @@ module.exports = {
           if (!msg.total_votes) {
             msg.edit(embed);
           } else {
-            msg.reaction_count.unshift('piechart')
-            const image = canvas_cmd.execute(message, msg.reaction_count);
-            embed.setImage('attachment://canvas.png')
+            const input = msg.reaction_count.filter(val => val > 0);
+            const values = input.length > 1 ? util.sort(input) : input;
+            console.log(values);
+            const chart = canvas.draw_piechart(values);
+            const image = new Discord.MessageAttachment(chart, 'canvas.png');
+            embed.setImage('attachment://canvas.png');
             msg.delete();
             message.channel.send({files: [image], embed: embed});
           }
@@ -124,6 +135,9 @@ module.exports = {
     if (args[0] === 'single') {
       args.shift();
       type = 1; // only 1 vote per person
+    } else if (args[0] === 'startquickpoll') {
+      args.shift();
+      type = 3; // make a quick poll
     } else {
       type = 2; // unlimited votes per person
     }
@@ -135,17 +149,19 @@ module.exports = {
     } else if (!isNaN(args[0]) && args[0] > 600) {
       return message.channel.send('A poll can only stay open for a maximum for 600 seconeds (10 minutes)');
     }
-
+    console.log(args);
     const input = format_input(args);
 
     if (input.length === 1) {
       return message.channel.send('you need at least two options');
     }
 
-    if (input.length < emojis.length) {
-      send_collector(type, length)
+    if (input.length < emojis.length && type !== 3) {
+      send_collector(type, length, false)
+    } else if (type === 3 && input.length <= 7) {
+      send_collector(1, 60, true)
     } else {
-      message.channel.send(`too many options, only allowed ${emojis.length} max`);
+      message.channel.send(`too many options, only allowed ${type === 3 ? 7 : emojis.length} max`);
     }
 
 
