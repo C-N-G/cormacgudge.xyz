@@ -1,3 +1,4 @@
+const canvas_cmd = require('./canvas.js');
 const Discord = require('discord.js');
 module.exports = {
 	name: 'poll',
@@ -103,7 +104,11 @@ module.exports = {
           for (var i = 0; i < input.length; i++) {
             embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
           }
-          msg.edit(embed)
+          msg.reaction_count.unshift('piechart')
+          const image = canvas_cmd.execute(message, msg.reaction_count);
+          embed.setImage('attachment://canvas.png')
+          msg.delete();
+          message.channel.send({files: [image], embed: embed});
         });
 
         collector.on('error', error => console.log('collector error'))
@@ -129,13 +134,15 @@ module.exports = {
 
     const input = format_input(args);
 
+    if (input.length = 1) {
+      return message.channel.send('you need at least two options');
+    }
+
     if (input.length < emojis.length) {
       send_collector(type, length)
     } else {
       message.channel.send(`too many options, only allowed ${emojis.length} max`);
     }
-
-
 
 
 	}
