@@ -147,7 +147,7 @@ module.exports = {
       length = args[0];
       args.shift();
     } else if (!isNaN(args[0]) && args[0] > 600) {
-      return message.channel.send('A poll can only stay open for a maximum for 600 seconeds (10 minutes)');
+      return message.channel.send('A poll can only stay open for a maximum of 600 seconds (10 minutes)');
     }
     console.log(args);
     const input = format_input(args);
