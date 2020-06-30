@@ -105,6 +105,7 @@ module.exports = {
         });
 
         collector.on('end', collected => {
+
           clearTimeout(msg.timer);
           const embed = new Discord.MessageEmbed()
           .setTitle(`Poll Completed`)
@@ -117,7 +118,6 @@ module.exports = {
           } else {
             const input = msg.reaction_count.filter(val => val > 0);
             const values = input.length > 1 ? util.sort(input) : input;
-            console.log(values);
             const chart = canvas.draw_piechart(values);
             const image = new Discord.MessageAttachment(chart, 'canvas.png');
             embed.setImage('attachment://canvas.png');
@@ -149,7 +149,7 @@ module.exports = {
     } else if (!isNaN(args[0]) && args[0] > 600) {
       return message.channel.send('A poll can only stay open for a maximum of 600 seconds (10 minutes)');
     }
-    console.log(args);
+
     const input = format_input(args);
 
     if (input.length === 1) {
