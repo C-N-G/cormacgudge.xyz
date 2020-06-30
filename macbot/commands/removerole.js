@@ -1,7 +1,7 @@
 module.exports = {
 	name: 'removerole',
   aliases: ['rr', 'unrole', 'derole'],
-	description: 'Removes a role to the user.',
+	description: 'Removes a role from the user.',
   usage: '[role name]',
   cooldown: 3,
   guildOnly: true,
