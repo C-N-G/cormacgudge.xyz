@@ -10,12 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.2.1",
+    "canvas": "^2.6.1",
     "discord.js": "^12.2.0",
-    "ffmpeg-static": "^4.1.1",
+    "ffmpeg-static": "^4.2.2",
     "fuse.js": "^6.0.0",
     "googleapis": "^49.0.0",
     "prism-media": "^1.2.2",
     "yt-search": "^1.1.2",
-    "ytdl-core": "^2.1.1"
+    "ytdl-core": "^2.1.5"
   }
 }
