@@ -1,16 +1,16 @@
 module.exports = {
-	name: 'args-info',
+  name: 'args-info',
   aliases: ['arginfo', 'arginf'],
-	description: 'Information about the arguments provided.',
+  description: 'Information about the arguments provided.',
   usage: '<args> ...',
   cooldown: 5,
   guildOnly: true,
   args: true,
-	execute(message, args) {
+    execute(message, args) {
     if (args[0] === 'foo') {
-			return message.channel.send('bar');
-		}
+      return message.channel.send('bar');
+    }
 
-		message.channel.send(`Arguments: ${args}\nArguments length: ${args.length}`);
-	}
+      message.channel.send(`Arguments: ${args}\nArguments length: ${args.length}`);
+    }
 };
