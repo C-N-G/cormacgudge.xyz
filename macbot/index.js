@@ -2,7 +2,7 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const {prefix, token} = require('./config.json');
 
-const client = new Discord.Client();
+const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] }); // PARTIALS ENABLED
 client.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
@@ -71,5 +71,17 @@ client.on('message', message => {
     message.reply('there was an error trying to execute that command!');
   }
 });
+
+// DISABLED REACTION HANDLER
+
+// client.on('messageReactionAdd', (reaction, user) => {
+//   const reactionhandler = require('./util/reactionHandler.js');
+//   reactionhandler.execute(reaction, user);
+// });
+
+// client.on('messageReactionRemove', (reaction, user) => {
+//   const reactionhandler = require('./util/reactionHandler.js');
+//   reactionhandler.execute(reaction, user, 'REMOVE_ROLE');
+// });
 
 client.login(token);
