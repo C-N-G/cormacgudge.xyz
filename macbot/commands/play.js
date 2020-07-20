@@ -31,23 +31,24 @@ module.exports = {
       }
     }
 
-    function queue_song (url, showURL) {
+    async function queue_song (url, showURL) {
       if (ytdl.validateURL(url)) {
         clearTimeout(timer);
-        ytdl.getInfo(url, (err, info) => {
-          const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-          const directLink = audioFormats[0].url;
-          const title = info.player_response.videoDetails.title;
-          const videoId = info.player_response.videoDetails.videoId;
-          const timeLength = info.player_response.videoDetails.lengthSeconds;
-          if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
-          queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
-          const link = showURL ? url : '';
+        const info = await ytdl.getInfo(url)
+        const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+        const directLink = audioFormats[0].url;
+        const title = info.player_response.videoDetails.title;
+        const videoId = info.player_response.videoDetails.videoId;
+        const timeLength = info.player_response.videoDetails.lengthSeconds;
+        if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
+        queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
+        const link = showURL ? url : '';
+        if (queue.length > 1) {
           message.channel.send(`__***${title}***__ added to the queue. ${link}`);
-          if (!server.playing) {
-            play_song();
-          }
-        });
+        }
+        if (!server.playing) {
+          play_song();
+        }
       } else {
         return message.channel.send('Cannot parse valid ID from URL.');
       }
