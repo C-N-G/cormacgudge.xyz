@@ -1,13 +1,13 @@
 const Discord = require('discord.js');
 module.exports = {
-	name: 'listroles',
+  name: 'listroles',
   aliases: ['lr', 'listrole', 'roles'],
-	description: 'List all roles available for self assignment.',
+  description: 'List all roles available for self assignment.',
   // usage: '[role name]',
   cooldown: 3,
   guildOnly: true,
   args: false,
-	async execute(message, args) {
+  async execute(message, args) {
 
     const roles = message.guild.roles.cache.filter(role =>
       // role has no permissions
@@ -15,11 +15,11 @@ module.exports = {
     )
     .map(role => role = {name: role.name, id: role.id})
 
-    const pageNum = Math.ceil(roles.length/25);
+    const pageNum = Math.ceil(roles.length/24);
 
     let rolePages = []
     for (let page = 0; page < pageNum; page++) {
-      rolePages.push(roles.splice(0,25));
+      rolePages.push(roles.splice(0,24));
     }
 
     for (let page = 0; page < pageNum; page++) {
@@ -32,5 +32,5 @@ module.exports = {
       await message.channel.send(roleListEmbed);
     }
 
-	}
+  }
 };
