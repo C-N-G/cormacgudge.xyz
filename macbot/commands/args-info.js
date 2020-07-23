@@ -6,7 +6,7 @@ module.exports = {
   cooldown: 5,
   guildOnly: true,
   args: true,
-    execute(message, args) {
+  execute(message, args) {
     if (args[0] === 'foo') {
       return message.channel.send('bar');
     }
