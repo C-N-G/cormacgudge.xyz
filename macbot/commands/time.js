@@ -31,12 +31,13 @@ module.exports = {
 
       const embed = new Discord.MessageEmbed()
       .setTitle(targetTime.fromNow())
+      // .setDescription(targetTime.format('dddd'))
   
       for (const key in timezones) {
         if (timezones[key][0] === timezone) {
-          embed.addField(`>${timezones[key][1]}<`, targetTime.tz(timezones[key][0]).format('DD/MM/YYYY HH:mm'), false);
+          embed.addField(`>${timezones[key][1]}<`, targetTime.tz(timezones[key][0]).format('DD/MM/YYYY HH:mm ddd'), false);
         } else {
-          embed.addField(timezones[key][1], targetTime.tz(timezones[key][0]).format('DD/MM/YYYY HH:mm'), false);
+          embed.addField(timezones[key][1], targetTime.tz(timezones[key][0]).format('DD/MM/YYYY HH:mm ddd'), false);
         }
         
       }
