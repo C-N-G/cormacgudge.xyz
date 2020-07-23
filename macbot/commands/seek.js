@@ -10,7 +10,7 @@ module.exports = {
   args: true,
 	execute(message, args) {
 
-    return message.channel.send('this command has been temporarily disabled');
+    return message.channel.send('This command has been temporarily disabled');
 
     if (!util.check_bot_location(message, 'same-voice')) {
       return message.reply('We need to be in the same VC.')

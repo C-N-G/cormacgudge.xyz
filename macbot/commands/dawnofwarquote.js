@@ -4,7 +4,7 @@ module.exports = {
 	name: 'dawnofwarquote',
   aliases: ['warhammerquote', 'warhammer', 'dowquote', 'dow', 'whq'],
 	description: 'Provides quotes from the Dawn of War franchise.',
-  usage: `[ [total | units] | ['unit'] ['quote number' | all] ]`,
+  usage: `[ [total|units] | ['unit'] ['quote number'|all] ]`,
   cooldown: 2,
 	execute(message, args) {
 

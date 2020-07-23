@@ -5,7 +5,7 @@ module.exports = {
 	name: 'play',
   aliases: ['p'],
 	description: 'Plays a Youtube video in your voice channel.',
-  usage: '<video url>',
+  usage: '<video url|search query>',
   cooldown: 1,
   guildOnly: true,
   args: true,

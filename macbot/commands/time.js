@@ -4,13 +4,13 @@ module.exports = {
   name: 'time',
   aliases: ['timezone', 'tz'],
   description: 'Converts a given time into various different timezones',
-  usage: '<timezone> <DD/MM/YYYY> <HH:MM>',
+  usage: 'list | <timezone> <DD/MM/YYYY> <HH:MM>',
   cooldown: 5,
   guildOnly: false,
   args: true,
   execute(message, args) {
 
-    function check_format(dateTime) {
+    function checkFormat(dateTime, timezone) {
 
       const regex = /([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}\s[0-9]{1,2}:[0-9]{1,2})/;
 
@@ -25,13 +25,11 @@ module.exports = {
 
     }
 
-    function sendEmbed(dateTime, timezone) {
+    function sendResponse(dateTime, timezone) {
 
       const targetTime = moment.tz(dateTime, 'DD/MM/YYYY HH:mm',  timezone);
 
-      const embed = new Discord.MessageEmbed()
-      .setTitle(targetTime.fromNow())
-      // .setDescription(targetTime.format('dddd'))
+      const embed = new Discord.MessageEmbed().setTitle(targetTime.fromNow());
   
       for (const key in timezones) {
         if (timezones[key][0] === timezone) {
@@ -46,6 +44,20 @@ module.exports = {
 
     }
 
+    function listTimezones() {
+
+      const embed = new Discord.MessageEmbed().setTitle('Available timezones');
+  
+      for (const key in timezones) {
+
+        embed.addField(key, timezones[key][1], true);
+        
+      }
+
+      message.channel.send(embed);
+
+    }
+
     const timezones = {
       euw: ['Europe/London', 'Europe West (London)'],
       eue: ['Europe/Helsinki', 'Europe East (Helsinki)'],
@@ -55,14 +67,16 @@ module.exports = {
       ase: ['Asia/Tokyo', 'Asia East (Tokyo)']
     }
 
+    if (args[0] === 'list') return listTimezones();
+
     let timezone = args.shift();
     const dateTime = args.join(' ');
 
-    if (check_format(dateTime)) return;
+    if (checkFormat(dateTime, timezone)) return;
 
     timezone = timezones[timezone][0];
 
-    sendEmbed(dateTime, timezone);
+    sendResponse(dateTime, timezone);
 
     }
 };

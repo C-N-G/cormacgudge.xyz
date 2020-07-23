@@ -3,7 +3,7 @@ module.exports = {
   name: 'addrole',
   aliases: ['ar', 'role', 'assign'],
   description: 'Assigns a role to the user.',
-  usage: '[role name]',
+  usage: '<role name>',
   cooldown: 3,
   guildOnly: true,
   args: true,

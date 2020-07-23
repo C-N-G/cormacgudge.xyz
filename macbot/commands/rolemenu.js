@@ -8,7 +8,7 @@ module.exports = {
   args: false,
   execute(message, args) {
 
-    return message.channel.send('This command has been disabled');
+    return message.channel.send('This command has been temporarily disabled');
     
     if (!message.member.hasPermission('ADMINISTRATOR')) {
       return;
