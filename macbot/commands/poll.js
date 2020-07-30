@@ -17,9 +17,11 @@ module.exports = {
     ]
 
     function format_input(args) {
-      let response = args.join(' ')
-      .split(',')
-      .map((word, index) => word = `${emojis[index]} ` + word.trim())
+      let response = args.join(' ');
+      if (response.endsWith(',')) {
+        response = response.substring(0, response.length - 1)
+      }
+      response = response.split(',').map((word, index) => word = `${emojis[index]} ` + word.trim());
       return response;
     }
 
@@ -148,6 +150,8 @@ module.exports = {
       args.shift();
     } else if (!isNaN(args[0]) && args[0] > 600) {
       return message.channel.send('A poll can only stay open for a maximum of 600 seconds (10 minutes)');
+    } else if (!isNaN(args[0]) && args[0] <= 0) {
+      return message.channel.send('Please input a positive number for the poll duration');
     }
 
     const input = format_input(args);
