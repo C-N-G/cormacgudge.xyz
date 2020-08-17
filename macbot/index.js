@@ -38,7 +38,7 @@ client.on('message', message => {
     let reply = 'You did not provide any arguments';
 
     if (command.usage) {
-      reply += `\nThe propoer usage would be: \`${prefix}${command.name} ${command.usage}\``;
+      reply += `\nThe proper usage would be: \`${prefix}${command.name} ${command.usage}\``;
     }
 
     return message.reply(reply);
