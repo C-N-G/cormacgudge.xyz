@@ -61,8 +61,11 @@ module.exports = {
       //return list of games somehow
       await message.channel.send(`You have ${sameGamesList.length} games in common`);
       const returnString = sameGamesList.map(g => g = g.name).sort().join(', ');
+      if (returnString.length > 6000) {
+        return message.channel.send('Too many games in common cannot print games list');
+      }
       for (let i = 0; i < returnString.length; i+=2000) {
-        await message.channel.send(returnString.substring(i, i+2000))
+        await message.channel.send(returnString.substring(i, i+2000));
       }
 
     }
@@ -93,7 +96,7 @@ module.exports = {
     function loadProfiles(args) {
       return new Promise(async (resolve, reject) => {
         const profileList = []
-        const steamProfiles = JSON.parse(await fs.readFile('./steamprofiles.json', 'utf8'))
+        const steamProfiles = JSON.parse(await fs.readFile('./data/steamprofiles.json', 'utf8'))
 
         //determine argument type e.g. steam link or discord mention or direct id
         for (const arg of args) { 

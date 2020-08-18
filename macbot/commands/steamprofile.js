@@ -1,5 +1,3 @@
-const { stringify } = require('querystring');
-
 const fs = require('fs').promises;
 module.exports = {
   name: 'steamprofile',
@@ -47,15 +45,21 @@ module.exports = {
       return steamProfiles.hasOwnProperty(profile[0])
     }
 
-    async function loadSteamProfiles() {
+    function loadSteamProfiles() {
       return new Promise (async (resolve) => {
-        resolve(JSON.parse(await fs.readFile('./steamprofiles.json', 'utf8')));
+        try {
+          resolve(JSON.parse(await fs.readFile('./data/steamprofiles.json', 'utf8')));
+        } catch (error) {
+          console.log(error)
+          resolve({});
+        }
       })
     }
 
-    function saveSteamProfiles(steamProfiles) {
+    async function saveSteamProfiles(steamProfiles) {
       console.log(steamProfiles)
-      fs.writeFile('./steamprofiles.json', JSON.stringify(steamProfiles))
+      await fs.writeFile('./data/steamprofiles.json', JSON.stringify(steamProfiles))
+      message.channel.send('profiles updated');
     }
 
     function formatInput(args) {
@@ -82,6 +86,10 @@ module.exports = {
 
       if (args[0] === 'show') {
         return showids(steamProfiles)
+      }
+      
+      if (!message.author.id === '150362891541938177') {
+        return message.channel.send('You do not have permission to use this command, message <@!150362891541938177> if you would like your profile cached');
       }
 
       const flag = args[0];
