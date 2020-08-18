@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 module.exports = {
   name: 'steamcompare',
   aliases: ['steamcomp', 'stcp'],
-  description: 'Compares games that between steam profiles',
+  description: 'Compares games between steam profiles',
   usage: '<steam profile/discord user> ...',
   cooldown: 5,
   guildOnly: true,
