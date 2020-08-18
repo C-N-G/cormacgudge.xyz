@@ -16,7 +16,11 @@ module.exports = {
       const url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/';
       try {
         const body = await got(`${url}?key=${steam_api_key}&steamid=${steamID}&format=json&include_appinfo=1`).json();
-        return body.response.games.map(m => m = { 'appid':m.appid, 'name':m.name })
+        if (body) {
+          return body.response.games.map(m => m = { 'appid':m.appid, 'name':m.name })
+        } else {
+          return false;
+        }
       } catch (error) {
         console.log(error.body);
       }
@@ -29,6 +33,9 @@ module.exports = {
       let allGamesList = [];
       for (const steamID of profileList) {
         let gamesList = await getGamesList(steamID);
+        if (!gamesList) {
+          return message.channel.send('could not retrive games list from one or more ids');
+        }
         allGamesList.push(gamesList);
       }
 
@@ -124,7 +131,7 @@ module.exports = {
 
         //do not continue if there are less than two profiles
         if (profileList.length < 2) {
-          reject(message.channel.send('You did not provide enough IDs'));
+          reject(message.channel.send('You did not provide enough arguments'));
         } else {
           resolve(profileList);
         }

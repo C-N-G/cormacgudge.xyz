@@ -85,7 +85,10 @@ module.exports = {
     loadSteamProfiles().then((steamProfiles) => {
 
       if (args[0] === 'show') {
-        return showids(steamProfiles)
+        if (Object.keys(steamProfiles).length === 0) {
+          return message.channel.send('No cached profiles found');
+        }
+        return showids(steamProfiles);
       }
       
       if (!message.author.id === '150362891541938177') {
