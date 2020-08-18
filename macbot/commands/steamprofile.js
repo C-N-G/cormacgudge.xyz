@@ -57,7 +57,6 @@ module.exports = {
     }
 
     async function saveSteamProfiles(steamProfiles) {
-      console.log(steamProfiles)
       await fs.writeFile('./data/steamprofiles.json', JSON.stringify(steamProfiles))
       message.channel.send('profiles updated');
     }
