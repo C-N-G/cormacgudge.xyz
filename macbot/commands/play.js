@@ -22,7 +22,7 @@ module.exports = {
         if (err) return err;
         const video = r.videos[0].url;
         if (video.startsWith('http')) {
-          queue_song(video, false); // true = show url of searched song in confirmation message
+          queue_song(video, true); // true/false showing url of video
         } else {
           message.channel.send('Error getting video url, please update bot');
         }
@@ -48,7 +48,7 @@ module.exports = {
         queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
         const link = showURL ? url : '';
         if (queue.length > 1) {
-          message.channel.send(`__***${title}***__ added to the queue. ${link}`);
+          message.channel.send(`__***${title}***__ added to the queue. <${link}>`);
         }
         if (!server.playing) {
           play_song();
