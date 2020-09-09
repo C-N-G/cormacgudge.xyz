@@ -21,7 +21,11 @@ module.exports = {
       yts(options, (err, r) => {
         if (err) return err;
         const video = r.videos[0].url;
-        queue_song(video, false); // true = show url of searched song in confirmation message
+        if (video.startsWith('http')) {
+          queue_song(video, false); // true = show url of searched song in confirmation message
+        } else {
+          message.channel.send('Error getting video url, please update bot');
+        }
       })
     }
 

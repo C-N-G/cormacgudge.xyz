@@ -18,7 +18,12 @@ module.exports = {
     yts(options, (err, r) => {
       if (err) return err;
       const videos = r.videos;
-      message.channel.send(videos[0].url);
+      if (videos[0].url.startsWith('http')) {
+        message.channel.send(videos[0].url);
+      } else {
+        message.channel.send('Error getting video url, please update bot');
+      }
+      
     })
 	}
 };
