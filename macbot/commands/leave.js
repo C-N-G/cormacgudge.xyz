@@ -1,4 +1,5 @@
 const util = require('../util/util.js');
+const fs = require('fs');
 module.exports = {
 	name: 'leave',
   aliases: ['stop', 's'],
@@ -13,12 +14,37 @@ module.exports = {
 
     const server = message.client.servers.get(message.guild.id);
 
+    message.member.voice.channel.leave(); 
+
+    let queueToRemove = server.queue
+
+    if (server.playing_cached) {
+      server.ffmpeg.kill()
+    }
+
+    function removeAll() {
+      console.log('remove via leave')
+      queueToRemove.forEach(item => {
+        fs.unlink(`./data/music_cache/${message.guild.id}_${item.id}.webm`, (err) => {
+          console.log('remove via leave real')
+          if (err) console.log(err)
+        })
+      });
+    }
+
+    if (server.removeAllTimeout) {
+      console.log('clear remove all')
+      clearTimeout(server.removeAllTimeout)
+    }
+
+    server.removeAllTimeout = setTimeout(removeAll, 5*1000);
+
     if (server.queue) {
+      clearInterval(server.seekCache);
       server.queue = [];
       server.playing = '';
       server.seekTime = '';
     }
     
-    message.member.voice.channel.leave();
 	}
 };

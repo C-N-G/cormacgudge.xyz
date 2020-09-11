@@ -1,6 +1,9 @@
 const ytdl = require('ytdl-core');
 const yts = require('yt-search');
 const prism = require('prism-media');
+const Discord = require('discord.js');
+const util = require('../util/util.js');
+const fs = require('fs');
 module.exports = {
 	name: 'play',
   aliases: ['p'],
@@ -22,7 +25,7 @@ module.exports = {
         if (err) return err;
         const video = r.videos[0].url;
         if (video.startsWith('http')) {
-          queue_song(video, true); // true/false showing url of video
+          queue_song(video);
         } else {
           message.channel.send('Error getting video url, please update bot');
         }
@@ -35,21 +38,42 @@ module.exports = {
       }
     }
 
-    async function queue_song (url, showURL) {
+    async function queue_song (url) {
       if (ytdl.validateURL(url)) {
         clearTimeout(timer);
         const info = await ytdl.getInfo(url)
-        const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-        const directLink = audioFormats[0].url;
-        const title = info.player_response.videoDetails.title;
+        
         const videoId = info.player_response.videoDetails.videoId;
+        const title = info.player_response.videoDetails.title;
         const timeLength = info.player_response.videoDetails.lengthSeconds;
-        if (queue.find(ele => ele.id === videoId)) return message.channel.send('That audio is already in the queue.');
-        queue.push({id: videoId, directLink: directLink, title: title, timeLength: timeLength});
-        const link = showURL ? url : '';
-        if (queue.length > 1) {
-          message.channel.send(`__***${title}***__ added to the queue. <${link}>`);
+        const link = url;
+
+        if (queue.find(ele => ele.id === videoId)) return message.channel.send('That item is already in the queue.');
+        const queueItem = {id: videoId, title: title, timeLength: timeLength, link: link, cached: false}
+        queue.push(queueItem);
+
+        if (timeLength <= 5400) {
+          // server.caching = true;
+          ytdl(`https://www.youtube.com/watch?v=${queueItem.id}`, {filter: 'audioonly'})
+          .pipe(
+            fs.createWriteStream(`./data/music_cache/${message.guild.id}_${queueItem.id}.webm`)
+            .on('close', () => {
+              if (queue.find(item => item.id === queueItem.id)) {
+                // server.caching = false;
+                console.log('cached')
+                queue.find(item => item.id === queueItem.id).cached = true;
+              }
+            })
+          )
         }
+
+        if (queue.length > 1) {
+          const response = new Discord.MessageEmbed()
+            .setColor('AQUA')
+            .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) added to the queue`);
+          message.channel.send(response);
+        }
+
         if (!server.playing) {
           play_song();
         }
@@ -61,33 +85,97 @@ module.exports = {
     function play_song (seek) {
       clearTimeout(timer);
       server.voiceChannel.join().then(async connection => {
-        // let audio = queue[0];
-        // if (!seek) seek = 0;
-        // const streamURL = audio.directLink;
-        // const output = new prism.FFmpeg({
-        //   args: [
-        //     '-ss', seek,
-        //     '-i', streamURL,
-        //     '-analyzeduration', '0',
-        //     '-loglevel', '0',
-        //     '-f', 's16le',
-        //     '-ar', '48000',
-        //     '-ac', '2',
-        //   ],
-        // });
-        // let dispatcher = connection.play(output, {type: 'converted'});
+
+        // console.log(queue)
 
         let audio = queue[0];
-        const stream = await ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly', highWaterMark: 1<<25})
-        let dispatcher = connection.play(stream);
+        let dispatcher;
+        let output;
 
-        server.playing = dispatcher;
-        if (!seek) {
-          message.channel.send(`Now playing __***${audio.title}***__`);
+        if (audio.cached) { //play from cached file if it exists
+          console.log('playing cached')
+
+          server.playing_cached = true;
+
+          if (!seek) seek = 0;
+          const file = `./data/music_cache/${message.guild.id}_${audio.id}.webm`
+          output = new prism.FFmpeg({
+            args: [
+              '-ss', seek,
+              '-i', file,
+              '-analyzeduration', '0',
+              '-loglevel', '0',
+              '-f', 's16le',
+              '-ar', '48000',
+              '-ac', '2',
+            ],
+          });
+          dispatcher = connection.play(output, {type: 'converted'});
+          server.playing = dispatcher;
+          server.ffmpeg = output.process;
+          
+
+        } else { //else stream directly
+
+          server.playing_cached = false;
+
+          output = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly', highWaterMark: 1<<25})
+          dispatcher = connection.play(output);
+          server.playing = dispatcher;
+
         }
+
+        if (!seek) {
+          const queueItem = audio
+          const response = new Discord.MessageEmbed()
+            .setColor('AQUA')
+            .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) now playing`);
+          message.channel.send(response);
+        }
+
         dispatcher.on('finish', () => {
+          console.log('finished')
+
           server.seekTime = '';
-          if (!server.looping) queue.shift();
+          if (!server.looping) {
+
+            if (server.playing_cached) {
+              
+              server.ffmpeg.kill()
+
+              let IdToRemove = queue[0].id
+
+              setTimeout(() => {
+                console.log('remove via playing_cached')
+                fs.unlink(`./data/music_cache/${message.guild.id}_${IdToRemove}.webm`, (err) => {
+                  if (err) console.log(err)
+                })
+              }, 5*1000);
+
+            } else if (queue[0].cached) {
+              console.log('remove via cached')
+
+              fs.unlink(`./data/music_cache/${message.guild.id}_${queue[0].id}.webm`, (err) => {
+                if (err) console.log(err)
+              })
+
+            }
+
+            queue.shift()
+
+            // output.process.kill('SIGINT')
+            // fs.unlink(`./data/music_cache/${message.guild.id}_${queue[0].id}.webm`, (err) => {
+            //   if (err) console.log(err)
+            // })
+            // make the file downloads be on a per server basis
+            // make it unlink the file when the song ends
+            // and when the song is skipped
+            // and when the stop command is used
+            // maybe make it use the cached copy as soon as it's downloaded, assuming it can be done without user noticing
+            // limit file caching to videos within a specific duration, e.g. 1.5h
+            
+          }
+
           if (!queue.length) {
             server.playing = '';
             message.channel.send(`Queue finished.`);
@@ -95,7 +183,9 @@ module.exports = {
           } else {
             play_song();
           }
+
         });
+
       });
     }
 
@@ -108,9 +198,15 @@ module.exports = {
 
     server.voiceChannel = message.member.voice.channel;
 
+    if (server.removeAllTimeout) {
+      console.log('clear remove all play')
+      clearTimeout(server.removeAllTimeout)
+    }
+
     if (!server.queue) {
       server.queue = [];
     }
+
     const queue = server.queue;
 
     if (!server.voiceChannel) {
