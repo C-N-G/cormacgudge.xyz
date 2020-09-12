@@ -15,7 +15,7 @@ module.exports = {
     function seek() {
       p.execute(message, [`https://www.youtube.com/watch?v=${server.queue[0].id}`, args[0]] );
 
-      message.channel.send(`Seeking [${util.convert_time(args[0])}].`);
+      message.channel.send(`Seeking [${util.convert_time(args[0])}]`);
     }
 
     function cacheSeek() {
