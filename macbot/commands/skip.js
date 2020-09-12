@@ -13,11 +13,11 @@ module.exports = {
 
     const server = message.client.servers.get(message.guild.id);
 
-    message.channel.send(`Skipping __***${server.queue[0].title}***__`);
     if (server.looping) {
       server.looping = false;
     }
     server.playing.end();
+    message.react('✅');
 
 	}
 };
