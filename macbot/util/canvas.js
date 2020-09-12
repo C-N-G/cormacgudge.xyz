@@ -1,7 +1,7 @@
 const { createCanvas, loadImage } = require('canvas')
 const Discord = require('discord.js');
 module.exports = {
-  draw_piechart(values) {
+  draw_piechart(values, names) {
 
     const canvas = createCanvas(600, 600);
     const ctx = canvas.getContext('2d');
@@ -40,7 +40,7 @@ module.exports = {
       ctx.moveTo(w/2, h/2);
       if (i !== values.length - 1) {
         // if this arc isn't thhe last one being drawn
-        // then draw it slightly being to fix ugly lines between segments
+        // then draw it slightly further to fix ugly lines between segments
         ctx.arc(w/2, h/2, w/2 - 10, start_angle, end_angle * 1.1);
       } else {
         // else this is the last arc being drawn
@@ -51,15 +51,24 @@ module.exports = {
       ctx.fill();
 
       ctx.fillStyle = 'black';
-      if (values[i]/total > 0.08 && values[i]/total < 1) {
+      if (values[i]/total > 0.05 && values[i]/total < 1) {
+        ctx.font = 'small-caps bold 50px sans-serif';
         bearing = start_angle + ((end_angle - start_angle) / 2);
         adj = hyp*Math.cos(bearing);
         opp = hyp*Math.sin(bearing);
-        pos_x = w/2 + adj;
-        pos_y = w/2 + opp;
+        pos_x = w/2 + adj*1.25;
+        pos_y = w/2 + opp*1.25;
         ctx.fillText(values[i], pos_x, pos_y);
+        if (names) {
+          ctx.font = 'small-caps bold 30px sans-serif';
+          pos_x = w/2 + adj;
+          pos_y = w/2 + opp; 
+          ctx.fillText(names[i], pos_x, pos_y)
+        };
       } else if (values[i]/total === 1) {
         ctx.fillText(values[i], w/2, h/2);
+        ctx.font = 'small-caps bold 30px sans-serif';
+        ctx.fillText(names[i], w/2, h/2 + h/10)
       }
 
       start_angle += (values[i]/total) * (2*Math.PI);

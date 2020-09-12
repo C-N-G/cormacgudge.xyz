@@ -16,6 +16,28 @@ module.exports = {
       '🇳','🇴','🇵','🇶','🇷','🇸','🇹','🇺','🇻','🇼','🇽','🇾','🇿'
     ]
 
+    const capitals = [
+      'A','B','C','D','E','F','G','H','I','J','K','L','M',
+      'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+    ]
+
+    function convert_emojis (array) {
+
+      let returnArray = [];
+      for (const emoji of array) {
+        for (let listEmoji = 0; listEmoji < emojis.length; listEmoji++) {
+
+          if (emoji.codePointAt(0) == emojis[listEmoji].codePointAt(0)) {
+            returnArray.push(capitals[listEmoji])
+            break;
+          }
+
+        }
+      }
+      return returnArray;
+
+    }
+
     function format_input(args) {
       let response = args.join(' ');
       if (response.endsWith(',')) {
@@ -108,19 +130,95 @@ module.exports = {
 
         collector.on('end', collected => {
 
+          // START VALUE SORTING
+
+          let combinedValues = new Map(); //combine input and reaction count into one variable
+          for (let i = 0; i < input.length; i++) {
+            combinedValues.set(i, {emoji: input[i].slice(0,3), name: input[i].slice(3), count: msg.reaction_count[i]})
+          }
+          
+          let iterator = 0;
+
+          let combinedValuesSorted = new Map(); // sort resulting array by reaction count
+          const sortedValues = util.sort(msg.reaction_count).reverse() 
+          for (let num = 0; num < sortedValues.length; num++) {
+            for (let str = 0; str < sortedValues.length; str++) {
+              
+              if (combinedValues.has(str) && sortedValues[num] == combinedValues.get(str).count) {
+                combinedValuesSorted.set(iterator, combinedValues.get(str));
+                iterator++;
+                combinedValues.delete(str)
+                break;
+              }
+
+            }
+          }
+
+          let tieValues = []; // get tied values
+          let lastVal;
+          combinedValuesSorted.forEach((value, key, map) => {
+            if (lastVal && lastVal.count == value.count && tieValues.indexOf(value.count) == -1) {
+              tieValues.push(value.count);
+              lastVal = value;
+            } else {
+              lastVal = value;
+            }
+          })
+
+          let sortedNames = []; // get sorted names
+          combinedValuesSorted.forEach((value, key, map) => {
+            sortedNames.push(value.name)
+          })
+          sortedNames.sort()
+
+          iterator = 0;
+          let tempValue; // sort names between tied scores
+          for (const tieValue of tieValues) {
+            for (let i = 0; true; i++) {
+              
+              if (
+                i < combinedValuesSorted.size - 1 &&
+                combinedValuesSorted.get(i).count == tieValue && 
+                combinedValuesSorted.get(i + 1).count == tieValue &&
+                sortedNames.indexOf(combinedValuesSorted.get(i).name) >
+                sortedNames.indexOf(combinedValuesSorted.get(i + 1).name)
+                ) {
+                tempValue = combinedValuesSorted.get(i);
+                combinedValuesSorted.set(i, combinedValuesSorted.get(i + 1));
+                combinedValuesSorted.set(i + 1, tempValue)
+              } else {
+                iterator++;
+              }
+
+              if (iterator == combinedValuesSorted.size) break;
+
+              if (i >= combinedValuesSorted.size) {i = 0; iterator = 0;}
+              
+            }
+          }
+
+          // END VALUE SORTING
+
           clearTimeout(msg.timer);
           const embed = new Discord.MessageEmbed()
-          .setTitle(`Poll Completed`)
-          .setDescription(`Received ${msg.total_votes} vote(s) from ${Object.keys(msg.submitted_user).length} user(s)`)
+            .setTitle(`Poll Completed`)
+            .setDescription(`Received ${msg.total_votes} vote(s) from ${Object.keys(msg.submitted_user).length} user(s)`)
           for (var i = 0; i < input.length; i++) {
-            embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
+            embed.addField(combinedValuesSorted.get(i).emoji + combinedValuesSorted.get(i).count, combinedValuesSorted.get(i).name, true)
           }
           if (!msg.total_votes) {
             msg.edit(embed);
           } else {
-            const input = msg.reaction_count.filter(val => val > 0);
-            const values = input.length > 1 ? util.sort(input) : input;
-            const chart = canvas.draw_piechart(values);
+            let chartValues = [];
+            let chartEmojis = [];
+            combinedValuesSorted.forEach((value, key, map) => {
+              if (value.count > 0) { // onlt draw items on chart if they are above 0
+                chartValues.unshift(value.count);
+                chartEmojis.unshift(value.emoji);
+              }
+            });
+            let chartNames = convert_emojis(chartEmojis);
+            const chart = canvas.draw_piechart(chartValues, chartNames);
             const image = new Discord.MessageAttachment(chart, 'canvas.png');
             embed.setImage('attachment://canvas.png');
             msg.delete();
