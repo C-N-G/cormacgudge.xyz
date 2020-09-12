@@ -27,6 +27,7 @@ module.exports = {
     msg[0] = `1: **[${currentTime}/${util.convert_time(queue[0].timeLength)}]** ${queue[0].title}`;
     msg.join('\n');
     const embed = new Discord.MessageEmbed()
+      .setColor('AQUA')
       .setTitle('Queue')
       .setDescription(msg);
     message.channel.send(embed);

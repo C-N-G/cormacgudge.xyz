@@ -120,11 +120,14 @@ module.exports = {
         }
 
         if (!seek) {
+          if (server.nowPlayingMessage) server.nowPlayingMessage.delete();
           const queueItem = audio
           const response = new Discord.MessageEmbed()
             .setColor('AQUA')
             .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) now playing`);
-          message.channel.send(response);
+          message.channel.send(response).then(msg => {
+            server.nowPlayingMessage = msg;
+          });
         }
 
         dispatcher.on('finish', () => {
@@ -158,6 +161,7 @@ module.exports = {
 
           if (!queue.length) {
             server.playing = '';
+            if (server.nowPlayingMessage) server.nowPlayingMessage.delete();
             message.channel.send(`Queue finished.`);
             timer = setTimeout(leave_timer, 60*1000);
           } else {
@@ -178,7 +182,7 @@ module.exports = {
 
     server.voiceChannel = message.member.voice.channel;
 
-    if (server.removeAllTimeout) {
+    if (server.removeAllTimeout) { //remove timout for deleting entire cache if new song is being played
       clearTimeout(server.removeAllTimeout)
     }
 
