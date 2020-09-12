@@ -175,6 +175,8 @@ module.exports = {
           let tempValue; // sort names between tied scores
           for (const tieValue of tieValues) {
             for (let i = 0; true; i++) {
+
+              if (i == combinedValuesSorted.size) {i = 0; iterator = 0;}
               
               if (
                 i < combinedValuesSorted.size - 1 &&
@@ -182,7 +184,7 @@ module.exports = {
                 combinedValuesSorted.get(i + 1).count == tieValue &&
                 sortedNames.indexOf(combinedValuesSorted.get(i).name) >
                 sortedNames.indexOf(combinedValuesSorted.get(i + 1).name)
-                ) {
+                ) { 
                 tempValue = combinedValuesSorted.get(i);
                 combinedValuesSorted.set(i, combinedValuesSorted.get(i + 1));
                 combinedValuesSorted.set(i + 1, tempValue)
@@ -191,8 +193,7 @@ module.exports = {
               }
 
               if (iterator == combinedValuesSorted.size) break;
-
-              if (i >= combinedValuesSorted.size) {i = 0; iterator = 0;}
+              
               
             }
           }
