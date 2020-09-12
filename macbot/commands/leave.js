@@ -23,17 +23,14 @@ module.exports = {
     }
 
     function removeAll() {
-      console.log('remove via leave')
       queueToRemove.forEach(item => {
         fs.unlink(`./data/music_cache/${message.guild.id}_${item.id}.webm`, (err) => {
-          console.log('remove via leave real')
           if (err) console.log(err)
         })
       });
     }
 
     if (server.removeAllTimeout) {
-      console.log('clear remove all')
       clearTimeout(server.removeAllTimeout)
     }
 

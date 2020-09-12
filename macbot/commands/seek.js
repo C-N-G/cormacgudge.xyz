@@ -50,13 +50,11 @@ module.exports = {
     }
 
     if (server.playing_cached) {
-      console.log('1')
       server.ffmpeg.kill()
       return seek()
     }
     
     if (server.queue[0].cached) {
-      console.log('2')
       seek()
     } else if (server.queue[0].timeLength > 5400) {
       return message.channel.send('That item is too long to cache and therefore cannot be seeked through');

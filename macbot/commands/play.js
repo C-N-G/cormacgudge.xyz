@@ -53,14 +53,11 @@ module.exports = {
         queue.push(queueItem);
 
         if (timeLength <= 5400) {
-          // server.caching = true;
           ytdl(`https://www.youtube.com/watch?v=${queueItem.id}`, {filter: 'audioonly'})
           .pipe(
             fs.createWriteStream(`./data/music_cache/${message.guild.id}_${queueItem.id}.webm`)
             .on('close', () => {
               if (queue.find(item => item.id === queueItem.id)) {
-                // server.caching = false;
-                console.log('cached')
                 queue.find(item => item.id === queueItem.id).cached = true;
               }
             })
@@ -86,14 +83,11 @@ module.exports = {
       clearTimeout(timer);
       server.voiceChannel.join().then(async connection => {
 
-        // console.log(queue)
-
         let audio = queue[0];
         let dispatcher;
         let output;
 
         if (audio.cached) { //play from cached file if it exists
-          console.log('playing cached')
 
           server.playing_cached = true;
 
@@ -134,7 +128,6 @@ module.exports = {
         }
 
         dispatcher.on('finish', () => {
-          console.log('finished')
 
           server.seekTime = '';
           if (!server.looping) {
@@ -146,14 +139,12 @@ module.exports = {
               let IdToRemove = queue[0].id
 
               setTimeout(() => {
-                console.log('remove via playing_cached')
                 fs.unlink(`./data/music_cache/${message.guild.id}_${IdToRemove}.webm`, (err) => {
                   if (err) console.log(err)
                 })
               }, 5*1000);
 
             } else if (queue[0].cached) {
-              console.log('remove via cached')
 
               fs.unlink(`./data/music_cache/${message.guild.id}_${queue[0].id}.webm`, (err) => {
                 if (err) console.log(err)
@@ -162,17 +153,6 @@ module.exports = {
             }
 
             queue.shift()
-
-            // output.process.kill('SIGINT')
-            // fs.unlink(`./data/music_cache/${message.guild.id}_${queue[0].id}.webm`, (err) => {
-            //   if (err) console.log(err)
-            // })
-            // make the file downloads be on a per server basis
-            // make it unlink the file when the song ends
-            // and when the song is skipped
-            // and when the stop command is used
-            // maybe make it use the cached copy as soon as it's downloaded, assuming it can be done without user noticing
-            // limit file caching to videos within a specific duration, e.g. 1.5h
             
           }
 
@@ -199,7 +179,6 @@ module.exports = {
     server.voiceChannel = message.member.voice.channel;
 
     if (server.removeAllTimeout) {
-      console.log('clear remove all play')
       clearTimeout(server.removeAllTimeout)
     }
 
