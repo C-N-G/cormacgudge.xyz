@@ -64,12 +64,10 @@ module.exports = {
           )
         }
 
-        if (queue.length > 1) {
-          const response = new Discord.MessageEmbed()
-            .setColor('AQUA')
-            .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) added to the queue`);
-          message.channel.send(response);
-        }
+        const response = new Discord.MessageEmbed()
+          .setColor('AQUA')
+          .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) added to the queue`);
+        message.channel.send(response);
 
         if (!server.playing) {
           play_song();
@@ -162,7 +160,6 @@ module.exports = {
           if (!queue.length) {
             server.playing = '';
             if (server.nowPlayingMessage) server.nowPlayingMessage.delete();
-            message.channel.send(`Queue finished.`);
             timer = setTimeout(leave_timer, 60*1000);
           } else {
             play_song();
