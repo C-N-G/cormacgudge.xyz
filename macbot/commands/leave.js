@@ -37,6 +37,7 @@ module.exports = {
     server.removeAllTimeout = setTimeout(removeAll, 5*1000);
 
     if (server.queue) {
+      if (server.nowPlayingMessage) server.nowPlayingMessage.delete();
       clearInterval(server.seekCache);
       server.queue = [];
       server.playing = '';
