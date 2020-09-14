@@ -120,6 +120,7 @@ module.exports = {
 
     function update_message(msg, input) {
       const embed = new Discord.MessageEmbed()
+      .setColor('AQUA')
       .setTitle(`Poll Open for ${msg.time_length} seconds`)
       .setDescription(msg.embed_desc)
       for (var i = 0; i < input.length; i++) {
@@ -131,6 +132,7 @@ module.exports = {
 
     async function send_collector(input, type, length, quick) {
       let embed = new Discord.MessageEmbed()
+      .setColor('AQUA')
       .setTitle(`Poll Generating`)
       
       let msg = await message.channel.send(embed);
@@ -165,6 +167,7 @@ module.exports = {
       //CONFIG END
 
       embed = new Discord.MessageEmbed()
+      .setColor('AQUA')
       .setTitle(`Poll Open for ${msg.time_length} seconds`)
       .setDescription(msg.embed_desc)
       for (var i = 0; i < input.length; i++) {
@@ -204,6 +207,7 @@ module.exports = {
         clearTimeout(msg.timer);
         const [items, tie] = doubleSort(input, msg.reaction_count)
         const embed = new Discord.MessageEmbed()
+          .setColor('AQUA')
           .setTitle(`Poll Completed`)
           .setDescription(`Received ${msg.total_votes} vote(s) from ${Object.keys(msg.submitted_user).length} user(s)`);
         for (var i = 0; i < input.length; i++) {
@@ -231,7 +235,7 @@ module.exports = {
 
         const filter = (reaction, user) => user.id == message.author.id;
         const promptMsg = await message.channel.send('If the poll maker would like to make an runoff poll please react to this message');
-        promptMsg.awaitReactions(filter, {max: 1, time: 15*1000})
+        promptMsg.awaitReactions(filter, {max: 1, time: 30*1000})
         .then(collected => {
           promptMsg.delete();
           let newInput = []
