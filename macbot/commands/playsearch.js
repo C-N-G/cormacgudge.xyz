@@ -25,10 +25,12 @@ module.exports = {
       let iterator = 0;
       emojis.forEach(emoji => {
         msg.react(emoji)
-        .then(() => {iterator++})
-      })
+        .then(() => {iterator++;});
+      });
 
       const filter = (reaction, user) => user.id == message.author.id;
+      // TODO change this to createReactionCollector
+      // so that I can use on end to stop if it no reactions are sent
       msg.awaitReactions(filter, {max: 1, time: 30*1000})
       .then(collected => {
 
@@ -38,14 +40,14 @@ module.exports = {
           if (iterator == 9) {
             clearInterval(timer);
             msg.delete();
-          };
+          }
         }, 2000);
 
-      })
+      });
       
     }
 
-    get_search_results(args.join(' '))
+    get_search_results(args.join(' '));
 
     }
 };

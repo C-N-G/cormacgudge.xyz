@@ -60,7 +60,7 @@ module.exports = {
         if (array[i] <= smallest) smallest = array[i];
       }
     values.push(smallest);
-    array.splice(array.indexOf(smallest), 1)
+    array.splice(array.indexOf(smallest), 1);
     smallest = array[0];
     }
 

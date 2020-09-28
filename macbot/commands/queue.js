@@ -6,7 +6,7 @@ module.exports = {
 	description: 'Lists the current queue.',
   cooldown: 1,
   guildOnly: true,
-	execute(message, args) {
+	execute(message) {
     if (!message.client.servers.get(message.guild.id)) {
       return message.channel.send('The queue is empty, try playing a song!');
     }

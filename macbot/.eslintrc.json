@@ -1,0 +1,33 @@
+{
+	"extends": "eslint:recommended",
+	"env": {
+		"node": true,
+		"es6": true
+	},
+	"parserOptions": {
+		"ecmaVersion": 2019
+	},
+	"rules": {
+    // possible errors
+    "semi": ["error", "always"],
+    "for-direction": "error",
+    "no-cond-assign": "error",
+    "no-constant-condition": "error",
+    "no-dupe-args": "error",
+    "no-dupe-else-if": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty": "error",
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-extra-semi": "error",
+    "no-func-assign": "error",
+    "no-inner-declarations": "error",
+    "no-irregular-whitespace": "error",
+    "no-sparse-arrays": "error",
+    "no-unreachable": "warn",
+    "no-unreachable-loop": "error",
+    "use-isnan": "error"
+
+	}
+}

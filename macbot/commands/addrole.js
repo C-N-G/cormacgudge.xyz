@@ -20,9 +20,7 @@ module.exports = {
       role.permissions.bitfield === 0 
     ).map(role => role.name);
 
-    const options = {
-      includeScore: true,
-    }
+    const options = { includeScore: true };
 
     const fuse = new Fuse(serverRoles, options);
 
@@ -32,11 +30,11 @@ module.exports = {
       return message.channel.send(`Could not find role ${input} 👎`);
     }
 
-    const targetRole = result[0].item
+    const targetRole = result[0].item;
 
     // check if user has role
     if (message.member.roles.cache.some(role => role.name === targetRole)) {
-      return message.channel.send(`You already have role ${targetRole} 👎`)
+      return message.channel.send(`You already have role ${targetRole} 👎`);
     }
 
     const role = message.guild.roles.cache.find(role =>
