@@ -5,7 +5,7 @@ module.exports = {
 	name: 'poll',
   aliases: ['strawpoll', 'vote'],
 	description: 'Makes a poll that users can vote on with reactions',
-  usage: '[single] [poll length] <poll items> ...',
+  usage: '[poll length in seconds] [-svwq] <poll items> ...\ns  -  single vote only\nv  -  voice only voting\nw  -  weighted voting\nq  -  quickpoll',
   cooldown: 5,
   guildOnly: true,
   args: true,
@@ -14,12 +14,12 @@ module.exports = {
     const emojis = [
       '🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲',
       '🇳','🇴','🇵','🇶','🇷','🇸','🇹','🇺','🇻','🇼','🇽','🇾','🇿'
-    ]
+    ];
 
     const capitals = [
       'A','B','C','D','E','F','G','H','I','J','K','L','M',
       'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
-    ]
+    ];
 
     function convert_emojis (array) {
 
@@ -28,7 +28,7 @@ module.exports = {
         for (let listEmoji = 0; listEmoji < emojis.length; listEmoji++) {
 
           if (emoji.codePointAt(0) == emojis[listEmoji].codePointAt(0)) {
-            returnArray.push(capitals[listEmoji])
+            returnArray.push(capitals[listEmoji]);
             break;
           }
 
@@ -42,20 +42,20 @@ module.exports = {
 
       let combinedValues = new Map(); //combine input and reaction count into one variable
       for (let i = 0; i < strArr.length; i++) {
-        combinedValues.set(i, {emoji: strArr[i].slice(0,3), name: strArr[i].slice(3), count: intArr[i]})
+        combinedValues.set(i, {emoji: strArr[i].slice(0,3), name: strArr[i].slice(3), count: intArr[i]});
       }
       
       let iterator = 0;
 
       let combinedValuesSorted = new Map(); // sort resulting map by reaction count
-      const sortedValues = util.sort(intArr).reverse() 
+      const sortedValues = util.sort(intArr).reverse() ;
       for (let num = 0; num < sortedValues.length; num++) {
         for (let str = 0; str < sortedValues.length; str++) {
           
           if (combinedValues.has(str) && sortedValues[num] == combinedValues.get(str).count) {
             combinedValuesSorted.set(iterator, combinedValues.get(str));
             iterator++;
-            combinedValues.delete(str)
+            combinedValues.delete(str);
             break;
           }
 
@@ -64,18 +64,18 @@ module.exports = {
 
       let tieValues = []; // get tied values
       let lastVal;
-      combinedValuesSorted.forEach((value, key, map) => {
+      combinedValuesSorted.forEach((value) => {
         if (lastVal && lastVal.count == value.count && tieValues.indexOf(value.count) == -1) {
           tieValues.push(value.count);
         }
         lastVal = value;
-      })
+      });
 
       let sortedNames = []; // get sorted names
-      combinedValuesSorted.forEach((value, key, map) => {
-        sortedNames.push(value.name)
-      })
-      sortedNames.sort()
+      combinedValuesSorted.forEach((value) => {
+        sortedNames.push(value.name);
+      });
+      sortedNames.sort();
 
       let tempValue; // sort names between tied scores
       for (const tieValue of tieValues) {
@@ -95,7 +95,7 @@ module.exports = {
             ) { 
             tempValue = combinedValuesSorted.get(i);
             combinedValuesSorted.set(i, combinedValuesSorted.get(i + 1));
-            combinedValuesSorted.set(i + 1, tempValue)
+            combinedValuesSorted.set(i + 1, tempValue);
           } else {
             iterator++;
           }
@@ -112,7 +112,7 @@ module.exports = {
     function format_input(args) {
       let response = args.join(' ');
       if (response.endsWith(',')) {
-        response = response.substring(0, response.length - 1)
+        response = response.substring(0, response.length - 1);
       }
       response = response.split(',').map((word, index) => word = `${emojis[index]} ` + word.trim());
       return response;
@@ -122,56 +122,66 @@ module.exports = {
       const embed = new Discord.MessageEmbed()
       .setColor('AQUA')
       .setTitle(`Poll Open for ${msg.time_length} seconds`)
-      .setDescription(msg.embed_desc)
+      .setDescription(msg.embed_desc);
       for (var i = 0; i < input.length; i++) {
-        embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true)
+        embed.addField(input[i].slice(0, 3) + msg.reaction_count[i], input[i].slice(2), true);
       }
-      msg.edit(embed)
+      msg.edit(embed);
       msg.timer = setTimeout(update_message, 3000, msg, input);
     }
 
-    async function send_collector(input, type, length, quick) {
+    async function send_collector(input, config) {
       let embed = new Discord.MessageEmbed()
       .setColor('AQUA')
-      .setTitle(`Poll Generating`)
+      .setTitle(`Poll Generating`);
       
       let msg = await message.channel.send(embed);
 
       //CONFIG START
 
+      msg.config = config;
       msg.reaction_count = [];
       msg.submitted_user = {};
-      msg.time_length = Math.round(length);
-      msg.type = type;
       msg.total_votes = 0;
-      msg.quickpoll = quick;
+      msg.time_length = Math.round(config.length);
+      msg.singleVoting = config.singleVoting;
+      msg.quickPoll = config.quickPoll;
+      msg.voiceOnly = config.voiceOnly;
 
-      if (msg.type === 1) {
-        msg.embed_desc = 'Only Single Voting Allowed';
-      } else if (msg.type === 2) {
-        msg.embed_desc = 'Multiple Votes Allowed';
+      if (msg.singleVoting) {
+        msg.embed_desc = 'Single voting only.';
+      } else {
+        msg.embed_desc = 'Multiple voting allowed.';
       }
+
+      if (msg.voiceOnly) {
+        msg.embed_desc = msg.embed_desc + '\nVoice voting only.';
+        msg.allowedVoters = message.member.voice.channel.members.map(member => member = member.user.id);
+      } else {
+        msg.embed_desc = msg.embed_desc + '\nPublic voting allowed.';
+      }
+
       const used_emojis = emojis.slice(0, input.length);
 
       for (var i = 0; i < input.length; i++) {
         msg.reaction_count.push(0);
-        if (msg.quickpoll) {
+        if (msg.quickPoll) {
           await msg.react(emojis[i]);
         }
       }
 
       const filter = (reaction, user) => {
         return used_emojis.includes(reaction.emoji.name) && user.id !== msg.author.id;
-      }
+      };
 
       //CONFIG END
 
       embed = new Discord.MessageEmbed()
       .setColor('AQUA')
       .setTitle(`Poll Open for ${msg.time_length} seconds`)
-      .setDescription(msg.embed_desc)
-      for (var i = 0; i < input.length; i++) {
-        embed.addField(input[i].slice(0, 3) + '0', input[i].slice(2), true)
+      .setDescription(msg.embed_desc);
+      for (let i = 0; i < input.length; i++) {
+        embed.addField(input[i].slice(0, 3) + '0', input[i].slice(2), true);
       }
       msg.edit(embed);
 
@@ -180,9 +190,14 @@ module.exports = {
 
       collector.on('collect', (reaction, user) => {
 
+        //check if user is in same voice channel of poll maker if voice only voting is enabled
+        if (msg.allowedVoters.indexOf(user.id) == -1 && msg.voiceOnly) {
+          return;
+        }
+
         //check if the user has already voted, and return if voting type is set to single
-        if (msg.submitted_user[user.id] && msg.type === 1) {
-          return
+        if (msg.submitted_user[user.id] && msg.singleVoting) {
+          return;
         }
 
         //check if the user has added ANY reactions before
@@ -194,7 +209,7 @@ module.exports = {
         if (!msg.submitted_user[user.id].includes(reaction.emoji.name)) {
           msg.submitted_user[user.id].push(reaction.emoji.name);
         } else {
-          return
+          return;
         }
 
         //increase internal vote count
@@ -203,9 +218,9 @@ module.exports = {
 
       });
 
-      collector.on('end', async collected => {
+      collector.on('end', async () => {
         clearTimeout(msg.timer);
-        const [items, tie] = doubleSort(input, msg.reaction_count)
+        const [items, tie] = doubleSort(input, msg.reaction_count);
         const embed = new Discord.MessageEmbed()
           .setColor('AQUA')
           .setTitle(`Poll Completed`)
@@ -218,7 +233,7 @@ module.exports = {
 
         let chartValues = [];
         let chartEmojis = [];
-        items.forEach((value, key, map) => {
+        items.forEach((value) => {
           if (value.count > 0) { // only draw items on chart if they score above 0
             chartValues.unshift(value.count);
             chartEmojis.unshift(value.emoji);
@@ -231,23 +246,23 @@ module.exports = {
         msg.delete();
         await message.channel.send({files: [image], embed: embed});
 
-        if (!tie || msg.quickpoll) return; // do not send overflow prompt if no tie or quickpoll
+        if (!tie || msg.quickPoll) return; // do not send overflow prompt if no tie or quickpoll
 
         const filter = (reaction, user) => user.id == message.author.id;
         const promptMsg = await message.channel.send('If the poll maker would like to make an runoff poll please react to this message');
         promptMsg.awaitReactions(filter, {max: 1, time: 30*1000})
-        .then(collected => {
+        .then(() => {
           promptMsg.delete();
-          let newInput = []
+          let newInput = [];
           let iterator = 0;
           items.forEach(item => {
             if (item.count == items.get(0).count) {
-              newInput.push(emojis[iterator] + ' ' + item.name)
+              newInput.push(emojis[iterator] + ' ' + item.name);
               iterator++;
             }
           });
-          send_collector(newInput, msg.type, msg.time_length, false)
-        })
+          send_collector(newInput, msg.config);
+        });
         
       });
 
@@ -255,41 +270,94 @@ module.exports = {
 
     }
 
-    let type = '';
-    if (args[0] === 'single') {
-      args.shift();
-      type = 1; // only 1 vote per person
-    } else if (args[0] === 'startquickpoll') {
-      args.shift();
-      type = 3; // make a quick poll
-    } else {
-      type = 2; // unlimited votes per person
+    function get_config(args) {
+
+      let config = {
+        length: 120,
+        singleVoting: false,
+        voiceOnly: false,
+        weightedVoting: false,
+        quickPoll: false,
+        errorMsg: false
+      };
+
+      if (!isNaN(args[0]) && args[0] <= 600) {
+        config.length = args[0];
+        args.shift();
+      } else if (!isNaN(args[0]) && args[0] > 600) {
+        config.length = 600;
+        args.shift();
+      } else if (!isNaN(args[0]) && args[0] <= 0) {
+        config.length = 5;
+        args.shift();
+      }
+
+      for (const arg of args) {
+
+        if (arg.startsWith('-')) {
+
+          for (const letter of arg) {
+
+            switch (letter) {
+              case 's':
+                config.singleVoting = true;
+                break;
+              case 'v':
+                config.voiceOnly = true;
+                break;
+              case 'w':
+                config.weightedVoting = true;
+                break;
+              case 'q':
+                config.length = 60;
+                config.singleVoting = true;
+                config.voiceOnly = false;
+                config.weightedVoting = false;
+                config.quickPoll = true;
+                break;
+            }
+
+            if (letter === 'q') break;
+
+          }
+
+          break;
+
+        }
+
+      }
+
+      if (args.findIndex(ele => ele[0].startsWith('-')) != -1) {
+        args.splice(args.findIndex(ele => ele[0].startsWith('-')), 1);
+      }
+
+      if (!message.member.voice.channelID && config.voiceOnly) {
+        config.errorMsg = 'you must be in a voice channel to enable voice only voting';
+      }
+      
+      return config;
+
     }
 
-    let length = 120;
-    if (!isNaN(args[0]) && args[0] <= 600) {
-      length = args[0];
-      args.shift();
-    } else if (!isNaN(args[0]) && args[0] > 600) {
-      return message.channel.send('A poll can only stay open for a maximum of 600 seconds (10 minutes)');
-    } else if (!isNaN(args[0]) && args[0] <= 0) {
-      return message.channel.send('Please input a positive number for the poll duration');
+    let config = get_config(args);
+
+    if (config.errorMsg) {
+      return message.channel.send(config.errorMsg);
     }
 
     const input = format_input(args);
 
-    if (input.length === 1) {
-      return message.channel.send('you need at least two options');
+    if (input.length <= 1) {
+      return message.channel.send('you need at least two items to make a poll');
+    } else if (input.length > emojis.length) {
+      return message.channel.send(`too many options, only allowed ${emojis.length} max`);
+    } else if (input.length > 7 && config.quickPoll) {
+      return message.channel.send(`too many options, only allowed 7 max`);
     }
 
-    if (input.length < emojis.length && type !== 3) {
-      send_collector(input, type, length, false)
-    } else if (type === 3 && input.length <= 7) {
-      send_collector(input, 1, 60, true)
-    } else {
-      message.channel.send(`too many options, only allowed ${type === 3 ? 7 : emojis.length} max`);
-    }
+    console.log(config);
 
+    send_collector(input, config);
 
 	}
 };

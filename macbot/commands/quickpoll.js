@@ -9,7 +9,7 @@ module.exports = {
   args: true,
 	execute(message, args) {
 
-    args.unshift('startquickpoll')
+    args.unshift('-q');
     poll.execute(message, args);
 
 	}
