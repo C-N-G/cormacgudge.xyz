@@ -355,8 +355,6 @@ module.exports = {
       return message.channel.send(`too many options, only allowed 7 max`);
     }
 
-    console.log(config);
-
     send_collector(input, config);
 
 	}
