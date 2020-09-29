@@ -5,7 +5,7 @@ module.exports = {
 	name: 'poll',
   aliases: ['strawpoll', 'vote'],
 	description: 'Makes a poll that users can vote on with reactions',
-  usage: '[poll length in seconds] [-svrq] <poll items> ...\ns  -  single vote only\nv  -  voice only voting\nr  -  ranked voting\nq  -  quickpoll',
+  usage: '[poll length in seconds] [-smvrq] <poll items> ...\ns  -  single vote only\nm  -  multi vote poll (default)\nv  -  voice only voting\nr  -  ranked voting\nq  -  quickpoll',
   cooldown: 5,
   guildOnly: true,
   args: true,
@@ -260,27 +260,24 @@ module.exports = {
         msg.delete();
         await message.channel.send({files: [image], embed: embed});
 
-        if (!tie || msg.quickPoll) return; // do not send overflow prompt if no tie or quickpoll
+        if (!tie) return; // do not send overflow prompt if no tie or quickpoll
 
         const filter = (reaction, user) => user.id == message.author.id;
         const promptMsg = await message.channel.send('If the poll maker would like to make a runoff poll please react to this message');
-        promptMsg.awaitReactions(filter, {max: 1, time: 5*1000})
+        promptMsg.awaitReactions(filter, {max: 1, time: 30*1000})
         .then(collected => {
 
           promptMsg.delete();
-          if (collected.size > 0) {
-
-            let newInput = [];
-            let iterator = 0;
-            items.forEach(item => {
-              if (item.count == items.get(0).count) {
-                newInput.push(emojis[iterator] + ' ' + item.name);
-                iterator++;
-              }
-            });
-            send_collector(newInput, msg.config);
-
-          }
+          if (collected.size != 1) return;
+          let newInput = [];
+          let iterator = 0;
+          items.forEach(item => {
+            if (item.count == items.get(0).count) {
+              newInput.push(emojis[iterator] + ' ' + item.name);
+              iterator++;
+            }
+          });
+          send_collector(newInput, msg.config);
 
         });
 
@@ -293,10 +290,10 @@ module.exports = {
     function get_config(args) {
 
       let config = {
-        length: 120,
-        singleVoting: false,
-        voiceOnly: false,
-        rankedVoting: false,
+        length: undefined,
+        singleVoting: undefined,
+        voiceOnly: undefined,
+        rankedVoting: undefined,
         quickPoll: false,
         errorMsg: false
       };
@@ -314,47 +311,56 @@ module.exports = {
 
       for (const arg of args) {
 
-        if (arg.startsWith('-')) {
+        if (!arg.startsWith('-')) continue;
 
-          for (const letter of arg) {
+        for (const letter of arg) {
 
-            switch (letter) {
-              case 's':
-                config.singleVoting = true;
-                break;
-              case 'v':
-                config.voiceOnly = true;
-                break;
-              case 'r':
-                config.rankedVoting = true;
-                break;
-              case 'q':
-                config.length = 60;
-                config.singleVoting = true;
-                config.voiceOnly = false;
-                config.rankedVoting = false;
-                config.quickPoll = true;
-                break;
-            }
-
-            if (letter === 'q') break;
-
+          switch (letter) {
+            case 's':
+              config.singleVoting = true;
+              break;
+            case 'm':
+              config.singleVoting = false;
+              break;
+            case 'v':
+              config.voiceOnly = true;
+              break;
+            case 'r':
+              config.rankedVoting = true;
+              break;
+            case 'q':
+              if (config.length == undefined) config.length = 60; // set quickpoll length to 60 seconds if no length is given
+              if (config.singleVoting == undefined) config.singleVoting = true;
+              if (config.voiceOnly == undefined) config.voiceOnly = false;
+              if (config.rankedVoting == undefined) config.rankedVoting = false;
+              config.quickPoll = true;
+              break;
           }
-
-          break;
 
         }
 
       }
 
-      if (args.findIndex(ele => ele[0].startsWith('-')) != -1) {
-        args.splice(args.findIndex(ele => ele[0].startsWith('-')), 1);
+      // remove config arguments from arguments list
+      let removedAllArgs = false;
+      while (removedAllArgs == false) {
+        if (args.findIndex(ele => ele[0].startsWith('-')) != -1) {
+          args.splice(args.findIndex(ele => ele[0].startsWith('-')), 1);
+          continue;
+        }
+        removedAllArgs = true;
       }
 
+      // throw an error message if trying to use voice only voting while not in a voice channel
       if (!message.member.voice.channelID && config.voiceOnly) {
         config.errorMsg = 'you must be in a voice channel to enable voice only voting';
       }
-      
+
+      // if values aren't chosen then set defaults
+      if (config.length == undefined) config.length = 120;
+      if (config.singleVoting == undefined) config.singleVoting == false;
+      if (config.voiceOnly == undefined) config.voiceOnly = false;
+      if (config.rankedVoting == undefined) config.rankedVoting = false;
       return config;
 
     }

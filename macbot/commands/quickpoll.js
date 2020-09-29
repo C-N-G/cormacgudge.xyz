@@ -9,7 +9,7 @@ module.exports = {
   args: true,
 	execute(message, args) {
 
-    args.unshift('-q');
+    args.splice(1 ,0, '-q');
     poll.execute(message, args);
 
 	}
