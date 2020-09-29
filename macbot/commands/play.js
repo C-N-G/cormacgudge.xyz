@@ -29,7 +29,7 @@ module.exports = {
         } else {
           message.channel.send('Error getting video url, please update bot');
         }
-      })
+      });
     }
 
     function leave_timer() {
@@ -41,7 +41,7 @@ module.exports = {
     async function queue_song (url) {
       if (ytdl.validateURL(url)) {
         clearTimeout(timer);
-        const info = await ytdl.getInfo(url)
+        const info = await ytdl.getInfo(url);
         
         const videoId = info.player_response.videoDetails.videoId;
         const title = info.player_response.videoDetails.title;
@@ -49,7 +49,7 @@ module.exports = {
         const link = url;
 
         if (queue.find(ele => ele.id === videoId)) return message.channel.send('That item is already in the queue.');
-        const queueItem = {id: videoId, title: title, timeLength: timeLength, link: link, cached: false}
+        const queueItem = {id: videoId, title: title, timeLength: timeLength, link: link, cached: false};
         queue.push(queueItem);
 
         if (timeLength <= 5400) {
@@ -61,7 +61,7 @@ module.exports = {
                 queue.find(item => item.id === queueItem.id).cached = true;
               }
             })
-          )
+          );
         }
 
         const response = new Discord.MessageEmbed()
@@ -90,7 +90,7 @@ module.exports = {
           server.playing_cached = true;
 
           if (!seek) seek = 0;
-          const file = `./data/music_cache/${message.guild.id}_${audio.id}.webm`
+          const file = `./data/music_cache/${message.guild.id}_${audio.id}.webm`;
           output = new prism.FFmpeg({
             args: [
               '-ss', seek,
@@ -111,7 +111,7 @@ module.exports = {
 
           server.playing_cached = false;
 
-          output = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly', highWaterMark: 1<<25})
+          output = ytdl(`https://www.youtube.com/watch?v=${audio.id}`, {filter: 'audioonly', highWaterMark: 1<<25});
           dispatcher = connection.play(output);
           server.playing = dispatcher;
 
@@ -119,7 +119,7 @@ module.exports = {
 
         if (!seek) {
           if (server.nowPlayingMessage) server.nowPlayingMessage.delete();
-          const queueItem = audio
+          const queueItem = audio;
           const response = new Discord.MessageEmbed()
             .setColor('AQUA')
             .setDescription(`[${util.convert_time(queueItem.timeLength)}] [${queueItem.title}](${queueItem.link}) now playing`);
@@ -135,25 +135,25 @@ module.exports = {
 
             if (server.playing_cached) {
               
-              server.ffmpeg.kill()
+              server.ffmpeg.kill();
 
-              let IdToRemove = queue[0].id
+              let IdToRemove = queue[0].id;
 
               setTimeout(() => {
                 fs.unlink(`./data/music_cache/${message.guild.id}_${IdToRemove}.webm`, (err) => {
-                  if (err) console.log(err)
-                })
+                  if (err) console.log(err);
+                });
               }, 5*1000);
 
             } else if (queue[0].cached) {
 
               fs.unlink(`./data/music_cache/${message.guild.id}_${queue[0].id}.webm`, (err) => {
-                if (err) console.log(err)
-              })
+                if (err) console.log(err);
+              });
 
             }
 
-            queue.shift()
+            queue.shift();
             
           }
 
@@ -180,7 +180,7 @@ module.exports = {
     server.voiceChannel = message.member.voice.channel;
 
     if (server.removeAllTimeout) { //remove timout for deleting entire cache if new song is being played
-      clearTimeout(server.removeAllTimeout)
+      clearTimeout(server.removeAllTimeout);
     }
 
     if (!server.queue) {
