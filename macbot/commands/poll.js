@@ -176,7 +176,7 @@ module.exports = {
         delete votes[lowestVotedItem];
 
         // if item holds majoirty of the votes then consider a winner chosen
-        if (highestVote/totalVotes > 0.5) winner = true;
+        if (highestVote/totalVotes >= 0.5) winner = true;
 
       }
 
