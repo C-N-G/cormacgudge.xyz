@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 const canvas = require('../util/canvas.js');
 const util = require('../util/util.js');
 const Discord = require('discord.js');
@@ -109,18 +110,87 @@ module.exports = {
 
     }
 
-    function simulate_runoff() {
+    function simulate_runoff(ballots) {
+
+      let votes = {};
+      let totalVotes, highestVote, lowestVote, lowestVotedItem;
+
       //count first preference votes
-      //if there is a majority winner then return
-      //else remove option with least first preference votes
-      //distribute votes from removed option to those voters lower preference
-      //if there is no lower preference to distribute votes then consider that persons votes void
+      for (const user in ballots) {
+        if (!votes[ballots[user][0]]) {
+          votes[ballots[user][0]] = 1;
+          continue;
+        }
+        votes[ballots[user][0]]++;
+      }
+
+      let winner = false;
+      while (winner == false) {
+
+        // cacluate highest voted item
+        highestVote = 0;
+        totalVotes = 0;
+        for (const option in votes) {
+          totalVotes += votes[option];
+          if (votes[option] > highestVote) highestVote = votes[option];
+        }
+
+        // if there is a majority winner this calcultion then consider a winner chosen
+        if (highestVote/totalVotes > 0.5) break;
+
+        // else find the item with fewest first votes
+        lowestVote = highestVote;
+        for (const option in votes) {
+          if (votes[option] < lowestVote) {
+            lowestVote = votes[option];
+            lowestVotedItem = option;
+          }
+        }
+
+        // redistribute votes from the lowest voted option to the next preference for those voters
+        for (const user in ballots) {
+
+          if (ballots[user][0] != lowestVotedItem) continue;// check if voter voted for lowest option
+
+          let voidBallot = false;
+          while (voidBallot == false) {
+
+            if (votes.hasOwnProperty(ballots[user][1])) { // check if ballot has a valid second prefernce vote
+              votes[ballots[user][1]]++; // if yes then redistribute vote
+              ballots[user].shift();
+              break;
+            } else {
+              ballots[user].shift(); // if no then remove first preference vote
+            }
+            
+            if (ballots[user].length == 1) { // if there is no lower preference to distribute votes then consider that ballot void
+              delete ballots[user];
+              voidBallot = true;
+            }
+
+          }
+
+        }
+
+        // remove the item with the fewest votes
+        delete votes[lowestVotedItem];
+
+        // if item holds majoirty of the votes then consider a winner chosen
+        if (highestVote/totalVotes > 0.5) winner = true;
+
+      }
+
+      return votes;
+      
     }
 
     function format_input(args) {
       let response = args.join(' ');
       if (response.endsWith(',')) {
         response = response.substring(0, response.length - 1);
+      }
+      if (response.startsWith(',')) {
+        response = response.substring(1);
       }
       response = response.split(',').map((word, index) => word = `${emojis[index]} ` + word.trim());
       return response;
@@ -232,7 +302,20 @@ module.exports = {
 
       collector.on('end', async () => {
 
-        console.log(msg.submitted_user);
+        if (config.rankedVoting) {
+
+          let runOff = simulate_runoff(msg.submitted_user);
+
+          input.map(e => e = e.slice(0,2)).forEach((item, index) => {
+            if (runOff.hasOwnProperty(item)) {
+              msg.reaction_count[index] = runOff[item];
+            } else {
+              msg.reaction_count[index] = 0;
+            }
+          });
+
+        }
+
         clearTimeout(msg.timer);
         const [items, tie] = double_sort(input, msg.reaction_count);
         const embed = new Discord.MessageEmbed()
@@ -372,6 +455,7 @@ module.exports = {
     }
 
     const input = format_input(args);
+
 
     if (input.length <= 1) {
       return message.channel.send('you need at least two items to make a poll');
