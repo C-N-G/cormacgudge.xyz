@@ -29,14 +29,15 @@ module.exports = {
       });
 
       const filter = (reaction, user) => user.id == message.author.id;
-      // TODO change this to createReactionCollector
-      // so that I can use on end to stop if it no reactions are sent
       msg.awaitReactions(filter, {max: 1, time: 30*1000})
       .then(collected => {
 
-        const chosenVideo = videoIds[emojis.indexOf(collected.first().emoji.name)];
-        p.execute(message, [`https://www.youtube.com/watch?v=${chosenVideo}`]);
-        let timer = setInterval(() => {
+        if (collected.size > 0) {
+          const chosenVideo = videoIds[emojis.indexOf(collected.first().emoji.name)];
+          p.execute(message, [`https://www.youtube.com/watch?v=${chosenVideo}`]);
+        }
+        
+        let timer = setInterval(() => { // wait for bot to finish reacting to messages before deleting 
           if (iterator == 9) {
             clearInterval(timer);
             msg.delete();
