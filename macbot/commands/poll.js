@@ -112,6 +112,8 @@ module.exports = {
 
     function simulate_runoff(ballots) {
 
+      let startingBallots = ballots; //DEBUG
+
       let votes = {};
       let totalVotes, highestVote, lowestVote, lowestVotedItem;
 
@@ -123,6 +125,8 @@ module.exports = {
         }
         votes[ballots[user][0]]++;
       }
+
+      let i = 0; //DEBUG
 
       let winner = false;
       while (winner == false) {
@@ -136,7 +140,7 @@ module.exports = {
         }
 
         // if there is a majority winner this calcultion then consider a winner chosen
-        if (highestVote/totalVotes > 0.5) break;
+        if (highestVote/totalVotes >= 0.5) break;
 
         // else find the item with fewest first votes
         lowestVote = highestVote;
@@ -177,6 +181,13 @@ module.exports = {
 
         // if item holds majoirty of the votes then consider a winner chosen
         if (highestVote/totalVotes >= 0.5) winner = true;
+
+        i++; // DEBUG
+        if (i > 2000)  {
+          message.channel.send('please tell mac it happened again');
+          console.log(`${util.get_time()}: ${startingBallots}`);
+          break;
+        }
 
       }
 

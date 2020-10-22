@@ -69,6 +69,11 @@ module.exports = {
 
   random(input) {
     return Math.round(Math.random()*Math.round(input));
+  },
+
+  get_time() {
+    const now = new Date();
+    return `[${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}]`;
   }
 
 };
