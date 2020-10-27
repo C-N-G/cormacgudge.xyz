@@ -112,7 +112,7 @@ module.exports = {
 
     function simulate_runoff(ballots) {
 
-      let startingBallots = ballots; //DEBUG
+      let startingBallots = JSON.stringify(ballots); //DEBUG
 
       let votes = {};
       let totalVotes, highestVote, lowestVote, lowestVotedItem;
