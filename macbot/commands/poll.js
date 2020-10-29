@@ -14,12 +14,12 @@ module.exports = {
 
     const emojis = [
       '🇦','🇧','🇨','🇩','🇪','🇫','🇬','🇭','🇮','🇯','🇰','🇱','🇲',
-      '🇳','🇴','🇵','🇶','🇷','🇸','🇹','🇺','🇻','🇼','🇽','🇾','🇿'
+      '🇳','🇴','🇵','🇶','🇷','🇸','🇹'
     ];
 
     const capitals = [
       'A','B','C','D','E','F','G','H','I','J','K','L','M',
-      'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+      'N','O','P','Q','R','S','T'
     ];
 
     function convert_emojis (array) {
@@ -112,12 +112,11 @@ module.exports = {
 
     function simulate_runoff(ballots) {
 
-      let startingBallots = JSON.stringify(ballots); //DEBUG
-
       let votes = {};
-      let totalVotes, highestVote, lowestVote, lowestVotedItem;
-
-      //count first preference votes
+      let weights = {};
+      let totalVotes, highestVote, lowestVote, lowestVotedItem, lowestWeight;
+    
+      // count first preference votes
       for (const user in ballots) {
         if (!votes[ballots[user][0]]) {
           votes[ballots[user][0]] = 1;
@@ -125,12 +124,26 @@ module.exports = {
         }
         votes[ballots[user][0]]++;
       }
-
-      let i = 0; //DEBUG
-
+    
+      // do a borda count to resolve ties
+      let i;
+      for (const voter in ballots) {
+        i = ballots[voter].length;
+        for (const voteItem of ballots[voter]) {
+          if (!weights.hasOwnProperty(voteItem)) {
+            weights[voteItem] = i;
+          } else {
+            weights[voteItem] += i;
+          }
+          i--;
+        }
+      }
+    
+      i = 0; //DEBUG
+    
       let winner = false;
       while (winner == false) {
-
+    
         // cacluate highest voted item
         highestVote = 0;
         totalVotes = 0;
@@ -138,27 +151,39 @@ module.exports = {
           totalVotes += votes[option];
           if (votes[option] > highestVote) highestVote = votes[option];
         }
-
-        // if there is a majority winner this calcultion then consider a winner chosen
-        if (highestVote/totalVotes >= 0.5) break;
-
+    
+        // if there is a majority winner from this calcultion then consider a winner chosen
+        if (highestVote / totalVotes > 0.5) break;
+    
         // else find the item with fewest first votes
         lowestVote = highestVote;
+        lowestVotedItem = undefined;
         for (const option in votes) {
           if (votes[option] < lowestVote) {
             lowestVote = votes[option];
             lowestVotedItem = option;
           }
         }
-
+    
+        // if there is no lowest voted item then use borda count to determine lowest option
+        lowestWeight = 0;
+        if (lowestVotedItem == undefined) {
+          for (const option in votes) {
+            if (weights[option] > lowestWeight) {
+              lowestWeight = weights[option];
+              lowestVotedItem = option;
+            }
+          }
+        }
+    
         // redistribute votes from the lowest voted option to the next preference for those voters
         for (const user in ballots) {
-
+    
           if (ballots[user][0] != lowestVotedItem) continue;// check if voter voted for lowest option
-
+    
           let voidBallot = false;
           while (voidBallot == false) {
-
+    
             if (votes.hasOwnProperty(ballots[user][1])) { // check if ballot has a valid second prefernce vote
               votes[ballots[user][1]]++; // if yes then redistribute vote
               ballots[user].shift();
@@ -166,33 +191,32 @@ module.exports = {
             } else {
               ballots[user].shift(); // if no then remove first preference vote
             }
-            
+    
             if (ballots[user].length == 1) { // if there is no lower preference to distribute votes then consider that ballot void
               delete ballots[user];
               voidBallot = true;
             }
-
+    
           }
-
+    
         }
-
+    
         // remove the item with the fewest votes
         delete votes[lowestVotedItem];
-
+    
         // if item holds majoirty of the votes then consider a winner chosen
-        if (highestVote/totalVotes >= 0.5) winner = true;
-
+        if (highestVote / totalVotes >= 0.5) winner = true;
+    
         i++; // DEBUG
         if (i > 2000)  {
-          message.channel.send('please tell mac it happened again');
-          console.log(`${util.get_time()}: ${startingBallots}`);
+          message.channel.send('ERROR: rank poll overflow');
           break;
         }
-
+    
       }
-
+    
       return votes;
-      
+    
     }
 
     function format_input(args) {
