@@ -8,4 +8,5 @@ rps_master/authentication.json
 macbot/node_modules
 macbot/config.json
 macbot/nw_servers.txt
-macbot/data/*
+macbot/data/steamprofiles.json
+macbot/data/music_cache
