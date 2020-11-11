@@ -14,7 +14,7 @@ module.exports = {
 
       try {
         let data = fs.readFileSync('./data/bossmusic.txt', 'utf8');
-        data = data.split('\r\n');
+        data = data.split('\n');
         return data;
       } catch (error) {
         message.channel.send('Error loading file');
