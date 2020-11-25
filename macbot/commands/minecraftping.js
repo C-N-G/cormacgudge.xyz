@@ -8,8 +8,9 @@ module.exports = {
   cooldown: 5,
   args: true,
 	execute(message, args) {
-    if (args[0] === 'cur') args[0] = 'mc.ancarnetwork.cf';
-    let msg = ''
+    // if (args[0] === 'cur') args[0] = 'mc.ancarnetwork.cf';
+    if (args[0] === 'cur') args[0] = '89.124.9.31:25565';
+    let msg = '';
 
     function build_msg(response) {
       if (['list', 'mods', 'plugins', 'all'].find(ele => ele === args[1]) || !args[1]){
@@ -18,7 +19,7 @@ module.exports = {
         msg += `\n**Player Count**: [${response.players.online}/${response.players.max}]`;
         if (args[1] === 'all' || args[1] === 'list') {
           if (response.players.list) {
-            msg += `\n**Player List**: ${response.players.list.join(', ')}`
+            msg += `\n**Player List**: ${response.players.list.join(', ')}`;
           } else {
             msg += `\n**Player List**: Cannot access player list`;
           }
@@ -64,7 +65,12 @@ module.exports = {
           return message.channel.send('Invalid address');
         }
         const response = JSON.parse(body);
-        build_msg(response);
+        if (response.online) {
+          build_msg(response);
+        } else {
+          message.channel.send('server is offline');
+        }
+        
       });
     }).on('error', (err) => {
       console.log(err);
