@@ -29,9 +29,9 @@ module.exports = {
             msg.edit(`${msg.content}\nserver list file updated`);
             message.client.fetchingmasterlist = false;
           });
-        })
-      })
-    };
+        });
+      });
+    }
 
     function format_master_list(list) {
       return new Promise((resolve, reject) => {
@@ -40,16 +40,16 @@ module.exports = {
         let responses = 0;
         for (var i = 0; i < unformatted_servers.length; i++) {
           get_server_info(unformatted_servers[i])
-          .then(server => formatted_servers.push(`[${server.address}]-[${server.name}]`))
+          .then(server => formatted_servers.push(`[${server.address}]-[${server.name}]-[${server.mod}]-[${server.mode}]`))
           .catch(result => console.log(result))
           .finally(() => {
             responses++;
             if (responses == unformatted_servers.length) {
-              fs.writeFile('./nw_servers.txt', formatted_servers.join('\n'), () => resolve());
+              fs.writeFile('./data/nw_servers.txt', formatted_servers.join('\n'), () => resolve());
             }
-          })
+          });
         }
-      })
+      });
     }
 
     function get_server_info(address) {
@@ -80,24 +80,36 @@ module.exports = {
         socket.on('error', (error) => {
           reject(`error with address ${address}`);
         });
-      })
-    };
+      });
+    }
 
     function format_response(res, addr) {
-      const data = res.split('\n');
+      const data = res.split('\n').map(w => w = w.trimStart());
+      while (!data[0].startsWith('<ServerStats>')) { // remove packet response information
+        data.shift();
+        if (data.length <= 0) {
+          console.log('broken response from ' + addr);
+          break;
+        }
+      }
+      console.log(data);
       let server = {};
       server.address = addr;
-      if (data[1] && data[9] && data [10]) {
+      try {
         server.name = data[1].startsWith('<Name>') ? data[1].substring(6, data[1].length - 7) : 'unknown';
+        server.mod = data[2].startsWith('<ModuleName>') ? data[2].substring(12, data[2].length - 13) : 'unknown';
+        server.mode = data[8].startsWith('<MapTypeName>') ? data[8].substring(13, data[8].length - 14) : 'unknown';
         server.curPlayers = data[9].startsWith('<NumberOfActivePlayers>') ? data[9].substring(23, data[9].length - 24) : '0';
         server.maxPlayers = data[10].startsWith('<MaxNumberOfPlayers>') ? data[10].substring(20, data[10].length - 21) : '0';
+      } catch (error) {
+        console.log('nwp error 0: ' + error);
       }
       return server;
     }
 
     function check_server_file() {
       try {
-        if (fs.existsSync('./nw_servers.txt')) {
+        if (fs.existsSync('./data/nw_servers.txt')) {
           return true;
         } else {
           return false;
@@ -112,10 +124,10 @@ module.exports = {
       if (check_server_file()) {
         message.channel.send({
           files: [{
-            attachment: './nw_servers.txt',
+            attachment: './data/nw_servers.txt',
             name: 'nw_servers.txt'
           }]
-        })
+        });
       } else {
         message.channel.send('no file found, try updating');
       }
@@ -127,7 +139,7 @@ module.exports = {
         message.client.user.setActivity(`[${server.curPlayers}/${server.maxPlayers}]`);
         timer = setTimeout(track, 1000*120, addr);
       })
-      .catch(result => message.channel.send(result))
+      .catch(result => message.channel.send(result));
     }
 
     function stop_tracking() {
@@ -138,17 +150,19 @@ module.exports = {
 
     function server_search(args) {
       if (check_server_file()) {
-        fs.readFile('./nw_servers.txt', 'utf8', (err, data) => {
+        fs.readFile('./data/nw_servers.txt', 'utf8', (err, data) => {
           let servers = data.split('\n').map(server => {
             const data = server.split(']-[');
             const ip = data[0].substring(1);
-            const name = data[1].slice(0, -1);
-            return {ip:ip, name:name};
+            const name = data[1];
+            const mod = data[2];
+            const mode = data[3].slice(0, -1);
+            return {ip:ip, name:name, mod:mod, mode:mode};
           });
           const options = {
             includeScore: true,
             keys: ['name']
-          }
+          };
           const fuzzy = new Fuse(servers, options);
           const result = fuzzy.search(args.join(' '));
           const maxResults = 10 < result.length ? 10 : result.length;
@@ -161,7 +175,7 @@ module.exports = {
             for (var i = 0; i < maxResults; i++) {
               get_server_info(result[i].item.ip)
               .then(server => {
-                response += `${server.address} - ${server.name} [${server.curPlayers}/${server.maxPlayers}]\n`;
+                response += `${server.address} - ${server.name} - ${server.mod} - ${server.mode} [${server.curPlayers}/${server.maxPlayers}]\n`;
               })
               .catch(result => console.log(result))
               .finally(() => {
@@ -172,9 +186,9 @@ module.exports = {
                   .setDescription(response);
                   msg.edit(embed);
                 }
-              })
+              });
             }
-          })
+          });
         });
       } else {
         message.channel.send('no file found, try updating');
@@ -204,11 +218,11 @@ module.exports = {
       stop_tracking();
     } else if (args[0] === 'search') {
       args.shift();
-      server_search(args)
+      server_search(args);
     } else if (args.length === 1) {
       get_server_info(args[0])
-      .then(server => message.channel.send(`${server.name} [${server.curPlayers}/${server.maxPlayers}]`))
-      .catch(result => message.channel.send(result))
+      .then(server => message.channel.send(`${server.name} - ${server.mod} - ${server.mode} [${server.curPlayers}/${server.maxPlayers}]`))
+      .catch(result => message.channel.send(result));
     }
 
 	}
