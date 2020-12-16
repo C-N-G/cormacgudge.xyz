@@ -17,7 +17,7 @@ module.exports = {
       try {
         const body = await got(`${url}?key=${steam_api_key}&steamid=${steamID}&format=json&include_appinfo=1`).json();
         if (body) {
-          return body.response.games.map(m => m = { 'appid':m.appid, 'name':m.name })
+          return body.response.games.map(m => m = { 'appid':m.appid, 'name':m.name });
         } else {
           return false;
         }
@@ -87,7 +87,7 @@ module.exports = {
           const response = await got(`${url}?xml=1`);
           const startIndex = response.body.search('<steamID64>') + 11;
           const endIndex = response.body.search('</steamID64>');
-          const id = response.body.substring(startIndex, endIndex)
+          const id = response.body.substring(startIndex, endIndex);
           if (!isNaN(id) && id.length === 17) {
             resolve(id);
           } else {
@@ -97,19 +97,19 @@ module.exports = {
           console.log(error.response.body);
           reject(error.response.body);
         }
-      })
+      });
     }
 
     function loadProfiles(args) {
       return new Promise(async (resolve, reject) => {
-        const profileList = []
-        const steamProfiles = JSON.parse(await fs.readFile('./data/steamprofiles.json', 'utf8'))
+        const profileList = [];
+        const steamProfiles = JSON.parse(await fs.readFile('./data/steamprofiles.json', 'utf8'));
 
         //determine argument type e.g. steam link or discord mention or direct id
         for (const arg of args) { 
           let profileToAdd = '';
           if (arg.startsWith('https://steamcommunity.com')) { //steam url
-            let id = await getSteamIdFromURL(arg).catch((error) => console.log(error))
+            let id = await getSteamIdFromURL(arg).catch((error) => console.log(error));
             if (id === false) {
               return reject(message.channel.send('Could not find ID from URL'));
             } else {
@@ -135,7 +135,7 @@ module.exports = {
         } else {
           resolve(profileList);
         }
-      })
+      });
     }
 
     loadProfiles(args)
@@ -143,7 +143,7 @@ module.exports = {
       compareProfiles(profileList);
     }).catch((error) => {
       console.log(error);
-    })
+    });
 
 
     async function loadWebsite(url) {

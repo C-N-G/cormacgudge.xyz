@@ -9,7 +9,7 @@ module.exports = {
   args: true,
 	execute(message, args) {
     // if (args[0] === 'cur') args[0] = 'mc.ancarnetwork.cf';
-    if (args[0] === 'cur') args[0] = '89.124.9.31:25565';
+    if (args[0] === 'cur') args[0] = '89.127.42.240:25565';
     let msg = '';
 
     function build_msg(response) {
