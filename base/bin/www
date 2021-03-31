@@ -38,6 +38,8 @@ const icarus_controller = require('../controllers/icarus');
 icarus_controller.index(io);
 const battleship_controller = require('../controllers/battleship');
 battleship_controller.index(io);
+const baristassist_controller = require('../controllers/baristassist');
+baristassist_controller.index(io);
 
 /**
  * Start NW DB Crawler
