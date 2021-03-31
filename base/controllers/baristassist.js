@@ -8,7 +8,7 @@ exports.render = function(req, res) {
 };
 exports.index = function(io) {
 
-  let ticketID = 1;
+  let ticketID = 0;
   let ticketQueue = [];
 
   function add_ticket(ticketName, ticketInfo) {
@@ -17,7 +17,7 @@ exports.index = function(io) {
     let ticketGroup = false;
     const groupIndex = ticketInfo.indexOf("Grouped=true")
     if (groupIndex != -1) {
-      ticketGroup = ticketID - 1;
+      ticketGroup = ticketID;
       ticketInfo.splice(groupIndex, 1);
     }
 
@@ -35,18 +35,24 @@ exports.index = function(io) {
       // use to reverse word order
       return temp.join(" ")
     })
-    const ticket = {id: ticketID, name: ticketName, info: ticketInfo, group: ticketGroup, quantity: ticketQuantity};
-    baristassist.emit("add_ticket", ticket);
-    ticketQueue.push(ticket); // TODO add max size
     if (!ticketGroup) {
       ticketID++;
     }
+    const ticket = {id: ticketID, name: ticketName, info: ticketInfo, group: ticketGroup, quantity: ticketQuantity};
+    baristassist.emit("add_ticket", ticket);
+    ticketQueue.push(ticket); // TODO add max size
   }
 
-  function remove_ticket(ticketID) {
-    const index = ticketQueue.findIndex(ele => ele.id == ticketID);
-    ticketQueue.splice(index, 1);
-    baristassist.emit("remove_ticket", ticketID);
+  function remove_ticket(ticket) {
+    let index;
+    while (index != -1) {
+      index = ticketQueue.findIndex(ele => ele.id == ticket.id);
+      if (index == -1) {
+        break;
+      }
+      ticketQueue.splice(index, 1);
+    }
+    baristassist.emit("remove_ticket", ticket);
   }
 
   function main(socket) {

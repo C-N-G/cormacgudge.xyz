@@ -197,16 +197,16 @@ $( document ).ready(function(){
             </div>
           </div>
         </div>
-      `) 
+      `)
+      $(`#ticket${ticket.id}`).on("swiperight", function(event) {
+        socket.emit("remove_ticket", ticket);
+      })
     }
     $(".view-list").trigger('create');
-    $(`#ticket${ticket.id}`).on("swiperight", function(event) {
-      socket.emit("remove_ticket", ticket.id);
-    })
   }
 
-  function remove_ticket(ticketID) {
-    $(`#ticket${ticketID}`).animate({left: "200vw"}, 400, function() {
+  function remove_ticket(ticket) {
+    $(`#ticket${ticket.id}`).animate({left: "200vw"}, 400, function() {
       $(this).remove();
     });
   }
