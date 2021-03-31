@@ -17,7 +17,7 @@ exports.index = function(io) {
     let ticketGroup = false;
     const groupIndex = ticketInfo.indexOf("Grouped=true")
     if (groupIndex != -1) {
-      ticketGroup = ticketID;
+      ticketGroup = ticketQueue[ticketQueue.length - 1].id;
       ticketInfo.splice(groupIndex, 1);
     }
 
