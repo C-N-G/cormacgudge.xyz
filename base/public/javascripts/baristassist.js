@@ -212,6 +212,7 @@ $( document ).ready(function(){
   }
 
   function sync_ticket(ticketQueue) {
+    $('.view-list').children().remove();
     ticketQueue.forEach(ticket => {
       add_ticket(ticket);
     });
