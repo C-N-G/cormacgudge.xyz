@@ -7,7 +7,7 @@
     "devstart": "nodemon ./bin/www"
   },
   "dependencies": {
-    "canvas": "^2.7.0",
+    "canvas": "^2.8.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
