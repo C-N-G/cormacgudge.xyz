@@ -159,9 +159,6 @@ exports.index = function(io) {
 
 
             const fs = require('fs');
-            fs.readdirSync('../').forEach(file => {
-              console.log(file);
-            });
             const out = fs.createWriteStream('../public/images/state.png')
             const stream = canvas.createPNGStream()
             stream.pipe(out)
