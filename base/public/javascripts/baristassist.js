@@ -143,7 +143,7 @@ $( document ).ready(function(){
       {name: "Tea", price: 2, options: {
         Type: ["DEF.Regular", "Custom"],
         Bag: ["DEF.In", "Out"],
-        Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Milk: ["DEF.Regular", "Skimmed", "Oat", "None"],
         Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]
       }},
