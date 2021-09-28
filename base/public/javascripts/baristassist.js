@@ -12,6 +12,10 @@ $( document ).ready(function(){
     const ticketNumber = (ele) => ele.name == item;
     let ticketIndex = items.findIndex(ticketNumber);
 
+    $('.config-list').append(`<h1 style="text-align: center; margin: 0;">${item}</h1>`)
+
+    let custom = false;
+
     for (let property in items[ticketIndex].options) {
       let options = items[ticketIndex].options[property];
       $('.config-list').append(`<form><fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest></form>`)
@@ -22,8 +26,24 @@ $( document ).ready(function(){
           check = true;
         }
         $(`<input type="radio" name="${property}" id="${property + i}" value="${option}" ${check ? `checked="checked"` : ""}><label for="${property + i}">${option}</label>`).appendTo(".config-list > form:last > fieldset")
+        if (option === 'Custom') {
+          custom = property + i;
+          $('.config-list').append(`
+          <form><fieldset id="field-${custom}" data-role="controlgroup" data-type="horizontal"></fieldest>
+            <input type="text" name="Custom${item}${property}" id="Custom${item}${property}" value="" maxlength="10">
+          </form>`)
+          $(`#field-${custom}`).hide();
+          $(`#${custom}`).parent().on("change", (event) => {
+            if (event.target.value == 'Custom') {
+              $(`#field-${custom}`).show();
+            } else {
+              $(`#field-${custom}`).hide();
+            }
+          });
+        }
       });
     }
+
     $('.config-list').append(`
     <strong>Quantity:</strong>
     <form>
@@ -116,6 +136,13 @@ $( document ).ready(function(){
         Chocolate: ["DEF.Yes", "No"]
       }},
       {name: "Mocha", price: 2, options: {
+        Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
+        Size: ["8oz", "DEF.12oz"]
+      }},
+      {name: "Tea", price: 2, options: {
+        Type: ["DEF.Regular", "Custom"],
+        Bag: ["DEF.In", "Out"],
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]

@@ -14,6 +14,16 @@ exports.index = function(io) {
   function add_ticket(ticketName, ticketInfo) {
     ticketInfo = ticketInfo.split("&");
 
+    ticketInfo.forEach((ele, index) => {
+      if (ele.includes('=Custom')) {
+        let property = ele.slice(0, -7);
+        let customValue = ticketInfo[index + 1].split('=')[1].replaceAll('+', '-');
+        ticketInfo[index] = `${property}=${customValue}`
+      }
+    });
+
+    ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'))
+
     let ticketGroup = false;
     const groupIndex = ticketInfo.indexOf("Grouped=true")
     if (groupIndex != -1) {
