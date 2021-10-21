@@ -3,10 +3,12 @@ $( document ).ready(function(){
   
   let socket = io('/baristassist');
   let items;
+  let showingNotification = false;
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);
   socket.on("sync_ticket", sync_ticket);
+  socket.on("show_notification", show_notification);
 
   function render_config(item) {
     const ticketNumber = (ele) => ele.name == item;
@@ -162,28 +164,29 @@ $( document ).ready(function(){
   function change_view(target) {
     $('.ui-header > .ui-icon-arrow-l').show();
     $('.ui-header > .ui-icon-delete').hide();
-    $('.menu').hide();
-    $('.order-menu').hide();
-    $('.view-menu').hide();
-    $('.config-menu').hide();
+    $('#viewport').children().hide(); // hide all menus
     $('.config-list').children().remove();
     switch (target) {
       case 'create':
-        $('.ui-header > .h1').text("Create Ticket");
+        $('.ui-header > h1').text("Create Ticket");
         $('.order-menu').show();
         break;
       case 'view':
-        $('.ui-header > .h1').text("View Tickets");
+        $('.ui-header > h1').text("View Tickets");
         $('.view-menu').show();
         break;
       case 'menu':
-        $('.ui-header > .h1').text("BaristAssist");
+        $('.ui-header > h1').text("BaristAssist");
         $('.ui-header > .ui-icon-arrow-l').hide();
         $('.menu').show();
         break;
       case 'config':
         $('.ui-header > .ui-icon-delete').show();
         $('.config-menu').show();
+        break;
+      case 'option':
+        $('.ui-header > h1').text("Options");
+        $('.option-menu').show();
         break;
       default:
         break;
@@ -215,7 +218,7 @@ $( document ).ready(function(){
             <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
               ${ticket.name}<br>
               Quantity #${ticket.quantity}<br>
-              #${ticket.id}
+              #${ticket.count}
             </div>
           </div>
           <div class="ui-block-b">
@@ -245,22 +248,68 @@ $( document ).ready(function(){
     });
   }
 
+  function show_notification(notification) {
+
+    if (showingNotification) {
+      return;
+    }
+    showingNotification = true;
+    $(".ui-header").prepend(`
+    <div style="
+    background-color: rgba(150,150,150,0.8);
+    z-index: 1;
+    text-shadow: none;
+    color: black;
+    padding-top: 0.5em;
+    position: fixed;
+    text-align: center;
+    left: 50vw;
+    top: 100vh;
+    width: 100vw;
+    height: 10vh;
+    margin-left: -50vw;" id="popupNotification">
+      <p>${notification}</p>
+    </div>
+    `);
+    $("#popupNotification").animate({
+      top:"-=10vh"
+    }, 250, function() {
+      setTimeout(() => {
+        $("#popupNotification").animate({
+          top:"+=10vh"
+        }, 150, function() {
+          $("#popupNotification").remove();
+          showingNotification = false;
+        })
+      }, 1500);
+    });
+
+  }
+
   render_ticket_types();
   change_view("menu");
 
-  $('.ui-icon-plus').on("click", function(){
+  $('#createBtn').on("click", function(){
     change_view('create')
   });
 
-  $('.ui-icon-search').on("click", function(){
+  $('#viewBtn').on("click", function(){
     change_view('view')
   });
   
-  $('.ui-icon-arrow-l').on("click", function(){
+  $('#menuBtn').on("click", function(){
     change_view('menu')
   });
 
-  $('.ui-icon-delete').on("click", function(){
+  $('#optionBtn').on("click", function(){
+    change_view('option')
+  });
+
+  $('#resetOrderCount').on("click", function(){
+    socket.emit("option", "resetOrderCount");
+  });
+
+  $('#cancelBtn').on("click", function(){
     change_view('create')
   });
 

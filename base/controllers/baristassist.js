@@ -9,6 +9,7 @@ exports.render = function(req, res) {
 exports.index = function(io) {
 
   let ticketID = 0;
+  let ticketCount = 0;
   let ticketQueue = [];
 
   function add_ticket(ticketName, ticketInfo) {
@@ -47,8 +48,9 @@ exports.index = function(io) {
     })
     if (!ticketGroup) {
       ticketID++;
+      ticketCount++;
     }
-    const ticket = {id: ticketID, name: ticketName, info: ticketInfo, group: ticketGroup, quantity: ticketQuantity};
+    const ticket = {id: ticketID, name: ticketName, info: ticketInfo, group: ticketGroup, quantity: ticketQuantity, count:ticketCount};
     baristassist.emit("add_ticket", ticket);
     ticketQueue.push(ticket); // TODO add max size
   }
@@ -65,11 +67,28 @@ exports.index = function(io) {
     baristassist.emit("remove_ticket", ticket);
   }
 
+  function show_notification(notification) {
+    baristassist.emit("show_notification", notification);
+  }
+
+  function option(type) {
+    switch (type) {
+      case "resetOrderCount":
+        ticketCount = 0;
+        show_notification("Order count reset successfully");
+        break;
+    
+      default:
+        break;
+    }
+  }
+
   function main(socket) {
     console.log('USER HAS CONNECTED TO BARISASSIST');
     socket.emit('sync_ticket', ticketQueue);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
+    socket.on("option", option);
   }
 
   var baristassist = io

@@ -6,13 +6,15 @@ block content
 
   //- div(data-role="header")
   div.ui-header.ui-bar-a
-    button.ui-btn-left.ui-btn-corner-all.ui-btn.ui-icon-arrow-l.ui-btn-icon-notext.ui-shadow
+    button.ui-btn-left.ui-btn-corner-all.ui-btn.ui-icon-arrow-l.ui-btn-icon-notext.ui-shadow#menuBtn
     h1.ui-title BaristAssist
-    button.ui-btn-right.ui-btn-corner-all.ui-btn.ui-icon-delete.ui-btn-icon-notext.ui-shadow
-  div.ui-content.ui-page-theme-a
+    button.ui-btn-right.ui-btn-corner-all.ui-btn.ui-icon-delete.ui-btn-icon-notext.ui-shadow#cancelBtn
+  div.ui-content.ui-page-theme-a#viewport
     div.menu
-      button.ui-btn.ui-btn-a.ui-icon-plus.ui-btn-icon-left.ui-shadow.ui-corner-all Create Ticket
-      button.ui-btn.ui-btn-a.ui-icon-search.ui-btn-icon-left.ui-shadow.ui-corner-all View Tickets
+      button.ui-btn.ui-btn-a.ui-icon-plus.ui-btn-icon-left.ui-shadow.ui-corner-all#createBtn Create Ticket
+      button.ui-btn.ui-btn-a.ui-icon-search.ui-btn-icon-left.ui-shadow.ui-corner-all#viewBtn View Tickets
+      br
+      button.ui-btn.ui-btn-a.ui-icon-gear.ui-btn-icon-left.ui-shadow.ui-corner-all#optionBtn Options
     div.order-menu
       div.order-list.ui-grid-a
         
@@ -21,3 +23,6 @@ block content
     
     div.config-menu
       div.config-list
+
+    div.option-menu
+      button.ui-btn.ui-btn-a.ui-icon-refresh.ui-btn-icon-left.ui-shadow.ui-corner-all#resetOrderCount Reset Order Count
