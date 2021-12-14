@@ -2,7 +2,7 @@ exports.render = function(req, res) {
   res.render('baristassist', {
     meta_title: 'BaristAssist',
     meta_desc: 'Barista Ticketing System',
-    meta_js: '/javascripts/baristassist.js',
+    meta_js: `/javascripts/baristassist.js?${Math.floor(Math.random()*9999999)}`,
     meta_css: '/stylesheets/baristassist.css'
   });
 };
