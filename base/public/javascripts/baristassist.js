@@ -91,38 +91,38 @@ $( document ).ready(function(){
       {name: "Americano", price: 2, options: {
         Milk: ["Black", "DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Cappuccino", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Flat-White", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"]
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       }},
       {name: "Latte", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"]
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       }},
       {name: "Macchiato", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Shots: ["DEF.Single", "Double"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"]
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       }},
       {name: "Espresso", price: 2, options: {
         Shots: ["DEF.Single", "Double"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"]
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       }},
       {name: "Cortado", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Shots: ["DEF.Single", "Double"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"]
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       }},
       {name: "Hot-Chocolate", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
@@ -135,18 +135,20 @@ $( document ).ready(function(){
         Chocolate: ["DEF.Yes", "No"]
       }},
       {name: "Babyccino", price: 2, options: {
-        Chocolate: ["DEF.Yes", "No"]
+        Chocolate: ["DEF.Yes", "No"],
+        Milk: ["DEF.Regular", "Oat"],
       }},
       {name: "Mocha", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
+        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Tea", price: 2, options: {
         Type: ["DEF.Regular", "Custom"],
         Bag: ["DEF.In", "Out"],
         Milk: ["DEF.Regular", "Skimmed", "Oat", "None"],
-        Sugar: ["DEF.0", "1", "2", "3", "4", "5"],
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Size: ["8oz", "DEF.12oz"]
       }},
     ]
@@ -260,28 +262,26 @@ $( document ).ready(function(){
     z-index: 1;
     text-shadow: none;
     color: black;
-    padding-top: 0.5em;
     position: fixed;
     text-align: center;
-    left: 50vw;
-    top: 100vh;
-    width: 100vw;
-    height: 10vh;
-    margin-left: -50vw;" id="popupNotification">
+    left: -100vw;
+    top: 45vh;
+    width: 90vw;
+    border-radius: .3123em; " id="popupNotification">
       <p>${notification}</p>
     </div>
     `);
     $("#popupNotification").animate({
-      top:"-=10vh"
+      left:"+=105vw"
     }, 250, function() {
       setTimeout(() => {
         $("#popupNotification").animate({
-          top:"+=10vh"
+          left:"+=100vw"
         }, 150, function() {
           $("#popupNotification").remove();
           showingNotification = false;
         })
-      }, 1500);
+      }, 1250);
     });
 
   }
