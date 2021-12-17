@@ -204,7 +204,7 @@ $( document ).ready(function(){
           <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
             ${ticket.name}<br>
             Quantity #${ticket.quantity}<br>
-            #${ticket.group}.${subOrders}
+            #${ticket.groupCount}.${subOrders}
           </div>
         </div>
         <div class="ui-block-b">

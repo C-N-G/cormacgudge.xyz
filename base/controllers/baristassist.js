@@ -26,10 +26,16 @@ exports.index = function(io) {
     ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'))
 
     let ticketGroup = false;
+    let ticketGroupCount = null;
     const groupIndex = ticketInfo.indexOf("Grouped=true")
     if (groupIndex != -1) {
       ticketGroup = ticketQueue[ticketQueue.length - 1].id;
       ticketInfo.splice(groupIndex, 1);
+      //if a new order hasn't been made since rest
+      //use the ID instead of the ticket count
+      //since the id will be the ticket count of the last ticket
+      if (ticketCount == 0) ticketGroupCount = ticketID;
+      else ticketGroupCount = ticketCount;
     }
 
     let ticketQuantity;
@@ -46,11 +52,20 @@ exports.index = function(io) {
       // use to reverse word order
       return temp.join(" ")
     })
+
     if (!ticketGroup) {
       ticketID++;
       ticketCount++;
     }
-    const ticket = {id: ticketID, name: ticketName, info: ticketInfo, group: ticketGroup, quantity: ticketQuantity, count:ticketCount};
+    const ticket = {
+      id: ticketID, 
+      name: ticketName, 
+      info: ticketInfo, 
+      group: ticketGroup, 
+      quantity: ticketQuantity, 
+      count: ticketCount, 
+      groupCount: ticketGroupCount
+    };
     baristassist.emit("add_ticket", ticket);
     ticketQueue.push(ticket); // TODO add max size
   }
