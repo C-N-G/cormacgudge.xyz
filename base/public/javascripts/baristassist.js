@@ -286,39 +286,54 @@ $( document ).ready(function(){
 
   }
 
+  function seasonal_changes() {
+    let now = new Date()
+    if (now.getMonth() == 11 && now.getDate() >= 20 && now.getDate() <= 29) {
+      $('.subheading').text("Happy Christmas");
+    } else if (now.getMonth() == 11 && now.getDate() >= 30) {
+      $('.subheading').text("Happy New Year");
+    } else if (now.getMonth() == 0 && now.getDate() <= 3) {
+      $('.subheading').text("Happy New Year");
+    } else {
+      $('.subheading').remove();
+    }
+  }
+
+  function add_button_events() {
+    $('#createBtn').on("click", function(){
+      change_view('create')
+    });
+  
+    $('#viewBtn').on("click", function(){
+      change_view('view')
+    });
+    
+    $('#menuBtn').on("click", function(){
+      change_view('menu')
+    });
+  
+    $('#optionBtn').on("click", function(){
+      change_view('option')
+    });
+  
+    $('#resetOrderCount').on("click", function(){
+      socket.emit("option", "resetOrderCount");
+    });
+  
+    $('#cancelBtn').on("click", function(){
+      change_view('create')
+    });
+  
+    $('.btn-add-ticket').on("click", function(){
+      change_view("config");
+      let ticket = $(this).text();
+      render_config(ticket);
+    });
+  }
+
+  seasonal_changes();
   render_ticket_types();
+  add_button_events();
   change_view("menu");
-
-  $('#createBtn').on("click", function(){
-    change_view('create')
-  });
-
-  $('#viewBtn').on("click", function(){
-    change_view('view')
-  });
-  
-  $('#menuBtn').on("click", function(){
-    change_view('menu')
-  });
-
-  $('#optionBtn').on("click", function(){
-    change_view('option')
-  });
-
-  $('#resetOrderCount').on("click", function(){
-    socket.emit("option", "resetOrderCount");
-  });
-
-  $('#cancelBtn').on("click", function(){
-    change_view('create')
-  });
-
-  $('.btn-add-ticket').on("click", function(){
-    change_view("config");
-    let ticket = $(this).text();
-    render_config(ticket);
-  });
-
-  
 
 });
