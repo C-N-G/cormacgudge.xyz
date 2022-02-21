@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const path = require('path');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -23,5 +24,8 @@ var icarus_controller = require('../controllers/icarus');               router.g
 var battleship_controller = require('../controllers/battleship');       router.get('/battleship', battleship_controller.render);
 var baristassist_controller = require('../controllers/baristassist');   router.get('/baristassist', baristassist_controller.render);
 
+router.get('/testing/rhw', function(req, res, next) {
+  res.sendFile(path.join(__dirname, '../build', 'app.html'));
+ })
 
 module.exports = router;

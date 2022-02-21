@@ -10,3 +10,4 @@ macbot/config.json
 macbot/nw_servers.txt
 macbot/data/steamprofiles.json
 macbot/data/music_cache
+base/build/*
