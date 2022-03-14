@@ -92,28 +92,33 @@ $( document ).ready(function(){
         Milk: ["Black", "DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Cappuccino", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Flat-White", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
       {name: "Latte", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
       {name: "Macchiato", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Shots: ["DEF.Single", "Double"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
       {name: "Espresso", price: 2, options: {
         Shots: ["DEF.Single", "Double"],
@@ -123,6 +128,7 @@ $( document ).ready(function(){
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Shots: ["DEF.Single", "Double"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
       {name: "Hot-Chocolate", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
@@ -142,6 +148,7 @@ $( document ).ready(function(){
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
         Strength: ["Weak", "DEF.Medium", "Strong"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
         Size: ["8oz", "DEF.12oz"]
       }},
       {name: "Tea", price: 2, options: {
