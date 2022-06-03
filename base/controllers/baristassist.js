@@ -6,7 +6,28 @@ exports.render = function(req, res) {
     meta_css: '/stylesheets/baristassist.css'
   });
 };
-exports.index = function(io) {
+exports.index = async function(io) {
+
+  // load spreadsheet
+  const { GoogleSpreadsheet } = require('google-spreadsheet');
+  const { client_email, private_key } = require('../config.json');
+  const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
+  await doc.useServiceAccountAuth({
+    client_email: client_email,
+    private_key: private_key,
+  });
+  await doc.loadInfo();
+
+  // load worksheet on spreadsheet
+  const thisYear = String(new Date().getFullYear());
+  const sheet = doc.sheetsByTitle[thisYear];
+  await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
+
+  // https://www.npmjs.com/package/google-spreadsheet
+  // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
+  // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
+
+  //sqlite also a possibility for a database
 
   let ticketID = 0;
   let ticketCount = 0;
@@ -68,6 +89,15 @@ exports.index = function(io) {
     };
     baristassist.emit("add_ticket", ticket);
     ticketQueue.push(ticket); // TODO add max size
+
+    const now = new Date().toLocaleString("en-IE").replace(",", "").split(" ");
+    sheet.addRow({
+      Date: now[0],
+      Time: now[1],
+      Quantity: ticketQuantity,
+      Item: ticketName,
+    });
+
   }
 
   function remove_ticket(ticket) {
@@ -99,7 +129,7 @@ exports.index = function(io) {
   }
 
   function main(socket) {
-    console.log('USER HAS CONNECTED TO BARISASSIST');
+    console.log('USER HAS CONNECTED TO BARISTASSIST');
     socket.emit('sync_ticket', ticketQueue);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);

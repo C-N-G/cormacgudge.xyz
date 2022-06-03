@@ -9,6 +9,11 @@
   animation-direction: alternate;
 }
 
+.ui-bar-b {
+  background-color: #333 !important;
+  border-color: #1f1f1f !important;
+}
+
 @keyframes christmasColor {
   0%   {color: inherit;}
   50%  {color: inherit;}

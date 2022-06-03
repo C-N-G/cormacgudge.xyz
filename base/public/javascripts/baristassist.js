@@ -4,6 +4,8 @@ $( document ).ready(function(){
   let socket = io('/baristassist');
   let items;
   let showingNotification = false;
+  let cur_theme = localStorage.getItem("theme");
+  let theme = cur_theme ? cur_theme : "a";
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);
@@ -208,14 +210,14 @@ $( document ).ready(function(){
       const subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2
       $(`.view-list > #ticket${ticket.group}`).append(`
         <div class="ui-block-a">
-          <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
+          <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
             ${ticket.name}<br>
             Quantity #${ticket.quantity}<br>
             #${ticket.groupCount}.${subOrders}
           </div>
         </div>
         <div class="ui-block-b">
-          <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
+          <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
             ${ticket.info.join("<br>")}
           </div>
         </div>
@@ -224,14 +226,14 @@ $( document ).ready(function(){
       $('.view-list').prepend(`
         <div id="ticket${ticket.id}" class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
           <div class="ui-block-a">
-            <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
+            <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
               ${ticket.name}<br>
               Quantity #${ticket.quantity}<br>
               #${ticket.count}
             </div>
           </div>
           <div class="ui-block-b">
-            <div class="ui-bar ui-bar-a" style="height:${height}em;text-align-last: justify">
+            <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
               ${ticket.info.join("<br>")}
             </div>
           </div>
@@ -306,6 +308,47 @@ $( document ).ready(function(){
     }
   }
 
+  function change_theme() {
+
+    let target_theme = theme == "a" ? "b" : "a";
+    theme = target_theme;
+    localStorage.setItem("theme", target_theme);
+
+    set_theme(target_theme);
+
+  }
+
+  function set_theme (target_theme) {
+    $(".ui-mobile-viewport")
+      .removeClass("ui-overlay-a ui-overlay-b")
+      .addClass("ui-overlay-" + target_theme);
+
+    $(".ui-mobile-viewport")
+      .find(".ui-page")
+      .removeClass("ui-page-theme-a ui-page-theme-b")
+      .addClass("ui-page-theme-" + target_theme);
+
+    $(".ui-mobile-viewport")
+      .find(".ui-content")
+      .removeClass("ui-page-theme-a ui-page-theme-b")
+      .addClass("ui-page-theme-" + target_theme);
+
+    $(".ui-mobile-viewport")
+      .find(".ui-header")
+      .removeClass("ui-bar-a ui-bar-b")
+      .addClass("ui-bar-" + target_theme);
+    
+    $(".ui-mobile-viewport")
+      .find(".ui-btn")
+      .removeClass("ui-btn-a ui-btn-b")
+      .addClass("ui-btn-" + target_theme);
+
+    $(".ui-mobile-viewport")
+      .find(".ui-bar")
+      .removeClass("ui-bar-a ui-bar-b")
+      .addClass("ui-bar-" + target_theme);
+  }
+
   function add_button_events() {
     $('#createBtn').on("click", function(){
       change_view('create')
@@ -326,6 +369,10 @@ $( document ).ready(function(){
     $('#resetOrderCount').on("click", function(){
       socket.emit("option", "resetOrderCount");
     });
+
+    $('#darkModeToggle').on("click", function(){
+      change_theme();
+    });
   
     $('#cancelBtn').on("click", function(){
       change_view('create')
@@ -342,5 +389,13 @@ $( document ).ready(function(){
   render_ticket_types();
   add_button_events();
   change_view("menu");
+
+  $(document).on("pagecreate", function() {
+    if (theme == "b") {
+      set_theme(theme);
+    }
+  })
+
+  
 
 });
