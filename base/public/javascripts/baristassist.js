@@ -153,6 +153,12 @@ $( document ).ready(function(){
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
         Size: ["8oz", "DEF.12oz"]
       }},
+      {name: "Iced-Coffee", price: 2, options: {
+        Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
+      }},
       {name: "Tea", price: 2, options: {
         Type: ["DEF.Regular", "Custom"],
         Bag: ["DEF.In", "Out"],
