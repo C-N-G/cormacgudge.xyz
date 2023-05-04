@@ -137,6 +137,7 @@ function render_ticket_types() {
     {name: "Chai-Latte", price: 2, options: {
       Milk: ["DEF.Regular", "Skimmed", "Oat"],
       Chocolate: ["DEF.Yes", "No"],
+      Cinnamon: ["Yes", "DEF.No"],
       Size: ["8oz", "DEF.12oz"],
     }},
     {name: "Dirty-Chai", price: 2, options: {
