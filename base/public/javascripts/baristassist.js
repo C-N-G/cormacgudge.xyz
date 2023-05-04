@@ -92,27 +92,27 @@ $( document ).ready(function(){
     items = [
       {name: "Americano", price: 2, options: {
         Milk: ["Black", "DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
-        Size: ["8oz", "DEF.12oz"]
+        Size: ["8oz", "DEF.12oz"],
       }},
       {name: "Cappuccino", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
-        Size: ["8oz", "DEF.12oz"]
+        Size: ["8oz", "DEF.12oz"],
       }},
       {name: "Flat-White", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
       {name: "Latte", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
@@ -134,13 +134,13 @@ $( document ).ready(function(){
       }},
       {name: "Hot-Chocolate", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Age: ["DEF.Adult", "Child"],
         Size: ["8oz", "DEF.12oz"],
-        Age: ["DEF.Adult", "Child"]
       }},
       {name: "Chai-Latte", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Chocolate: ["DEF.Yes", "No"],
         Size: ["8oz", "DEF.12oz"],
-        Chocolate: ["DEF.Yes", "No"]
       }},
       {name: "Babyccino", price: 2, options: {
         Chocolate: ["DEF.Yes", "No"],
@@ -148,14 +148,14 @@ $( document ).ready(function(){
       }},
       {name: "Mocha", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
-        Size: ["8oz", "DEF.12oz"]
+        Size: ["8oz", "DEF.12oz"],
       }},
       {name: "Iced-Coffee", price: 2, options: {
         Milk: ["DEF.Regular", "Skimmed", "Oat"],
-        Strength: ["Weak", "DEF.Medium", "Strong"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
         Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
       }},
@@ -164,7 +164,15 @@ $( document ).ready(function(){
         Bag: ["DEF.In", "Out"],
         Milk: ["DEF.Regular", "Skimmed", "Oat", "None"],
         Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
-        Size: ["8oz", "DEF.12oz"]
+        Size: ["8oz", "DEF.12oz"],
+      }},
+      {name: "Dirty-Chai", price: 2, options: {
+        Milk: ["DEF.Regular", "Skimmed", "Oat"],
+        Strength: ["Weak", "DEF.Medium", "Strong", "Decaf"],
+        Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
+        Chocolate: ["DEF.Yes", "No"],
+        Cinnamon: ["Yes", "DEF.No"],
+        Size: ["8oz", "DEF.12oz"],
       }},
     ]
     items.forEach((item, i) => {
