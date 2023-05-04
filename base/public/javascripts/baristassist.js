@@ -1,6 +1,6 @@
 $( document ).ready(main);
 
-let socket, items, showingNotification, cur_theme, theme;
+let socket, items, showingNotification, cur_theme, theme, active_orders;
 
 function render_config(item) {
   const ticketNumber = (ele) => ele.name == item;
@@ -187,6 +187,8 @@ function change_view(target) {
       $('.order-menu').show();
       break;
     case 'view':
+      $('#activeBtn').hide();
+      $('#activeBtn').show();
       $('.ui-header > h1').text("View Tickets");
       $('.view-menu').show();
       break;
@@ -196,6 +198,7 @@ function change_view(target) {
       $('.menu').show();
       break;
     case 'config':
+      $('.ui-header > .ui-icon-arrow-l').hide();
       $('.ui-header > .ui-icon-delete').show();
       $('.config-menu').show();
       break;
@@ -214,6 +217,8 @@ function change_view(target) {
 
 function add_ticket(ticket) {
   let height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
+  active_orders += parseInt(ticket.quantity);
+  $('#activeBtn').text(active_orders);
   if (ticket.group) {
     const subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2
     $(`.view-list > #ticket${ticket.group}`).append(`
@@ -255,6 +260,8 @@ function add_ticket(ticket) {
 }
 
 function remove_ticket(ticket) {
+  active_orders -= parseInt(ticket.quantity);
+  $('#activeBtn').text(active_orders);
   $(`#ticket${ticket.id}`).animate({left: "200vw"}, 400, function() {
     $(this).remove();
   });
@@ -382,6 +389,10 @@ function add_button_events() {
     change_view('stat')
   });
 
+  $('#activeBtn').on("click", function(){
+    change_view('view')
+  });
+
   $('#resetOrderCount').on("click", function(){
     socket.emit("option", "resetOrderCount");
   });
@@ -407,6 +418,7 @@ function main() {
   showingNotification = false;
   cur_theme = localStorage.getItem("theme");
   theme = cur_theme ? cur_theme : "a";
+  active_orders = 0;
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);

@@ -110,13 +110,16 @@ exports.index = async function(io) {
 
   function remove_ticket(ticket) {
     let index;
+    let quantity = 0 // so when removing grouped tickets the quantity is correctly updated in the active tickets
     while (index != -1) {
       index = ticketQueue.findIndex(ele => ele.id == ticket.id);
       if (index == -1) {
         break;
       }
+      quantity += parseInt(ticketQueue[index].quantity);
       ticketQueue.splice(index, 1);
     }
+    ticket.quantity = quantity;
     baristassist.emit("remove_ticket", ticket);
   }
 

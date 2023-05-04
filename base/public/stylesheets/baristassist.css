@@ -14,6 +14,10 @@
   border-color: #1f1f1f !important;
 }
 
+#activeBtn:focus {
+  box-shadow: none;
+}
+
 @keyframes christmasColor {
   0%   {color: inherit;}
   50%  {color: inherit;}
