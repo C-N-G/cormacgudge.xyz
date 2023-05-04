@@ -23,6 +23,9 @@ exports.index = async function(io) {
   const sheet = doc.sheetsByTitle[thisYear];
   await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
 
+  const todaySheet = doc.sheetsByTitle["Today"];
+  await todaySheet.loadCells("F26:F26");
+
   // https://www.npmjs.com/package/google-spreadsheet
   // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
   // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
@@ -32,6 +35,8 @@ exports.index = async function(io) {
   let ticketID = 0;
   let ticketCount = 0;
   let ticketQueue = [];
+  let todayTotal = todaySheet.getCellByA1("F26").value;
+  let updateTimer;
 
   function add_ticket(ticketName, ticketInfo) {
     ticketInfo = ticketInfo.split("&");
@@ -98,6 +103,9 @@ exports.index = async function(io) {
       Item: ticketName,
     });
 
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(update_total, 3*1000);
+
   }
 
   function remove_ticket(ticket) {
@@ -128,9 +136,16 @@ exports.index = async function(io) {
     }
   }
 
+  async function update_total() {
+    await todaySheet.loadCells("F26:F26");
+    todayTotal = todaySheet.getCellByA1("F26").value;
+    baristassist.emit("update_stats", todayTotal);
+  }
+
   function main(socket) {
     console.log('USER HAS CONNECTED TO BARISTASSIST');
     socket.emit('sync_ticket', ticketQueue);
+    socket.emit("update_stats", todayTotal);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
     socket.on("option", option);

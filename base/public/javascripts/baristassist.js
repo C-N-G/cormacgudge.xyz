@@ -11,6 +11,7 @@ $( document ).ready(function(){
   socket.on("remove_ticket", remove_ticket);
   socket.on("sync_ticket", sync_ticket);
   socket.on("show_notification", show_notification);
+  socket.on("update_stats", update_stats);
 
   function render_config(item) {
     const ticketNumber = (ele) => ele.name == item;
@@ -213,6 +214,10 @@ $( document ).ready(function(){
         $('.ui-header > h1').text("Options");
         $('.option-menu').show();
         break;
+      case 'stat':
+        $('.ui-header > h1').text("Stats");
+        $('.stat-menu').show();
+        break;
       default:
         break;
     }
@@ -309,6 +314,10 @@ $( document ).ready(function(){
 
   }
 
+  function update_stats(stats) {
+    $("#statBtn").text("Total Today: " + stats);
+  }
+
   function seasonal_changes() {
     let now = new Date()
     if (now.getMonth() == 11 && now.getDate() >= 20 && now.getDate() <= 29) {
@@ -378,6 +387,10 @@ $( document ).ready(function(){
   
     $('#optionBtn').on("click", function(){
       change_view('option')
+    });
+
+    $('#statBtn').on("click", function(){
+      change_view('stat')
     });
   
     $('#resetOrderCount').on("click", function(){
