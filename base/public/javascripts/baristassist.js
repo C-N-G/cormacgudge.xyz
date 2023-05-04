@@ -1,17 +1,27 @@
 $( document ).ready(main);
 
-let socket, items, showingNotification, cur_theme, theme, active_orders;
+let socket, items, showingNotification, currentTheme, theme, activeOrders;
 
-function render_config(item) {
+/**
+ * 
+ * @param {string} item - name of the item to render
+ * @param {object} ticket - if edting a ticket this will be the ticket data object
+ */
+function render_config(item, ticket) {
   const ticketNumber = (ele) => ele.name == item;
   let ticketIndex = items.findIndex(ticketNumber);
 
   $('.config-list').append(`<h1 style="text-align: center; margin: 0;">${item}</h1>`)
 
   let custom = false;
+  let itemOptions = items[ticketIndex].options
 
-  for (let property in items[ticketIndex].options) {
-    let options = items[ticketIndex].options[property];
+  if (ticket) {
+    // TODO config with ticket options for editing
+  }
+
+  for (let property in itemOptions) {
+    let options = itemOptions[property];
     $('.config-list').append(`<form><fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest></form>`)
     options.forEach((option, i) => {
       let check = false
@@ -218,8 +228,8 @@ function change_view(target) {
 
 function add_ticket(ticket) {
   let height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
-  active_orders += parseInt(ticket.quantity);
-  $('#activeBtn').text(active_orders);
+  activeOrders += parseInt(ticket.quantity);
+  $('#activeBtn').text(activeOrders);
   if (ticket.group) {
     const subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2
     $(`.view-list > #ticket${ticket.group}`).append(`
@@ -256,13 +266,18 @@ function add_ticket(ticket) {
     $(`#ticket${ticket.id}`).on("swiperight", function(event) {
       socket.emit("remove_ticket", ticket);
     })
+    // TODO edit tickets
+    // $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
+    //   change_view("config");
+    //   render_config(ticket.name, ticket);
+    // })
   }
   $(".view-list").trigger('create');
 }
 
 function remove_ticket(ticket) {
-  active_orders -= parseInt(ticket.quantity);
-  $('#activeBtn').text(active_orders);
+  activeOrders -= parseInt(ticket.quantity);
+  $('#activeBtn').text(activeOrders);
   $(`#ticket${ticket.id}`).animate({left: "200vw"}, 400, function() {
     $(this).remove();
   });
@@ -417,9 +432,9 @@ function main() {
 
   socket = io('/baristassist');
   showingNotification = false;
-  cur_theme = localStorage.getItem("theme");
-  theme = cur_theme ? cur_theme : "a";
-  active_orders = 0;
+  currentTheme = localStorage.getItem("theme");
+  theme = currentTheme ? currentTheme : "a";
+  activeOrders = 0;
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);
