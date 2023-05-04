@@ -1,6 +1,6 @@
 $( document ).ready(main);
 
-let socket, items, showingNotification, currentTheme, theme, activeOrders;
+let socket, items, showingNotification, currentTheme, theme, activeOrders, connected;
 
 /**
  * 
@@ -428,6 +428,16 @@ function add_button_events() {
   });
 }
 
+function check_connection() {
+  connected = socket.connected;
+  if (connected === false) {
+    show_notification("CONNECTION ERROR");
+    $('.ui-header > h1').css("color", "red");
+  } else {
+    $('.ui-header > h1').css("color", "white");
+  }
+}
+
 function main() {
 
   socket = io('/baristassist');
@@ -435,12 +445,15 @@ function main() {
   currentTheme = localStorage.getItem("theme");
   theme = currentTheme ? currentTheme : "a";
   activeOrders = 0;
+  connected = socket.connected;
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);
   socket.on("sync_ticket", sync_ticket);
   socket.on("show_notification", show_notification);
   socket.on("update_stats", update_stats);
+  socket.on("connect_error", check_connection);
+  socket.on("connect", check_connection);
 
   seasonal_changes();
   render_ticket_types();

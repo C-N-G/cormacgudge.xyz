@@ -8,34 +8,11 @@ exports.render = function(req, res) {
 };
 exports.index = async function(io) {
 
-  // load spreadsheet
-  const { GoogleSpreadsheet } = require('google-spreadsheet');
-  const { client_email, private_key } = require('../config.json');
-  const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
-  await doc.useServiceAccountAuth({
-    client_email: client_email,
-    private_key: private_key,
-  });
-  await doc.loadInfo();
-
-  // load worksheet on spreadsheet
-  const thisYear = String(new Date().getFullYear());
-  const sheet = doc.sheetsByTitle[thisYear];
-  await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
-
-  const todaySheet = doc.sheetsByTitle["Today"];
-  await todaySheet.loadCells("F26:F26");
-
-  // https://www.npmjs.com/package/google-spreadsheet
-  // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
-  // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
-
-  //sqlite also a possibility for a database
-
+  let sheet, todaySheet;
   let ticketID = 0;
   let ticketCount = 0;
   let ticketQueue = [];
-  let todayTotal = todaySheet.getCellByA1("F26").value;
+  let todayTotal = 0;
   let updateTimer;
 
   function add_ticket(ticketName, ticketInfo) {
@@ -145,13 +122,61 @@ exports.index = async function(io) {
     baristassist.emit("update_stats", todayTotal);
   }
 
-  function main(socket) {
+  function load_spreadsheet() {
+    return new Promise( async (resolve, reject) => {
+
+      // load spreadsheet
+      try {
+        const { GoogleSpreadsheet } = require('google-spreadsheet');
+        const { client_email, private_key } = require('../config.json');
+        const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
+        await doc.useServiceAccountAuth({
+          client_email: client_email,
+          private_key: private_key,
+        });
+        await doc.loadInfo();
+  
+        // load worksheet on spreadsheet
+        const thisYear = String(new Date().getFullYear());
+        sheet = doc.sheetsByTitle[thisYear];
+        await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
+  
+        todaySheet = doc.sheetsByTitle["Today"];
+        todaySheet.loadCells("F26:F26").then(() => {
+          todayTotal = todaySheet.getCellByA1("F26").value;
+        });
+        
+  
+        // https://www.npmjs.com/package/google-spreadsheet
+        // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
+        // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
+  
+        //sqlite also a possibility for a database
+
+      } catch(error) {
+
+        console.log(error);
+
+      }
+
+      if (todayTotal !== undefined) resolve();
+      else reject();
+
+    })
+  }
+
+  async function main(socket) {
+
+    await load_spreadsheet();
+
     console.log('USER HAS CONNECTED TO BARISTASSIST');
+
     socket.emit('sync_ticket', ticketQueue);
     socket.emit("update_stats", todayTotal);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
     socket.on("option", option);
+
   }
 
   var baristassist = io
