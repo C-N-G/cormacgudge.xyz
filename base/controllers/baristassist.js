@@ -16,7 +16,7 @@ exports.index = async function(io) {
   let updateTimer;
 
   /**
-   * 
+   * adds a ticket item to the system
    * @param {string} ticketName - the name of the ticket item
    * @param {string} ticketInfo - the parameters of the ticket
    * @returns - if the operation was a success
@@ -106,8 +106,7 @@ exports.index = async function(io) {
     });
 
     // update the stats on the client
-    clearTimeout(updateTimer);
-    updateTimer = setTimeout(update_total, 3*1000);
+    update_total()
 
     return true;
 
@@ -145,10 +144,17 @@ exports.index = async function(io) {
     }
   }
 
-  async function update_total() {
-    await todaySheet.loadCells("F26:F26");
-    todayTotal = todaySheet.getCellByA1("F26").value;
-    baristassist.emit("update_stats", todayTotal);
+  function update_total() {
+
+    async function make_update() {
+      await todaySheet.loadCells("F26:F26");
+      todayTotal = todaySheet.getCellByA1("F26").value;
+      baristassist.emit("update_stats", todayTotal);
+    }
+
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(make_update, 3*1000);
+
   }
 
   async function load_spreadsheet() {
@@ -192,6 +198,8 @@ exports.index = async function(io) {
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
     socket.on("option", option);
+    
+    update_total()
 
   }
 
