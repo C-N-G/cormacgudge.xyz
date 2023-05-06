@@ -1,5 +1,3 @@
-$( document ).ready(main);
-
 let socket, items, showingNotification, currentTheme, theme, activeOrders, connected;
 
 /**
@@ -79,6 +77,7 @@ function render_config(item, ticket) {
     $('.config-list > .btn-group-order').on("click", function(){
       const ticketInfo = $("form").serialize() + "&Grouped=true";
       change_view("create");
+      history.back();
       const ticketName = item;
       socket.emit("add_ticket", ticketName, ticketInfo);
     })
@@ -203,11 +202,6 @@ function change_view(target) {
       $('.ui-header > h1').text("View Tickets");
       $('.view-menu').show();
       break;
-    case 'menu':
-      $('.ui-header > h1').text("BaristAssist");
-      $('.ui-header > .ui-icon-arrow-l').hide();
-      $('.menu').show();
-      break;
     case 'config':
       $('.ui-header > .ui-icon-arrow-l').hide();
       $('.ui-header > .ui-icon-delete').show();
@@ -221,7 +215,11 @@ function change_view(target) {
       $('.ui-header > h1').text("Stats");
       $('.stat-menu').show();
       break;
+    case 'menu': // because the hostory stage seemingly couldn't be changed on page load
     default:
+      $('.ui-header > h1').text("BaristAssist");
+      $('.ui-header > .ui-icon-arrow-l').hide();
+      $('.menu').show();
       break;
   }
 }
@@ -386,29 +384,35 @@ function set_theme (target_theme) {
     .addClass("ui-bar-" + target_theme);
 }
 
-function add_button_events() {
+function add_events() {
   $('#createBtn').on("click", function(){
-    change_view('create')
+    change_view('create');
+    history.pushState({page: "create"}, "");
   });
 
   $('#viewBtn').on("click", function(){
-    change_view('view')
+    change_view('view');
+    history.pushState({page: "view"}, "");
   });
   
   $('#menuBtn').on("click", function(){
-    change_view('menu')
+    change_view('menu');
+    history.pushState({page: "menu"}, "");
   });
 
   $('#optionBtn').on("click", function(){
-    change_view('option')
+    change_view('option');
+    history.pushState({page: "option"}, "");
   });
 
   $('#statBtn').on("click", function(){
-    change_view('stat')
+    change_view('stat');
+    history.pushState({page: "stat"}, "");
   });
 
   $('#activeBtn').on("click", function(){
-    change_view('view')
+    change_view('view');
+    history.pushState({page: "view"}, "");
   });
 
   $('#resetOrderCount').on("click", function(){
@@ -420,14 +424,22 @@ function add_button_events() {
   });
 
   $('#cancelBtn').on("click", function(){
-    change_view('create')
+    change_view('create');
+    history.back();
   });
 
   $('.btn-add-ticket').on("click", function(){
     change_view("config");
     let ticket = $(this).text();
     render_config(ticket);
+    history.pushState({page: "create"}, "");
   });
+
+  addEventListener("popstate", (event) => {
+    change_view(event.state.page);
+  });
+
+
 }
 
 function check_connection() {
@@ -441,6 +453,8 @@ function check_connection() {
 }
 
 function main() {
+
+  history.pushState({page: "menu"}, "");
 
   socket = io('/baristassist');
   showingNotification = false;
@@ -459,7 +473,7 @@ function main() {
 
   seasonal_changes();
   render_ticket_types();
-  add_button_events();
+  add_events();
   change_view("menu");
 
   $(document).on("pagecreate", function() {
@@ -469,3 +483,5 @@ function main() {
   })
   
 };
+
+$( document ).ready(main);
