@@ -285,6 +285,8 @@ function remove_ticket(ticket) {
 
 function sync_ticket(ticketQueue) {
   $('.view-list').children().remove();
+  activeOrders = 0;
+  $('#activeBtn').text(activeOrders);
   ticketQueue.forEach(ticket => {
     add_ticket(ticket);
   });

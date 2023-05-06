@@ -15,23 +15,39 @@ exports.index = async function(io) {
   let todayTotal = 0;
   let updateTimer;
 
+  /**
+   * 
+   * @param {string} ticketName - the name of the ticket item
+   * @param {string} ticketInfo - the parameters of the ticket
+   * @returns - if the operation was a success
+   */
   function add_ticket(ticketName, ticketInfo) {
+
+    // local vars
+    let ticketGroup = false;
+    let ticketGroupCount = null;
+    let ticketQuantity;
+
+    // split the ticket info string into an array
     ticketInfo = ticketInfo.split("&");
 
+    // handle custom values in the info string
     ticketInfo.forEach((ele, index) => {
       if (ele.includes('=Custom')) {
         let property = ele.slice(0, -7);
         let customValue = ticketInfo[index + 1].split('=')[1].replaceAll('+', '-');
-        ticketInfo[index] = `${property}=${customValue}`
+        ticketInfo[index] = `${property}=${customValue}`;
       }
     });
 
-    ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'))
+    // remove the custom flag
+    ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'));
 
-    let ticketGroup = false;
-    let ticketGroupCount = null;
-    const groupIndex = ticketInfo.indexOf("Grouped=true")
+    // group handling if the ticket is part of a group
+    const groupIndex = ticketInfo.indexOf("Grouped=true");
     if (groupIndex != -1) {
+      // if the id of the group ticket doesn't exist anymore then don't add the ticket
+      if (!ticketQueue[ticketQueue.length - 1]?.id) return false;
       ticketGroup = ticketQueue[ticketQueue.length - 1].id;
       ticketInfo.splice(groupIndex, 1);
       //if a new order hasn't been made since rest
@@ -41,37 +57,46 @@ exports.index = async function(io) {
       else ticketGroupCount = ticketCount;
     }
 
-    let ticketQuantity;
-    const quantityIndex = ticketInfo.findIndex(ele => ele.startsWith("Quantity="))
+    // handle the ticket quantity
+    const quantityIndex = ticketInfo.findIndex(ele => ele.startsWith("Quantity="));``
     if (quantityIndex != -1) {
       ticketQuantity = ticketInfo[quantityIndex].slice(9);
       ticketInfo.splice(quantityIndex, 1);
     }
 
+    // update the ticket info to look presentable
     ticketInfo = ticketInfo.map((ele) => {
-      let temp = ele.split("=")
+      let temp = ele.split("=");
       // temp.push(temp[0])
       // temp.shift()
       // use to reverse word order
-      return temp.join(" ")
-    })
+      return temp.join(" ");
+    });
 
+    // increament counts if ticket isn't part of a group
     if (!ticketGroup) {
       ticketID++;
       ticketCount++;
     }
+
+    // put it all together
     const ticket = {
-      id: ticketID, 
-      name: ticketName, 
-      info: ticketInfo, 
-      group: ticketGroup, 
-      quantity: ticketQuantity, 
-      count: ticketCount, 
-      groupCount: ticketGroupCount
+      id: ticketID, // unique identifier for the ticket
+      name: ticketName, // the name of the item on the ticket
+      info: ticketInfo, // the options of the ticket
+      group: ticketGroup, // the the id of the ticket for which this ticket belongs to if grouped
+      quantity: ticketQuantity, // the quantity of the ticket
+      count: ticketCount, // the count of the ticket, shown in the app sort of like the id
+      groupCount: ticketGroupCount // the count of the ticket in the specific group
     };
+    
+    // send the ticket to all clients
     baristassist.emit("add_ticket", ticket);
+
+    // add the ticket to the server queue
     ticketQueue.push(ticket); // TODO add max size
 
+    // add the order to the spreadsheet
     const now = new Date().toLocaleString("en-IE").replace(",", "").split(" ");
     sheet.addRow({
       Date: now[0],
@@ -80,8 +105,11 @@ exports.index = async function(io) {
       Item: ticketName,
     });
 
+    // update the stats on the client
     clearTimeout(updateTimer);
     updateTimer = setTimeout(update_total, 3*1000);
+
+    return true;
 
   }
 
@@ -108,6 +136,7 @@ exports.index = async function(io) {
     switch (type) {
       case "resetOrderCount":
         ticketCount = 0;
+        ticketQueue = [];
         show_notification("Order count reset successfully");
         break;
     
@@ -122,11 +151,9 @@ exports.index = async function(io) {
     baristassist.emit("update_stats", todayTotal);
   }
 
-  function load_spreadsheet() {
-    return new Promise( async (resolve, reject) => {
+  async function load_spreadsheet() {
 
       // load spreadsheet
-      try {
         const { GoogleSpreadsheet } = require('google-spreadsheet');
         const { client_email, private_key } = require('../config.json');
         const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
@@ -142,10 +169,10 @@ exports.index = async function(io) {
         await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
   
         todaySheet = doc.sheetsByTitle["Today"];
-        todaySheet.loadCells("F26:F26").then(() => {
-          todayTotal = todaySheet.getCellByA1("F26").value;
-        });
-        
+        await todaySheet.loadCells("F26:F26");
+        todayTotal = todaySheet.getCellByA1("F26").value;
+
+        update_total();
   
         // https://www.npmjs.com/package/google-spreadsheet
         // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
@@ -153,21 +180,10 @@ exports.index = async function(io) {
   
         //sqlite also a possibility for a database
 
-      } catch(error) {
 
-        console.log(error);
-
-      }
-
-      if (todayTotal !== undefined) resolve();
-      else reject();
-
-    })
   }
 
-  async function main(socket) {
-
-    await load_spreadsheet();
+  function main(socket) {
 
     console.log('USER HAS CONNECTED TO BARISTASSIST');
 
@@ -178,6 +194,8 @@ exports.index = async function(io) {
     socket.on("option", option);
 
   }
+
+  load_spreadsheet();
 
   var baristassist = io
     .of('/baristassist')
