@@ -9,7 +9,9 @@ function render_config(item, ticket) {
   const ticketNumber = (ele) => ele.name == item;
   let ticketIndex = items.findIndex(ticketNumber);
 
-  $('.config-list').append(`<h1 style="text-align: center; margin: 0;">${item}</h1>`)
+  $('.config-list').append(`<form id="ticket-form"></form>`);
+
+  $('#ticket-form').append(`<h1 style="text-align: center; margin: 0;">${item}</h1>`)
 
   let custom = false;
   let itemOptions = items[ticketIndex].options
@@ -20,20 +22,20 @@ function render_config(item, ticket) {
 
   for (let property in itemOptions) {
     let options = itemOptions[property];
-    $('.config-list').append(`<form><fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest></form>`)
+    $('#ticket-form').append(`<fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest>`)
     options.forEach((option, i) => {
       let check = false
       if (option.startsWith("DEF.")) {
         option = option.slice(4);
         check = true;
       }
-      $(`<input type="radio" name="${property}" id="${property + i}" value="${option}" ${check ? `checked="checked"` : ""}><label for="${property + i}">${option}</label>`).appendTo(".config-list > form:last > fieldset")
+      $(`<input type="radio" name="${property}" id="${property + i}" value="${option}" ${check ? `checked="checked"` : ""}><label for="${property + i}">${option}</label>`).appendTo("#ticket-form > fieldset:last")
       if (option === 'Custom') {
         custom = property + i;
-        $('.config-list').append(`
-        <form><fieldset id="field-${custom}" data-role="controlgroup" data-type="horizontal"></fieldest>
+        $('#ticket-form').append(`
+        <fieldset id="field-${custom}" data-role="controlgroup" data-type="horizontal">
           <input type="text" name="Custom${item}${property}" id="Custom${item}${property}" value="" maxlength="10">
-        </form>`)
+        </fieldest>`)
         $(`#field-${custom}`).hide();
         $(`#${custom}`).parent().on("change", (event) => {
           if (event.target.value == 'Custom') {
@@ -46,10 +48,9 @@ function render_config(item, ticket) {
     });
   }
 
-  $('.config-list').append(`
-  <strong>Quantity:</strong>
-  <form>
+  $('#ticket-form').append(`
   <fieldset data-role="controlgroup" data-type="horizontal">
+    <legend><strong>Quantity:</strong></legend>
     <label for="Quantity"><strong>Quantity:</strong></label>
     <select name="Quantity" id="Quantity">
       <option value="1">1</option>
@@ -61,21 +62,30 @@ function render_config(item, ticket) {
       <option value="7">7</option>
     </select>
   </fieldset>
-  <form>
   `)
 
-  $('.config-list').append(`<button class="btn-order">Order</buitton>`)
-  $('.config-list > .btn-order').on("click", function(){
-    const ticketInfo = $("form").serialize();
+  $('#ticket-form').append(`
+  <fieldset data-role="controlgroup" data-type="horizontal">
+    <legend><strong>Name:</strong></legend>
+    <label for="Name">Name:</label>
+    <input type="text" name="Name" id="Name" value="" placeholder="Optional" maxlength="10">
+  </fieldset>
+  `)
+
+  $('#ticket-form').append(`<button class="btn-order">Order</buitton>`)
+  $('#ticket-form > .btn-order').on("click", function(e){
+    e.preventDefault();
+    const ticketInfo = $("#ticket-form").serialize();
     change_view("create");
     const ticketName = item;
     socket.emit("add_ticket", ticketName, ticketInfo);
   })
 
   if ($('.view-list').children().length) {
-    $('.config-list').append(`<button class="btn-group-order">Group With Last Order</buitton>`)
-    $('.config-list > .btn-group-order').on("click", function(){
-      const ticketInfo = $("form").serialize() + "&Grouped=true";
+    $('#ticket-form').append(`<button class="btn-group-order">Group With Last Order</buitton>`)
+    $('#ticket-form > .btn-group-order').on("click", function(e){
+      e.preventDefault();
+      const ticketInfo = $("#ticket-form").serialize() + "&Grouped=true";
       change_view("create");
       history.back();
       const ticketName = item;
@@ -225,51 +235,53 @@ function change_view(target) {
 }
 
 function add_ticket(ticket) {
+  
   let height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
+
   activeOrders += parseInt(ticket.quantity);
   $('#activeBtn').text(activeOrders);
+
+  let subOrders;
+  if (ticket.group) subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2;
+
+  const ticketHTML = `
+    <div class="ui-block-a">
+      <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
+        ${ticket.name}<br>
+        Quantity #${ticket.quantity}<br>
+        #${ticket.group ? ticket.groupCount + "." + subOrders : ticket.count} ${ticket.purchaser}
+      </div>
+    </div>
+    <div class="ui-block-b">
+      <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
+        ${ticket.info.join("<br>")}
+      </div>
+    </div>
+  `;
   if (ticket.group) {
-    const subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2
-    $(`.view-list > #ticket${ticket.group}`).append(`
-      <div class="ui-block-a">
-        <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
-          ${ticket.name}<br>
-          Quantity #${ticket.quantity}<br>
-          #${ticket.groupCount}.${subOrders}
-        </div>
-      </div>
-      <div class="ui-block-b">
-        <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
-          ${ticket.info.join("<br>")}
-        </div>
-      </div>
-  `) 
+
+    $(`.view-list > #ticket${ticket.group}`).append(ticketHTML);
+
   } else {
+
     $('.view-list').prepend(`
-      <div id="ticket${ticket.id}" class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
-        <div class="ui-block-a">
-          <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
-            ${ticket.name}<br>
-            Quantity #${ticket.quantity}<br>
-            #${ticket.count}
-          </div>
-        </div>
-        <div class="ui-block-b">
-          <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
-            ${ticket.info.join("<br>")}
-          </div>
-        </div>
-      </div>
-    `)
+    <div id="ticket${ticket.id}" class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
+      ${ticketHTML}
+    </div>
+    `);
+
     $(`#ticket${ticket.id}`).on("swiperight", function(event) {
       socket.emit("remove_ticket", ticket);
     })
+
     // TODO edit tickets
     // $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
     //   change_view("config");
     //   render_config(ticket.name, ticket);
     // })
+
   }
+
   $(".view-list").trigger('create');
 }
 

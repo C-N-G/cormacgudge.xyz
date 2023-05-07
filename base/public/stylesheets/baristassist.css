@@ -18,6 +18,10 @@
   box-shadow: none;
 }
 
+.view-list {
+  font-family:'Courier New', Courier, monospace;
+}
+
 @keyframes christmasColor {
   0%   {color: inherit;}
   50%  {color: inherit;}

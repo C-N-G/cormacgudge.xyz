@@ -3,7 +3,7 @@ exports.render = function(req, res) {
     meta_title: 'BaristAssist',
     meta_desc: 'Barista Ticketing System',
     meta_js: `/javascripts/baristassist.js?random=${Math.floor(Math.random()*9999999)}`,
-    meta_css: '/stylesheets/baristassist.css'
+    meta_css: `/stylesheets/baristassist.css?random=${Math.floor(Math.random()*9999999)}`
   });
 };
 exports.index = async function(io) {
@@ -26,7 +26,7 @@ exports.index = async function(io) {
     // local vars
     let ticketGroup = false;
     let ticketGroupCount = null;
-    let ticketQuantity;
+    let ticketQuantity, purchaser;
 
     // split the ticket info string into an array
     ticketInfo = ticketInfo.split("&");
@@ -58,10 +58,17 @@ exports.index = async function(io) {
     }
 
     // handle the ticket quantity
-    const quantityIndex = ticketInfo.findIndex(ele => ele.startsWith("Quantity="));``
+    const quantityIndex = ticketInfo.findIndex(ele => ele.startsWith("Quantity="));
     if (quantityIndex != -1) {
       ticketQuantity = ticketInfo[quantityIndex].slice(9);
       ticketInfo.splice(quantityIndex, 1);
+    }
+
+    // handle the ticket name
+    const nameIndex = ticketInfo.findIndex(ele => ele.startsWith("Name="));
+    if (nameIndex != -1) {
+      purchaser = ticketInfo[nameIndex].slice(5);
+      ticketInfo.splice(nameIndex, 1);
     }
 
     // update the ticket info to look presentable
@@ -87,7 +94,8 @@ exports.index = async function(io) {
       group: ticketGroup, // the the id of the ticket for which this ticket belongs to if grouped
       quantity: ticketQuantity, // the quantity of the ticket
       count: ticketCount, // the count of the ticket, shown in the app sort of like the id
-      groupCount: ticketGroupCount // the count of the ticket in the specific group
+      groupCount: ticketGroupCount, // the count of the ticket in the specific group
+      purchaser: purchaser // the name of the person making the order
     };
     
     // send the ticket to all clients
