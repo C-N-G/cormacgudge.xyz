@@ -18,7 +18,7 @@ $( document ).ready(function(){
     draw.lineJoin = "round";
 
     var draw_overlay = $('#drawing_area_overlay')[0].getContext('2d');
-    $('#drawing_area_overlay').hide();
+    // $('#drawing_area_overlay').hide();
     draw_overlay.lineCap = 'round';
     draw_overlay.lineJoin = "round";
     draw_overlay.lineWidth = 3;
@@ -264,8 +264,11 @@ $( document ).ready(function(){
     socket.on('setup', function(src){
         var img_state = new Image();
         img_state.onload = function() {
-            $('#drawing_area_overlay').show()
-            draw.drawImage(img_state,0,0)
+            // I can't remember why I hid the drawing board on load and then showed it after the image was loaded
+            // but there was some kind of bug to do with the board not being shown therefore inputs were not being accepted
+            // so it is always shown for now
+            // $('#drawing_area_overlay').show();
+            draw.drawImage(img_state,0,0);
             setInterval(draw_event, 20);
         }
         img_state.src = src;
