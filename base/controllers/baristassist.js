@@ -8,12 +8,11 @@ exports.render = function(req, res) {
 };
 exports.index = async function(io) {
 
-  let sheet, todaySheet;
+  let sheet, todaySheet, updateTimer, lastOrder;
   let ticketID = 0;
   let ticketCount = 0;
   let ticketQueue = [];
   let todayTotal = 0;
-  let updateTimer;
 
   /**
    * adds a ticket item to the system
@@ -97,6 +96,9 @@ exports.index = async function(io) {
       groupCount: ticketGroupCount, // the count of the ticket in the specific group
       purchaser: purchaser // the name of the person making the order
     };
+
+    // update last order
+    lastOrder = ticket;
     
     // send the ticket to all clients
     baristassist.emit("add_ticket", ticket);
@@ -201,7 +203,7 @@ exports.index = async function(io) {
 
     console.log('USER HAS CONNECTED TO BARISTASSIST');
 
-    socket.emit('sync_ticket', ticketQueue);
+    socket.emit('sync_ticket', {ticketQueue: ticketQueue, lastOrder: lastOrder});
     socket.emit("update_stats", todayTotal);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);

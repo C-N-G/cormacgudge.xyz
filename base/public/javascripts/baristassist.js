@@ -1,4 +1,4 @@
-let socket, items, showingNotification, currentTheme, theme, activeOrders, connected;
+let socket, items, showingNotification, currentTheme, theme, activeOrders, connected, lastOrder;
 
 /**
  * 
@@ -11,7 +11,7 @@ function render_config(item, ticket) {
 
   $('.config-list').append(`<form id="ticket-form"></form>`);
 
-  $('#ticket-form').append(`<h1 style="text-align: center; margin: 0;">${item}</h1>`)
+  $('#ticket-form').append(`<h1 id="ticket-name" style="text-align: center; margin: 0;">${item} #${get_order_id()}</h1>`)
 
   let custom = false;
   let itemOptions = items[ticketIndex].options
@@ -235,6 +235,8 @@ function change_view(target) {
 }
 
 function add_ticket(ticket) {
+
+  update_last_order(ticket)
   
   let height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
 
@@ -293,13 +295,14 @@ function remove_ticket(ticket) {
   });
 }
 
-function sync_ticket(ticketQueue) {
+function sync_ticket(syncObj) {
   $('.view-list').children().remove();
   activeOrders = 0;
   $('#activeBtn').text(activeOrders);
-  ticketQueue.forEach(ticket => {
+  syncObj.ticketQueue.forEach(ticket => {
     add_ticket(ticket);
   });
+  update_last_order(syncObj.lastOrder);
 }
 
 function show_notification(notification) {
@@ -464,6 +467,30 @@ function check_connection() {
   }
 }
 
+function get_order_id() {
+
+  if (lastOrder) {
+    return lastOrder.count + 1;
+  } else {
+    return 1;
+  }
+
+}
+
+function update_last_order(ticket) {
+
+  lastOrder = ticket;
+
+  let data = $("#ticket-name").text();
+  if (data) {
+    data = data.split(" ");
+    data[1] = "#" + (get_order_id());
+    data = data.join(" ");
+    $("#ticket-name").text(data)
+  }
+
+}
+
 function main() {
 
   history.pushState({page: "menu"}, "");
@@ -496,4 +523,4 @@ function main() {
   
 };
 
-$( document ).ready(main);
+$(document).ready(main);
