@@ -105,13 +105,15 @@ exports.index = async function(io) {
     ticketQueue.push(ticket); // TODO add max size
 
     // add the order to the spreadsheet
-    const now = new Date().toLocaleString("en-IE").replace(",", "").split(" ");
-    sheet.addRow({
-      Date: now[0],
-      Time: now[1],
-      Quantity: ticketQuantity,
-      Item: ticketName,
-    });
+    if (process.env.npm_lifecycle_event !== "devstart") {
+      const now = new Date().toLocaleString("en-IE").replace(",", "").split(" ");
+      sheet.addRow({
+        Date: now[0],
+        Time: now[1],
+        Quantity: ticketQuantity,
+        Item: ticketName,
+      });
+    }
 
     // update the stats on the client
     update_total()
