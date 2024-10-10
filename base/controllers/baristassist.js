@@ -9,22 +9,20 @@ exports.render = function(req, res) {
 exports.index = async function(io) {
 
   let sheet, todaySheet, updateTimer, lastOrder;
-  let ticketID = 0;
-  let ticketCount = 0;
+  let ticketCount = 1;
   let ticketQueue = [];
   let todayTotal = 0;
 
   /**
    * adds a ticket item to the system
    * @param {string} ticketName - the name of the ticket item
-   * @param {string} ticketInfo - the parameters of the ticket
+   * @param {Array} ticketInfo - the parameters of the ticket
    * @returns - if the operation was a success
    */
   function add_ticket(ticketName, ticketInfo) {
 
     // local vars
     let ticketGroup = false;
-    let ticketGroupCount = null;
     let ticketQuantity, purchaser;
 
     // split the ticket info string into an array
@@ -42,18 +40,20 @@ exports.index = async function(io) {
     // remove the custom flag
     ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'));
 
+    let thisTicketId = createTicketId();
+    let thisTicketCount = ticketCount;
+
     // group handling if the ticket is part of a group
     const groupIndex = ticketInfo.indexOf("Grouped=true");
     if (groupIndex != -1) {
       // if the id of the group ticket doesn't exist anymore then don't add the ticket
-      if (!ticketQueue[ticketQueue.length - 1]?.id) return false;
+      if (!ticketQueue[ticketQueue.length - 1]?.id) {
+        return false;
+      }
       ticketGroup = ticketQueue[ticketQueue.length - 1].id;
+      thisTicketId = ticketGroup;
+      thisTicketCount = ticketQueue[ticketQueue.length - 1].count;
       ticketInfo.splice(groupIndex, 1);
-      //if a new order hasn't been made since rest
-      //use the ID instead of the ticket count
-      //since the id will be the ticket count of the last ticket
-      if (ticketCount == 0) ticketGroupCount = ticketID;
-      else ticketGroupCount = ticketCount;
     }
 
     // handle the ticket quantity
@@ -81,19 +81,17 @@ exports.index = async function(io) {
 
     // increament counts if ticket isn't part of a group
     if (!ticketGroup) {
-      ticketID++;
       ticketCount++;
     }
 
     // put it all together
     const ticket = {
-      id: ticketID, // unique identifier for the ticket
+      id: thisTicketId, // unique identifier for the ticket
       name: ticketName, // the name of the item on the ticket
       info: ticketInfo, // the options of the ticket
-      group: ticketGroup, // the the id of the ticket for which this ticket belongs to if grouped
+      groupId: ticketGroup, // the the id of the ticket for which this ticket belongs to if grouped
       quantity: ticketQuantity, // the quantity of the ticket
-      count: ticketCount, // the count of the ticket, shown in the app sort of like the id
-      groupCount: ticketGroupCount, // the count of the ticket in the specific group
+      count: thisTicketCount, // the count of the ticket, shown in the app sort of like the id
       purchaser: purchaser // the name of the person making the order
     };
 
@@ -144,7 +142,7 @@ exports.index = async function(io) {
   function option(type) {
     switch (type) {
       case "resetOrderCount":
-        ticketCount = 0;
+        ticketCount = 1;
         ticketQueue = [];
         show_notification("Order count reset successfully");
         break;
@@ -211,6 +209,15 @@ exports.index = async function(io) {
     
     update_total()
 
+  }
+
+  function createTicketId(length = 16) {
+    const array = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
+    const output = [];
+    for (let i = 0; i < length; i++) {
+        output.push(array[Math.floor(Math.random() * array.length)]);
+    }
+    return output.join("");
   }
 
   load_spreadsheet();

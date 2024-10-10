@@ -184,6 +184,10 @@ function render_ticket_types() {
       Sugar: ["DEF.0", "0.5", "1", "2", "3", "4", "5"],
       Syrup: ["DEF.None", "Hazelnut", "Vanilla", "Caramel"],
     }},
+    {name: "Matcha-Latte", price: 2, options: {
+      Milk: ["DEF.Regular", "Skimmed", "Oat"],
+      Size: ["8oz", "DEF.12oz"],
+    }},
   ]
   items.forEach((item, i) => {
     let column;
@@ -244,14 +248,14 @@ function add_ticket(ticket) {
   $('#activeBtn').text(activeOrders);
 
   let subOrders;
-  if (ticket.group) subOrders = $(`.view-list > #ticket${ticket.group}`).children().length / 2;
+  if (ticket.groupId) subOrders = $(`.view-list > #ticket${ticket.groupId}`).children().length / 2;
 
   const ticketHTML = `
     <div class="ui-block-a">
       <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
         ${ticket.name}<br>
         Quantity #${ticket.quantity}<br>
-        #${ticket.group ? ticket.groupCount + "." + subOrders : ticket.count} ${ticket.purchaser}
+        #${ticket.groupId ? ticket.count + "." + subOrders : ticket.count} ${ticket.purchaser}
       </div>
     </div>
     <div class="ui-block-b">
@@ -260,9 +264,9 @@ function add_ticket(ticket) {
       </div>
     </div>
   `;
-  if (ticket.group) {
+  if (ticket.groupId) {
 
-    $(`.view-list > #ticket${ticket.group}`).append(ticketHTML);
+    $(`.view-list > #ticket${ticket.groupId}`).append(ticketHTML);
 
   } else {
 
