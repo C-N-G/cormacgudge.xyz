@@ -229,7 +229,11 @@ function change_view(target) {
       $('.ui-header > h1').text("Stats");
       $('.stat-menu').show();
       break;
-    case 'menu': // because the hostory stage seemingly couldn't be changed on page load
+    case 'completed':
+      $('.ui-header > h1').text("Completed Tickets");
+      $('.completed-menu').show();
+      break;
+    case 'menu': // because the history stage seemingly couldn't be changed on page load
     default:
       $('.ui-header > h1').text("BaristAssist");
       $('.ui-header > .ui-icon-arrow-l').hide();
@@ -242,20 +246,21 @@ function add_ticket(ticket) {
 
   update_last_order(ticket)
   
-  let height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
+  const height = ticket.info.length > 3 ? ticket.info.length * 1.3 : 3 * 1.3;
 
   activeOrders += parseInt(ticket.quantity);
   $('#activeBtn').text(activeOrders);
 
-  let subOrders;
-  if (ticket.groupId) subOrders = $(`.view-list > #ticket${ticket.groupId}`).children().length / 2;
+  const subOrders = ticket.groupId ? $(`.view-list > div[data-group-id='${ticket.groupId}']`) : null;
+  const subOrderTargetId = subOrders && subOrders.length > 0 ? subOrders[subOrders.length - 1].id : "ticket" + ticket.groupId;
+  const subOrderNum = subOrders ? subOrders.length + 1 : 1;
 
   const ticketHTML = `
     <div class="ui-block-a">
       <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
         ${ticket.name}<br>
         Quantity #${ticket.quantity}<br>
-        #${ticket.groupId ? ticket.count + "." + subOrders : ticket.count} ${ticket.purchaser}
+        #${ticket.groupId ? ticket.count + "." + subOrderNum : ticket.count} ${ticket.purchaser}
       </div>
     </div>
     <div class="ui-block-b">
@@ -264,38 +269,86 @@ function add_ticket(ticket) {
       </div>
     </div>
   `;
+
   if (ticket.groupId) {
-
-    $(`.view-list > #ticket${ticket.groupId}`).append(ticketHTML);
-
-  } else {
-
-    $('.view-list').prepend(`
-    <div id="ticket${ticket.id}" class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
-      ${ticketHTML}
-    </div>
+    $(`.view-list > #${subOrderTargetId}`).after(`
+      <div id="ticket${ticket.id}" data-group-id="${ticket.groupId}" data-ticket='${JSON.stringify(ticket)}' class="ui-grid-a" style="margin-top:-1em;margin-bottom:1em;touch-action:manipulation;position:relative">
+        ${ticketHTML}
+      </div>
     `);
-
-    $(`#ticket${ticket.id}`).on("swiperight", function(event) {
-      socket.emit("remove_ticket", ticket);
-    })
-
-    // TODO edit tickets
-    // $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
-    //   change_view("config");
-    //   render_config(ticket.name, ticket);
-    // })
-
+  } else {
+    $('.view-list').prepend(`
+      <div id="ticket${ticket.id}" data-ticket='${JSON.stringify(ticket)}' class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
+        ${ticketHTML}
+      </div>
+    `);
   }
+
+  $(`#ticket${ticket.id}`).on("swiperight", () => {
+    socket.emit("remove_ticket", ticket);
+  })
+
+  // TODO add ticket editing
+  // ticket editing for single tickets is easy enough, but editing tickets that are grouped is more difficult
+  // $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
+  //   change_view("config");
+  //   render_config(ticket.name, ticket);
+  // })
+
 
   $(".view-list").trigger('create');
 }
 
+function add_ticket_to_completed(ticket) {
+  // this doesn't work for grouped tickets as they only remove the main ticket
+  const height = ticket.info.length > 4 ? ticket.info.length * 1.3 : 4 * 1.3;
+  const currentTime = new Date();
+  const timeString = `${currentTime.toTimeString().split(" ")[0].slice(0, -3)}`
+
+  const subOrders = ticket.groupId ? $(`.completed-list > div[data-group-id='${ticket.groupId}']`) : null;
+  const subOrderTargetId = subOrders && subOrders.length > 0 ? subOrders[subOrders.length - 1].id : "ticket" + ticket.groupId;
+  const subOrderNum = subOrders ? subOrders.length + 1 : 1;
+
+  const ticketHTML = `
+    <div class="ui-block-a">
+      <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
+        ${ticket.name}<br>
+        Quantity #${ticket.quantity}<br>
+        #${ticket.groupId ? ticket.count + "." + subOrderNum : ticket.count} ${ticket.purchaser}<br>
+        Completed ${timeString}
+      </div>
+    </div>
+    <div class="ui-block-b">
+      <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
+        ${ticket.info.join("<br>")}
+      </div>
+    </div>
+  `;
+
+  if (ticket.groupId) {
+    $(`.completed-list > #${subOrderTargetId}`).after(`
+      <div id="ticket${ticket.id}" data-group-id="${ticket.groupId}" data-ticket='${JSON.stringify(ticket)}' class="ui-grid-a" style="margin-top:-1em;margin-bottom:1em;touch-action:manipulation;position:relative">
+        ${ticketHTML}
+      </div>
+    `);
+  } else {
+    $('.completed-list').prepend(`
+      <div id="ticket${ticket.id}" data-ticket='${JSON.stringify(ticket)}' class="ui-grid-a" style="margin-bottom:1em;touch-action:manipulation;position:relative">
+        ${ticketHTML}
+      </div>
+    `);
+  }
+
+  $(".completed-list").trigger('create');
+}
+
 function remove_ticket(ticket) {
-  activeOrders -= parseInt(ticket.quantity);
-  $('#activeBtn').text(activeOrders);
-  $(`#ticket${ticket.id}`).animate({left: "200vw"}, 400, function() {
+  $(`#ticket${ticket.id}, div[data-group-id='${ticket.id}'], #ticket${ticket.groupId}, div[data-group-id='${ticket.groupId}']`).animate({left: "200vw"}, 400, function() {
+    const removedTicket = $(this).data("ticket");
+    activeOrders -= parseInt(removedTicket.quantity);
+    $('#activeBtn').text(activeOrders)
     $(this).remove();
+    add_ticket_to_completed(removedTicket);
   });
 }
 
@@ -305,6 +358,10 @@ function sync_ticket(syncObj) {
   $('#activeBtn').text(activeOrders);
   syncObj.ticketQueue.forEach(ticket => {
     add_ticket(ticket);
+  });
+  $('.completed-list').children().remove();
+  syncObj.ticketHistory.forEach(ticket => {
+    add_ticket_to_completed(ticket);
   });
   update_last_order(syncObj.lastOrder);
 }
@@ -404,50 +461,55 @@ function set_theme (target_theme) {
 }
 
 function add_events() {
-  $('#createBtn').on("click", function(){
+  $('#createBtn').on("click", () => {
     change_view('create');
     history.pushState({page: "create"}, "");
   });
 
-  $('#viewBtn').on("click", function(){
+  $('#viewBtn').on("click", () => {
     change_view('view');
     history.pushState({page: "view"}, "");
   });
+
+  $('#completedBtn').on("click", () => {
+    change_view('completed');
+    history.pushState({page: "completed"}, "");
+  });
   
-  $('#menuBtn').on("click", function(){
+  $('#menuBtn').on("click", () => {
     change_view('menu');
     history.pushState({page: "menu"}, "");
   });
 
-  $('#optionBtn').on("click", function(){
+  $('#optionBtn').on("click", () => {
     change_view('option');
     history.pushState({page: "option"}, "");
   });
 
-  $('#statBtn').on("click", function(){
+  $('#statBtn').on("click", () => {
     change_view('stat');
     history.pushState({page: "stat"}, "");
   });
 
-  $('#activeBtn').on("click", function(){
+  $('#activeBtn').on("click", () => {
     change_view('view');
     history.pushState({page: "view"}, "");
   });
 
-  $('#resetOrderCount').on("click", function(){
+  $('#resetOrderCount').on("click", () => {
     socket.emit("option", "resetOrderCount");
   });
 
-  $('#darkModeToggle').on("click", function(){
+  $('#darkModeToggle').on("click", () => {
     change_theme();
   });
 
-  $('#cancelBtn').on("click", function(){
+  $('#cancelBtn').on("click", () => {
     change_view('create');
     history.back();
   });
 
-  $('.btn-add-ticket').on("click", function(){
+  $('.btn-add-ticket').on("click", function() {
     change_view("config");
     let ticket = $(this).text();
     render_config(ticket);

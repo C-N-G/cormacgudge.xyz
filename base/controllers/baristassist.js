@@ -11,6 +11,7 @@ exports.index = async function(io) {
   let sheet, todaySheet, updateTimer, lastOrder;
   let ticketCount = 1;
   let ticketQueue = [];
+  let ticketHistory = [];
   let todayTotal = 0;
 
   /**
@@ -40,7 +41,6 @@ exports.index = async function(io) {
     // remove the custom flag
     ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'));
 
-    let thisTicketId = createTicketId();
     let thisTicketCount = ticketCount;
 
     // group handling if the ticket is part of a group
@@ -50,9 +50,9 @@ exports.index = async function(io) {
       if (!ticketQueue[ticketQueue.length - 1]?.id) {
         return false;
       }
-      ticketGroup = ticketQueue[ticketQueue.length - 1].id;
-      thisTicketId = ticketGroup;
-      thisTicketCount = ticketQueue[ticketQueue.length - 1].count;
+      const latestMasterTicket = find_latest_non_grouped_ticket();
+      ticketGroup = latestMasterTicket.id;
+      thisTicketCount = latestMasterTicket.count;
       ticketInfo.splice(groupIndex, 1);
     }
 
@@ -86,7 +86,7 @@ exports.index = async function(io) {
 
     // put it all together
     const ticket = {
-      id: thisTicketId, // unique identifier for the ticket
+      id: createTicketId(), // unique identifier for the ticket
       name: ticketName, // the name of the item on the ticket
       info: ticketInfo, // the options of the ticket
       groupId: ticketGroup, // the the id of the ticket for which this ticket belongs to if grouped
@@ -126,12 +126,17 @@ exports.index = async function(io) {
     let index;
     let quantity = 0 // so when removing grouped tickets the quantity is correctly updated in the active tickets
     while (index != -1) {
-      index = ticketQueue.findIndex(ele => ele.id == ticket.id);
+      index = ticketQueue.findIndex(ele => ele.id === ticket.id || ele.groupId === ticket.id || ele.id === ticket.groupId || ele.groupId == ticket);
       if (index == -1) {
         break;
       }
       quantity += parseInt(ticketQueue[index].quantity);
-      ticketQueue.splice(index, 1);
+      const removedTicket = ticketQueue.splice(index, 1)[0];
+      if (ticketHistory.length > 10) {
+        const oldestTicketId = ticketHistory[ticketHistory.length - 1].id;
+        ticketHistory = ticketHistory.filter(ele => ele.id !== oldestTicketId);
+      }
+      ticketHistory.push(removedTicket);
     }
     ticket.quantity = quantity;
     baristassist.emit("remove_ticket", ticket);
@@ -199,11 +204,24 @@ exports.index = async function(io) {
 
   }
 
+  function find_latest_non_grouped_ticket() {
+
+    let index = ticketQueue.length - 1;
+    while (index >= 0) {
+      if (ticketQueue[index].groupId === false) {
+        return ticketQueue[index];
+      }
+      index--;
+    }
+    return false;
+
+  }
+
   function main(socket) {
 
     console.log('USER HAS CONNECTED TO BARISTASSIST');
 
-    socket.emit('sync_ticket', {ticketQueue: ticketQueue, lastOrder: lastOrder});
+    socket.emit('sync_ticket', {ticketQueue: ticketQueue, lastOrder: lastOrder, ticketHistory: ticketHistory});
     socket.emit("update_stats", todayTotal);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
