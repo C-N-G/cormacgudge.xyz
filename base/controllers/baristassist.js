@@ -218,7 +218,7 @@ exports.index = async function(io) {
         ticketQueue = [];
         ticketHistory = [];
         lastOrder = undefined;
-        show_notification("Order count reset successfully");
+        show_notification("System reset successfully");
         baristassist.emit('sync_ticket', {ticketQueue: ticketQueue, lastOrder: lastOrder, ticketHistory: ticketHistory});
         break;
     
