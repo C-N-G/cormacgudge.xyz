@@ -7,7 +7,11 @@ exports.render = function(req, res) {
     });
 };
 exports.index = function(io) {
+
+    const fs = require('fs');
+    const path = require('path');
     const { createCanvas, loadImage } = require('canvas');
+    
     const canvas = createCanvas(1500, 1500);
     const draw = canvas.getContext('2d');
     draw.lineCap = 'round';
@@ -158,8 +162,8 @@ exports.index = function(io) {
             whiteboard.emit('client update', clients);
 
 
-            const fs = require('fs');
-            const out = fs.createWriteStream('./public/images/state.png')
+            const imageState = path.join(__dirname, "..", "public", "images", "state.png");
+            const out = fs.createWriteStream(imageState)
             const stream = canvas.createPNGStream()
             stream.pipe(out)
             out.on('finish', function (){

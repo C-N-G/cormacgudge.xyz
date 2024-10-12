@@ -1,0 +1,48 @@
+extends main_layout
+
+block content
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script>
+
+  //- div(data-role="header")
+  div.ui-header.ui-bar-a
+    button.ui-btn-left.ui-btn-corner-all.ui-btn.ui-icon-arrow-l.ui-btn-icon-notext.ui-shadow#menuBtn
+    button.ui-btn-left.ui-btn-corner-all.ui-btn.ui-icon-delete.ui-btn-icon-notext.ui-shadow#cancelBtn
+    button.ui-btn-left.ui-btn-corner-all.ui-btn.ui-icon-delete.ui-btn-icon-notext.ui-shadow#cancelEditBtn
+    h1.ui-title BaristAssist
+    p.subheading Seasons Greetings
+    button.ui-btn-right.ui-btn-corner-all.ui-btn.ui-btn-icon-notext.ui-shadow#activeBtn 0
+  div.ui-content.ui-page-theme-a#viewport
+    div.menu
+      button.ui-btn.ui-btn-a.ui-icon-plus.ui-btn-icon-left.ui-shadow.ui-corner-all#createBtn Create
+      button.ui-btn.ui-btn-a.ui-icon-search.ui-btn-icon-left.ui-shadow.ui-corner-all#viewBtn Pending
+      button.ui-btn.ui-btn-a.ui-icon-check.ui-btn-icon-left.ui-shadow.ui-corner-all#completedBtn Completed
+      br
+      button.ui-btn.ui-btn-a.ui-icon-info.ui-btn-icon-left.ui-shadow.ui-corner-all#statBtn Total Today: 0
+      button.ui-btn.ui-btn-a.ui-icon-gear.ui-btn-icon-left.ui-shadow.ui-corner-all#optionBtn Options
+    div.order-menu
+      div.order-list.ui-grid-a
+        
+    div.view-menu
+      div.view-list
+    
+    div.config-menu
+      div.config-list
+
+    div.completed-menu
+      div.completed-list
+
+    div.option-menu
+      button.ui-btn.ui-btn-a.ui-icon-refresh.ui-btn-icon-left.ui-shadow.ui-corner-all#resetOrderCount Reset System
+      button.ui-btn.ui-btn-a.ui-icon-eye.ui-btn-icon-left.ui-shadow.ui-corner-all#darkModeToggle Toggle Dark Mode
+    
+    div.stat-menu
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=1684875125&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Today's Orders by Time
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=126902642&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Today's Orders by Item
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=689257069&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Today's Orders by Time and Item
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=200088875&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Today's Orders Pie Chart
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=2073072550&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Last 30 Days Orders by Item
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=1032317049&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Last 30 Days Orders Pie Chart
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=1098874505&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - Last 30 Days Daily Totals
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=1778992340&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - This Year Monthly Totals
+      a(href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSylwP0YgzV_EqQXUMjL0JcdC9iBRpTnnuZSJEjjdSaiWNBVkav6sHArN80PYj18EVgk3bpk2W3VLRu/pubchart?oid=968197526&format=interactive", target="_blank").ui-btn.ui-btn-a.ui-icon-bullets.ui-btn-icon-left.ui-shadow.ui-corner-all Metrics - This Year Weekly Totals

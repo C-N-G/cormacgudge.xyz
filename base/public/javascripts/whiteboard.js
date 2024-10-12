@@ -18,7 +18,7 @@ $( document ).ready(function(){
     draw.lineJoin = "round";
 
     var draw_overlay = $('#drawing_area_overlay')[0].getContext('2d');
-    $('#drawing_area_overlay').hide();
+    // $('#drawing_area_overlay').hide();
     draw_overlay.lineCap = 'round';
     draw_overlay.lineJoin = "round";
     draw_overlay.lineWidth = 3;
@@ -77,98 +77,119 @@ $( document ).ready(function(){
 
     // Main draw function
     function draw_event() {
-        for (var user in inputs) {
-            if (inputs[user]['events'].length > 0) {
-                for (var i = 0; i < inputs[user]['events'].length; i++) {
-                    switch (inputs[user]['events'][i].tool) {
-                        case 'draw': // Draw tool
-                            if (dot_last_pos[user] == undefined && line_last_pos[user] == undefined) {
-                                inputs[user]['events'][i].is_drawing = false;
-                            }
-                            if (inputs[user]['events'][i].is_drawing == false && (line_was_last[user] == false || line_was_last[user] == undefined)) {
-                                dot_draw(
-                                    inputs[user]['events'][i].x,
-                                    inputs[user]['events'][i].y,
-                                    inputs[user]['events'][i].size,
-                                    inputs[user]['events'][i].color
-                                );
-                                dot_was_last[user] = true;
-                                dot_last_pos[user] = inputs[user]['events'][i];
 
-                            } else if (inputs[user]['events'][i].is_drawing == true || inputs[user]['events'][i].is_drawing == false && line_was_last[user] == true) {
-                                var pos_x = 0;
-                                var pos_y = 0;
-                                if (dot_was_last[user] == true) {
-                                    pos_x = dot_last_pos[user].x;
-                                    pos_y = dot_last_pos[user].y;
-                                    dot_was_last[user] = false;
-                                } else if (dot_was_last[user] == false && inputs[user]['events'][i-1] != undefined) {
-                                    pos_x = inputs[user]['events'][i-1].x;
-                                    pos_y = inputs[user]['events'][i-1].y;
-                                } else if (dot_was_last[user] == false && inputs[user]['events'][i-1] == undefined) {
-                                    pos_x = line_last_pos[user].x;
-                                    pos_y = line_last_pos[user].y;
-                                }
-                                line_draw(
-                                    pos_x,
-                                    pos_y,
-                                    inputs[user]['events'][i].x,
-                                    inputs[user]['events'][i].y,
-                                    inputs[user]['events'][i].size,
-                                    inputs[user]['events'][i].color
-                                );
-                                if (inputs[user]['events'][i].is_drawing == false) {
-                                    line_was_last[user] = false;
-                                } else {
-                                    line_was_last[user] = true;
-                                    line_last_pos[user] = inputs[user]['events'][i];
-                                }
-                            }
-                            break;
-                        case 'rectangle': // Rectangle tool
-                            if (line_was_last[user] == false) {
-                                line_was_last[user] = true;
-                                line_last_pos[user] = inputs[user]['events'][i];
-                            } else if (line_was_last[user] == true && inputs[user]['events'][i].is_drawing == false) {
-                                line_was_last[user] = false;
-                                rectangle_draw(
-                                    line_last_pos[user].x,
-                                    line_last_pos[user].y,
-                                    inputs[user]['events'][i].x,
-                                    inputs[user]['events'][i].y,
-                                    inputs[user]['events'][i].color
-                                );
-                                clear_overlay();
-                            }
-                            if (line_was_last[user] == true && user == 'local') {
-                                rectangle_overlay(
-                                    line_last_pos[user].x,
-                                    line_last_pos[user].y,
-                                    inputs[user]['events'][i].x,
-                                    inputs[user]['events'][i].y
-                                );
-                            }
-                            break;
-                        case 'eraser': // Eraser tool
-                            eraser_draw(
-                                inputs[user]['events'][i].x,
-                                inputs[user]['events'][i].y
-                            );
-                            if (user == 'local') {
-                                eraser_overlay(
-                                    inputs[user]['events'][i].x,
-                                    inputs[user]['events'][i].y
-                                );
-                            }
-                            if (inputs[user]['events'][i].is_drawing == false) {
-                                clear_overlay();
-                            }
-                            break;
-                    }
+        function draw_tool(event_num) {
+
+            if (dot_last_pos[user] == undefined && line_last_pos[user] == undefined) {
+              inputs[user]['events'][event_num].is_drawing = false;
+            }
+            if (inputs[user]['events'][event_num].is_drawing == false && (line_was_last[user] == false || line_was_last[user] == undefined)) {
+                dot_draw(
+                    inputs[user]['events'][event_num].x,
+                    inputs[user]['events'][event_num].y,
+                    inputs[user]['events'][event_num].size,
+                    inputs[user]['events'][event_num].color
+                );
+                dot_was_last[user] = true;
+                dot_last_pos[user] = inputs[user]['events'][event_num];
+
+            } else if (inputs[user]['events'][event_num].is_drawing == true || inputs[user]['events'][event_num].is_drawing == false && line_was_last[user] == true) {
+                var pos_x = 0;
+                var pos_y = 0;
+                if (dot_was_last[user] == true) {
+                    pos_x = dot_last_pos[user].x;
+                    pos_y = dot_last_pos[user].y;
+                    dot_was_last[user] = false;
+                } else if (dot_was_last[user] == false && inputs[user]['events'][event_num-1] != undefined) {
+                    pos_x = inputs[user]['events'][event_num-1].x;
+                    pos_y = inputs[user]['events'][event_num-1].y;
+                } else if (dot_was_last[user] == false && inputs[user]['events'][event_num-1] == undefined) {
+                    pos_x = line_last_pos[user].x;
+                    pos_y = line_last_pos[user].y;
                 }
-                inputs[user]['events'] = [];
+                line_draw(
+                    pos_x,
+                    pos_y,
+                    inputs[user]['events'][event_num].x,
+                    inputs[user]['events'][event_num].y,
+                    inputs[user]['events'][event_num].size,
+                    inputs[user]['events'][event_num].color
+                );
+                if (inputs[user]['events'][event_num].is_drawing == false) {
+                    line_was_last[user] = false;
+                } else {
+                    line_was_last[user] = true;
+                    line_last_pos[user] = inputs[user]['events'][event_num];
+                }
+            }
+        
+        }
+
+        function rectangle_tool(event_num) {
+            if (line_was_last[user] == false) {
+                line_was_last[user] = true;
+                line_last_pos[user] = inputs[user]['events'][event_num];
+            } else if (line_was_last[user] == true && inputs[user]['events'][event_num].is_drawing == false) {
+                line_was_last[user] = false;
+                rectangle_draw(
+                    line_last_pos[user].x,
+                    line_last_pos[user].y,
+                    inputs[user]['events'][event_num].x,
+                    inputs[user]['events'][event_num].y,
+                    inputs[user]['events'][event_num].color
+                );
+                clear_overlay();
+            }
+            if (line_was_last[user] == true && user == 'local') {
+                rectangle_overlay(
+                    line_last_pos[user].x,
+                    line_last_pos[user].y,
+                    inputs[user]['events'][event_num].x,
+                    inputs[user]['events'][event_num].y
+                );
             }
         }
+
+        function eraser_tool(event_num) {
+            eraser_draw(
+                inputs[user]['events'][event_num].x,
+                inputs[user]['events'][event_num].y
+              );
+              if (user == 'local') {
+                  eraser_overlay(
+                      inputs[user]['events'][event_num].x,
+                      inputs[user]['events'][event_num].y
+                  );
+              }
+              if (inputs[user]['events'][event_num].is_drawing == false) {
+                  clear_overlay();
+              }
+        }
+
+        function process_user_inputs() {
+            for (let event_num = 0; event_num < inputs[user]['events'].length; event_num++) {
+                switch (inputs[user]['events'][event_num].tool) {
+                    case 'draw': // Draw tool
+                        draw_tool(event_num);
+                        break;
+                    case 'rectangle': // Rectangle tool
+                        rectangle_tool(event_num);
+                        break;
+                    case 'eraser': // Eraser tool
+                        eraser_tool(event_num)
+                        break;
+                }
+            }
+
+            inputs[user]['events'] = [];
+        }
+
+        for (var user in inputs) {
+            if (inputs[user]['events'].length > 0) {
+                process_user_inputs()
+            }
+        }
+
     }
 
 
@@ -248,6 +269,65 @@ $( document ).ready(function(){
         });
     }
 
+    function setup_board() {
+
+        // Event listeners
+        $('#drawing_area_overlay').on('mousemove', function(event){
+          offset = $('#drawing_area').offset();
+          mouse_x = (event.pageX - offset.left);
+          mouse_y = (event.pageY - offset.top);
+          $('.testing').text('X = '+ mouse_x + ', Y = ' + mouse_y);
+          if (mouse_click == true) {
+              mouse_draw();
+          }
+        }).on('mousedown', function(){
+            mouse_click = true;
+            mouse_draw();
+            mouse_drawing = true;
+        }).on('mouseup', function(){
+            mouse_click = false;
+            mouse_drawing = false;
+            mouse_draw();
+            clear_overlay();
+        }).on('mouseleave', function(){
+            if (mouse_click == true) {
+                mouse_drawing = false;
+                mouse_draw();
+            }
+            mouse_click = false;
+            mouse_drawing = false;
+        });
+
+        $('#color_picker').on('change', function(){
+            var color = $(this).val();
+            socket.emit('color update', color);
+        });
+
+        $('#size_picker').on('change', function(){
+            var size = $(this).val();
+            socket.emit('size update', size);
+        });
+
+        $('#tool_picker').on('change', function(){
+            var tool = $(this).val();
+            socket.emit('tool update', tool);
+        });
+
+        $('#clear_screen').on('click', function(){
+            socket.emit('clear');
+        });
+
+        $('#nickname').submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            var name = $('#nickname_entry').val();
+            socket.emit('name update', name)
+            return false;
+        });
+
+        // start drawing updates
+        setInterval(draw_event, 20);
+    }
+
     // Socket updates
     socket.on('draw', function(data){
         store_inputs(
@@ -264,9 +344,12 @@ $( document ).ready(function(){
     socket.on('setup', function(src){
         var img_state = new Image();
         img_state.onload = function() {
-            $('#drawing_area_overlay').show()
-            draw.drawImage(img_state,0,0)
-            setInterval(draw_event, 20);
+            // I can't remember why I hid the drawing board on load and then showed it after the image was loaded
+            // but there was some kind of bug to do with the board not being shown therefore inputs were not being accepted
+            // so it is always shown for now
+            // $('#drawing_area_overlay').show();
+            draw.drawImage(img_state,0,0);
+            setup_board();
         }
         img_state.src = src;
     });
@@ -336,56 +419,4 @@ $( document ).ready(function(){
     one person can't just replace everything by spamming
     */
 
-    // Event listeners
-    $('#drawing_area_overlay').on('mousemove', function(event){
-        offset = $('#drawing_area').offset();
-        mouse_x = (event.pageX - offset.left);
-        mouse_y = (event.pageY - offset.top);
-        $('.testing').text('X = '+ mouse_x + ', Y = ' + mouse_y);
-        if (mouse_click == true) {
-            mouse_draw();
-        }
-    }).on('mousedown', function(){
-        mouse_click = true;
-        mouse_draw();
-        mouse_drawing = true;
-    }).on('mouseup', function(){
-        mouse_click = false;
-        mouse_drawing = false;
-        mouse_draw();
-        clear_overlay();
-    }).on('mouseleave', function(){
-        if (mouse_click == true) {
-            mouse_drawing = false;
-            mouse_draw();
-        }
-        mouse_click = false;
-        mouse_drawing = false;
-    });
-
-    $('#color_picker').on('change', function(){
-        var color = $(this).val();
-        socket.emit('color update', color);
-    });
-
-    $('#size_picker').on('change', function(){
-        var size = $(this).val();
-        socket.emit('size update', size);
-    });
-
-    $('#tool_picker').on('change', function(){
-        var tool = $(this).val();
-        socket.emit('tool update', tool);
-    });
-
-    $('#clear_screen').on('click', function(){
-        socket.emit('clear');
-    });
-
-    $('#nickname').submit(function(e){
-        e.preventDefault(); // prevents page reloading
-        var name = $('#nickname_entry').val();
-        socket.emit('name update', name)
-        return false;
-    });
 });

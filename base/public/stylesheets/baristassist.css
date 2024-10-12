@@ -1,0 +1,30 @@
+.subheading {
+  text-align: center;
+  margin-top: -1.5em;
+  margin-bottom: 0.2em;
+  font-size: 0.7em;
+  animation-duration: 1s;
+  animation-name: christmasColor;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.ui-bar-b {
+  background-color: #333 !important;
+  border-color: #1f1f1f !important;
+}
+
+#activeBtn:focus {
+  box-shadow: none;
+}
+
+.view-list, .completed-list {
+  font-family:'Courier New', Courier, monospace;
+}
+
+@keyframes christmasColor {
+  0%   {color: inherit;}
+  50%  {color: inherit;}
+  51%  {color: red;}
+  100% {color: red;}
+}
