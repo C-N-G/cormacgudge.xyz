@@ -216,7 +216,10 @@ exports.index = async function(io) {
       case "resetOrderCount":
         ticketCount = 1;
         ticketQueue = [];
+        ticketHistory = [];
+        lastOrder = undefined;
         show_notification("Order count reset successfully");
+        baristassist.emit('sync_ticket', {ticketQueue: ticketQueue, lastOrder: lastOrder, ticketHistory: ticketHistory});
         break;
     
       default:
