@@ -6,37 +6,66 @@ let socket, items, showingNotification, currentTheme, theme, activeOrders, conne
  * @param {object} ticket - if edting a ticket this will be the ticket data object
  */
 function render_config(item, ticket) {
+
   const ticketNumber = (ele) => ele.name == item;
   let ticketIndex = items.findIndex(ticketNumber);
-
+  let custom = false;
+  let itemOptions = items[ticketIndex].options;
+  
+  let newOptions = {};
+  if (ticket) {
+    ticket.info.forEach(option => {
+      const [itemName, itemProperty] = option.split(" ");
+      newOptions[itemName] = itemProperty;
+    })
+  }
+  
   $('.config-list').append(`<form id="ticket-form"></form>`);
 
-  $('#ticket-form').append(`<h1 id="ticket-name" style="text-align: center; margin: 0;">${item} #${get_order_id()}</h1>`)
-
-  let custom = false;
-  let itemOptions = items[ticketIndex].options
-
-  if (ticket) {
-    // TODO config with ticket options for editing
-  }
+  const ticketString = ticket ? `Editing ${ticket.name} #${ticket.count}` : `${item} #${get_order_id()}`;
+  $('#ticket-form').append(`<h1 id="ticket-name" style="text-align: center; margin: 0;">${ticketString}</h1>`);
 
   for (let property in itemOptions) {
-    let options = itemOptions[property];
-    $('#ticket-form').append(`<fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest>`)
+    const options = itemOptions[property];
+    const optionsWithoutDefaults = options.map(opt => opt.startsWith("DEF.") ? opt.slice(4) : opt);
+    $('#ticket-form').append(`<fieldset data-role="controlgroup" data-type="horizontal"><legend><strong>${property}:</strong></legend></fieldest>`);
     options.forEach((option, i) => {
-      let check = false
+      let check = false; // set if the option should be checked or not
+
+      // handle the default param, setting checked state if found
       if (option.startsWith("DEF.")) {
         option = option.slice(4);
-        check = true;
+        check = ticket ? false : true; // do not make it checked if editing a ticket
       }
-      $(`<input type="radio" name="${property}" id="${property + i}" value="${option}" ${check ? `checked="checked"` : ""}><label for="${property + i}">${option}</label>`).appendTo("#ticket-form > fieldset:last")
+
+      // handle checked state if editing a ticket
+      if (ticket && newOptions[property] === option) check = true; // use ticket selected options if present
+      // handled checked state when editing ticket with custom field
+      else if (ticket && optionsWithoutDefaults.includes(newOptions[property]) === false && option === "Custom") check = true; 
+
+      // add input option
+      $(`
+        <input 
+          type="radio" 
+          name="${property}" 
+          id="${property + i}" 
+          value="${option}" 
+          ${check ? `checked="checked"` : ""}
+        />
+        <label for="${property + i}">
+          ${option}
+        </label>
+      `).appendTo("#ticket-form > fieldset:last")
+
+      // handle custom field
       if (option === 'Custom') {
         custom = property + i;
         $('#ticket-form').append(`
         <fieldset id="field-${custom}" data-role="controlgroup" data-type="horizontal">
-          <input type="text" name="Custom${item}${property}" id="Custom${item}${property}" value="" maxlength="10">
+          <input type="text" name="Custom${item}${property}" id="Custom${item}${property}" value="${ticket ? newOptions[property] : ""}" maxlength="10">
         </fieldest>`)
-        $(`#field-${custom}`).hide();
+        // hide if not editing a ticket and this field isn't checked
+        if ((ticket && check) !== true) $(`#field-${custom}`).hide();
         $(`#${custom}`).parent().on("change", (event) => {
           if (event.target.value == 'Custom') {
             $(`#field-${custom}`).show();
@@ -45,53 +74,68 @@ function render_config(item, ticket) {
           }
         });
       }
+
     });
   }
 
+  // handle quantity section of form
   $('#ticket-form').append(`
   <fieldset data-role="controlgroup" data-type="horizontal">
     <legend><strong>Quantity:</strong></legend>
     <label for="Quantity"><strong>Quantity:</strong></label>
     <select name="Quantity" id="Quantity">
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
+      <option value="1" ${ticket && ticket.quantity === "1" ? "selected" : ""}>1</option>
+      <option value="2" ${ticket && ticket.quantity === "2" ? "selected" : ""}>2</option>
+      <option value="3" ${ticket && ticket.quantity === "3" ? "selected" : ""}>3</option>
+      <option value="4" ${ticket && ticket.quantity === "4" ? "selected" : ""}>4</option>
+      <option value="5" ${ticket && ticket.quantity === "5" ? "selected" : ""}>5</option>
+      <option value="6" ${ticket && ticket.quantity === "6" ? "selected" : ""}>6</option>
+      <option value="7" ${ticket && ticket.quantity === "7" ? "selected" : ""}>7</option>
     </select>
   </fieldset>
   `)
 
+  // handle name section of form
   $('#ticket-form').append(`
   <fieldset data-role="controlgroup" data-type="horizontal">
     <legend><strong>Name:</strong></legend>
     <label for="Name">Name:</label>
-    <input type="text" name="Name" id="Name" value="" placeholder="Optional" maxlength="10">
+    <input type="text" name="Name" id="Name" value="${ticket && ticket.purchaser !== "" ? ticket.purchaser : ""}" placeholder="Optional" maxlength="10">
   </fieldset>
   `)
 
-  $('#ticket-form').append(`<button class="btn-order">Order</buitton>`)
-  $('#ticket-form > .btn-order').on("click", function(e){
-    e.preventDefault();
-    const ticketInfo = $("#ticket-form").serialize();
-    change_view("create");
-    const ticketName = item;
-    socket.emit("add_ticket", ticketName, ticketInfo);
-  })
-
-  if ($('.view-list').children().length) {
-    $('#ticket-form').append(`<button class="btn-group-order">Group With Last Order</buitton>`)
-    $('#ticket-form > .btn-group-order').on("click", function(e){
+  if (!ticket) {
+    $('#ticket-form').append(`<button class="btn-order">Order</buitton>`)
+    $('#ticket-form > .btn-order').on("click", function(e){
       e.preventDefault();
-      const ticketInfo = $("#ticket-form").serialize() + "&Grouped=true";
+      const ticketInfo = $("#ticket-form").serialize();
       change_view("create");
-      history.back();
       const ticketName = item;
       socket.emit("add_ticket", ticketName, ticketInfo);
     })
+  
+    if ($('.view-list').children().length) {
+      $('#ticket-form').append(`<button class="btn-group-order">Group With Last Order</buitton>`)
+      $('#ticket-form > .btn-group-order').on("click", function(e){
+        e.preventDefault();
+        const ticketInfo = $("#ticket-form").serialize() + "&Grouped=true";
+        change_view("create");
+        history.back();
+        const ticketName = item;
+        socket.emit("add_ticket", ticketName, ticketInfo);
+      })
+    }
+  } else if (ticket) {
+    $('#ticket-form').append(`<button class="btn-order">Update</buitton>`)
+    $('#ticket-form > .btn-order').on("click", function(e){
+      e.preventDefault();
+      const ticketInfo = $("#ticket-form").serialize();
+      change_view("view");
+      history.back();
+      socket.emit("edit_ticket", ticket, ticketInfo);
+    })
   }
+
   
   $(".config-list").trigger('create');
 
@@ -201,14 +245,21 @@ function render_ticket_types() {
 }
 
 function change_view(target) {
-  $('.ui-header > .ui-icon-arrow-l').show();
-  $('.ui-header > .ui-icon-delete').hide();
+  $('.ui-header > #menuBtn').show();
+  $('.ui-header > #cancelBtn').hide();
+  $('.ui-header > #cancelEditBtn').hide();
   $('#viewport').children().hide(); // hide all menus
   $('.config-list').children().remove();
   switch (target) {
     case 'create':
       $('.ui-header > h1').text("Create Ticket");
       $('.order-menu').show();
+      break;
+    case 'edit':
+      $('.ui-header > h1').text("Edit Ticket");
+      $('.ui-header > #menuBtn').hide();
+      $('.ui-header > #cancelEditBtn').show();
+      $('.config-menu').show();
       break;
     case 'view':
       $('#activeBtn').hide();
@@ -217,8 +268,8 @@ function change_view(target) {
       $('.view-menu').show();
       break;
     case 'config':
-      $('.ui-header > .ui-icon-arrow-l').hide();
-      $('.ui-header > .ui-icon-delete').show();
+      $('.ui-header > #menuBtn').hide();
+      $('.ui-header > #cancelBtn').show();
       $('.config-menu').show();
       break;
     case 'option':
@@ -236,7 +287,7 @@ function change_view(target) {
     case 'menu': // because the history stage seemingly couldn't be changed on page load
     default:
       $('.ui-header > h1').text("BaristAssist");
-      $('.ui-header > .ui-icon-arrow-l').hide();
+      $('.ui-header > #menuBtn').hide();
       $('.menu').show();
       break;
   }
@@ -254,13 +305,14 @@ function add_ticket(ticket) {
   const subOrders = ticket.groupId ? $(`.view-list > div[data-group-id='${ticket.groupId}']`) : null;
   const subOrderTargetId = subOrders && subOrders.length > 0 ? subOrders[subOrders.length - 1].id : "ticket" + ticket.groupId;
   const subOrderNum = subOrders ? subOrders.length + 1 : 1;
+  const displayCount = ticket.groupId ? ticket.count + "." + subOrderNum : ticket.count;
 
   const ticketHTML = `
     <div class="ui-block-a">
       <div class="ui-bar ui-bar-${theme}" style="height:${height}em;text-align-last: justify">
         ${ticket.name}<br>
         Quantity #${ticket.quantity}<br>
-        #${ticket.groupId ? ticket.count + "." + subOrderNum : ticket.count} ${ticket.purchaser}
+        #${displayCount} ${ticket.purchaser}
       </div>
     </div>
     <div class="ui-block-b">
@@ -288,19 +340,18 @@ function add_ticket(ticket) {
     socket.emit("remove_ticket", ticket);
   })
 
-  // TODO add ticket editing
-  // ticket editing for single tickets is easy enough, but editing tickets that are grouped is more difficult
-  // $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
-  //   change_view("config");
-  //   render_config(ticket.name, ticket);
-  // })
+  $(`#ticket${ticket.id}`).on("swipeleft", function(event) {
+    change_view("edit");
+    ticket.count = displayCount;
+    render_config(ticket.name, ticket);
+    history.pushState({page: "create"}, "");
+  })
 
 
   $(".view-list").trigger('create');
 }
 
 function add_ticket_to_completed(ticket) {
-  // this doesn't work for grouped tickets as they only remove the main ticket
   const height = ticket.info.length > 4 ? ticket.info.length * 1.3 : 4 * 1.3;
   const currentTime = new Date();
   const timeString = `${currentTime.toTimeString().split(" ")[0].slice(0, -3)}`
@@ -342,12 +393,42 @@ function add_ticket_to_completed(ticket) {
   $(".completed-list").trigger('create');
 }
 
+function edit_ticket(ticket) {
+  const ele = $(`#ticket${ticket.id}`);
+  ele.animate({right: "50vw"}, 150);
+  ele.animate({right: "0vw"}, 150, function() {
+
+    const subOrders = ticket.groupId ? $(`.view-list > div[data-group-id='${ticket.groupId}']`) : false;
+    const subOrderNum = subOrders ? subOrders.length + 1 : 1;
+
+    const leftHTML = `
+        ${ticket.name}<br>
+        Quantity #${ticket.quantity}<br>
+        #${ticket.count} ${ticket.purchaser}
+    `;
+
+    const rightHTML = `${ticket.info.join("<br>")}`;
+
+    $(`#ticket${ticket.id} > div.ui-block-a > div.ui-bar`).html(leftHTML);
+    $(`#ticket${ticket.id} > div.ui-block-b > div.ui-bar`).html(rightHTML);
+    $(`#ticket${ticket.id}`).data(ticket, JSON.stringify(ticket));
+    $(`#ticket${ticket.id}`).off("swipeleft").on("swipeleft", function(event) {
+      change_view("edit");
+      render_config(ticket.name, ticket);
+      history.pushState({page: "create"}, "");
+    })
+  });
+}
+
 function remove_ticket(ticket) {
   $(`#ticket${ticket.id}, div[data-group-id='${ticket.id}'], #ticket${ticket.groupId}, div[data-group-id='${ticket.groupId}']`).animate({left: "200vw"}, 400, function() {
     const removedTicket = $(this).data("ticket");
     activeOrders -= parseInt(removedTicket.quantity);
     $('#activeBtn').text(activeOrders)
     $(this).remove();
+    if ($(`.completed-list > div`).length >= 25) {
+      $(`.completed-list > div:last`).remove();
+    }
     add_ticket_to_completed(removedTicket);
   });
 }
@@ -509,6 +590,11 @@ function add_events() {
     history.back();
   });
 
+  $('#cancelEditBtn').on("click", () => {
+    change_view('view');
+    history.back();
+  });
+
   $('.btn-add-ticket').on("click", function() {
     change_view("config");
     let ticket = $(this).text();
@@ -570,6 +656,7 @@ function main() {
 
   socket.on("add_ticket", add_ticket);
   socket.on("remove_ticket", remove_ticket);
+  socket.on("edit_ticket", edit_ticket);
   socket.on("sync_ticket", sync_ticket);
   socket.on("show_notification", show_notification);
   socket.on("update_stats", update_stats);

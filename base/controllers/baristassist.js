@@ -123,23 +123,88 @@ exports.index = async function(io) {
   }
 
   function remove_ticket(ticket) {
-    let index;
     let quantity = 0 // so when removing grouped tickets the quantity is correctly updated in the active tickets
-    while (index != -1) {
-      index = ticketQueue.findIndex(ele => ele.id === ticket.id || ele.groupId === ticket.id || ele.id === ticket.groupId || ele.groupId == ticket);
-      if (index == -1) {
-        break;
+    const ticketsToRemove = ticketQueue.filter(ele => ele.id === ticket.id || ele.groupId === ticket.id || ele.id === ticket.groupId || (ele.groupId === ticket.groupId) && ele.groupId !== false);
+    ticketsToRemove.forEach(ticket => {
+      quantity += parseInt(ticket.quantity);
+      ticketQueue = ticketQueue.filter(ele => ele.id !== ticket.id);
+      if (ticketHistory.length >= 25) { 
+        // bug related to group orders disappearing if they're cut in the middle
+        ticketHistory.shift();
       }
-      quantity += parseInt(ticketQueue[index].quantity);
-      const removedTicket = ticketQueue.splice(index, 1)[0];
-      if (ticketHistory.length > 10) {
-        const oldestTicketId = ticketHistory[ticketHistory.length - 1].id;
-        ticketHistory = ticketHistory.filter(ele => ele.id !== oldestTicketId);
-      }
-      ticketHistory.push(removedTicket);
-    }
+      ticketHistory.push(ticket);
+    })
     ticket.quantity = quantity;
     baristassist.emit("remove_ticket", ticket);
+  }
+
+  function edit_ticket(originalTicket, ticketInfo) {
+
+    let targetTicket = ticketQueue.some(ticket => ticket?.id === originalTicket?.id);
+
+    if (!targetTicket) return console.error("could not find target ticket to edit");
+
+    // local vars
+    let ticketQuantity, purchaser;
+
+    // split the ticket info string into an array
+    ticketInfo = ticketInfo.split("&");
+
+    // handle custom values in the info string
+    ticketInfo.forEach((ele, index) => {
+      if (ele.includes('=Custom')) {
+        let property = ele.slice(0, -7);
+        let customValue = ticketInfo[index + 1].split('=')[1].replaceAll('+', '-');
+        ticketInfo[index] = `${property}=${customValue}`;
+      }
+    });
+
+    // remove the custom flag
+    ticketInfo = ticketInfo.filter(ele => !ele.startsWith('Custom'));
+
+    // handle the ticket quantity
+    const quantityIndex = ticketInfo.findIndex(ele => ele.startsWith("Quantity="));
+    if (quantityIndex != -1) {
+      ticketQuantity = ticketInfo[quantityIndex].slice(9);
+      ticketInfo.splice(quantityIndex, 1);
+    }
+
+    // handle the ticket name
+    const nameIndex = ticketInfo.findIndex(ele => ele.startsWith("Name="));
+    if (nameIndex != -1) {
+      purchaser = ticketInfo[nameIndex].slice(5);
+      ticketInfo.splice(nameIndex, 1);
+    }
+
+    // update the ticket info to look presentable
+    ticketInfo = ticketInfo.map((ele) => {
+      let temp = ele.split("=");
+      return temp.join(" ");
+    });
+
+    // put it all together
+    const ticket = {
+      id: originalTicket.id, // unique identifier for the ticket
+      name: originalTicket.name, // the name of the item on the ticket
+      info: ticketInfo, // the options of the ticket
+      groupId: originalTicket.groupId, // the the id of the ticket for which this ticket belongs to if grouped
+      quantity: ticketQuantity, // the quantity of the ticket
+      count: originalTicket.count, // the count of the ticket, shown in the app sort of like the id
+      purchaser: purchaser // the name of the person making the order
+    };
+
+    // update the ticket in the server queue
+    ticketQueue = ticketQueue.map(ticket => {
+      if (ticket.id === originalTicket.id) {
+        ticket.info = ticketInfo;
+        ticket.quantity = ticketQuantity;
+        ticket.purchaser = purchaser;
+        return ticket;
+      } else return ticket;
+    })
+
+    baristassist.emit("edit_ticket", ticket);
+
   }
 
   function show_notification(notification) {
@@ -225,6 +290,7 @@ exports.index = async function(io) {
     socket.emit("update_stats", todayTotal);
     socket.on('add_ticket', add_ticket);
     socket.on('remove_ticket', remove_ticket);
+    socket.on("edit_ticket", edit_ticket);
     socket.on("option", option);
     
     update_total()
