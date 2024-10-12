@@ -264,7 +264,7 @@ function change_view(target) {
     case 'view':
       $('#activeBtn').hide();
       $('#activeBtn').show();
-      $('.ui-header > h1').text("View Tickets");
+      $('.ui-header > h1').text("Pending Tickets");
       $('.view-menu').show();
       break;
     case 'config':
