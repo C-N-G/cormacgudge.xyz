@@ -242,32 +242,47 @@ exports.index = async function(io) {
 
   async function load_spreadsheet() {
 
-      // load spreadsheet
-        const { GoogleSpreadsheet } = require('google-spreadsheet');
-        const { client_email, private_key } = require('../config.json');
-        const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
-        await doc.useServiceAccountAuth({
-          client_email: client_email,
-          private_key: private_key,
-        });
-        await doc.loadInfo();
-  
-        // load worksheet on spreadsheet
-        const thisYear = String(new Date().getFullYear());
-        sheet = doc.sheetsByTitle[thisYear];
-        await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
-  
-        todaySheet = doc.sheetsByTitle["Today"];
-        await todaySheet.loadCells("F26:F26");
-        todayTotal = todaySheet.getCellByA1("F26").value;
+    // load spreadsheet
+    const { GoogleSpreadsheet } = require('google-spreadsheet');
+    const { client_email, private_key } = require('../config.json');
+    const doc = new GoogleSpreadsheet("1hT4ndFl-fzei3sGLo_YD_4SrGEhpNqo-aRq_yT27N8w");
+    await doc.useServiceAccountAuth({
+      client_email: client_email,
+      private_key: private_key,
+    });
+    await doc.loadInfo();
 
-        update_total();
-  
-        // https://www.npmjs.com/package/google-spreadsheet
-        // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
-        // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
-  
-        //sqlite also a possibility for a database
+    // load worksheet on spreadsheet
+    const thisYear = String(new Date().getFullYear());
+    sheet = doc.sheetsByTitle[thisYear];
+    await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
+
+    todaySheet = doc.sheetsByTitle["Today"];
+    await todaySheet.loadCells("F26:F26");
+    todayTotal = todaySheet.getCellByA1("F26").value;
+
+    update_total();
+
+    async function update_sheet_name() {
+      const newYear = String(new Date().getFullYear());
+      if (newYear !== sheet.title) {
+        console.log("updating worksheet from", sheet.title, "to", newYear);
+        await doc.loadInfo();
+        sheet = doc.sheetsByTitle[newYear];
+        await sheet.setHeaderRow(["Date", "Time", "Quantity", "Item"]);
+        console.log("updated worksheet");
+      }
+    }
+
+    setInterval(() => {
+      update_sheet_name()
+    }, 1000*60*60*24)
+
+    // https://www.npmjs.com/package/google-spreadsheet
+    // https://theoephraim.github.io/node-google-spreadsheet/#/getting-started/authentication
+    // https://console.cloud.google.com/apis/api/sheets.googleapis.com/metrics?project=baristassist
+
+    //sqlite also a possibility for a database
 
 
   }
